@@ -25,15 +25,21 @@ def create_app(config_name="default"):
         app.register_blueprint(shell_routes.shell_bp)
         logging.info("Registered shell blueprint.")
 
-        # --- Register CLI Blueprint ---
-        from view_cli import cli_bp  # Import the blueprint
+        # Register CLI Blueprint
+        from view_cli import cli_bp
 
-        app.register_blueprint(cli_bp, url_prefix="/cli")  # Register with a prefix
+        app.register_blueprint(cli_bp, url_prefix="/cli")
         logging.info("Registered cli blueprint with prefix /cli.")
 
+        # --- Register Recruiter Blueprint ---
+        from view_recruiter import recruiter_bp  # Import the blueprint
+
+        app.register_blueprint(
+            recruiter_bp, url_prefix="/recruiter"
+        )  # Register with prefix
+        logging.info("Registered recruiter blueprint with prefix /recruiter.")
+
         # --- Register other view blueprints later ---
-        # from view_recruiter import recruiter_bp
-        # app.register_blueprint(recruiter_bp, url_prefix='/recruiter')
         # from view_visual import visual_bp
         # app.register_blueprint(visual_bp, url_prefix='/visual')
 

@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Get DOM Elements ---
     const selectorContainer = document.getElementById('selector-container');
     const viewContainer = document.getElementById('view-container');
     const backButton = document.getElementById('back-button');
@@ -7,44 +8,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const recruiterOption = document.getElementById('select-recruiter');
     const visualOption = document.getElementById('select-visual');
 
-    let currentView = null;
-    let currentCleanup = null; // Function to call for cleanup
+    // --- State Variables ---
+    let currentView = null; // Tracks the currently displayed view ('Developer', 'Recruiter', 'Visual')
+    let currentCleanup = null; // Holds the specific cleanup function for the current view
 
-    // --- Resource Loading/Cleanup ---
+    // --- Helper Functions for Resource Management ---
+
+    /**
+     * Dynamically loads a CSS file into the document head.
+     * Avoids loading the same file multiple times.
+     * @param {string} href - The URL of the CSS file.
+     * @param {string} id - A unique ID for the link element.
+     */
     function loadCSS(href, id) {
-        if (document.getElementById(id)) return; // Already loaded
+        if (document.getElementById(id)) {
+            console.log(`CSS already loaded: ${href}`);
+            return; // Already loaded
+        }
         const link = document.createElement('link');
-        link.rel = 'stylesheet'; link.href = href; link.id = id;
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.id = id;
         document.head.appendChild(link);
         console.log(`CSS loaded: ${href}`);
     }
 
-    function loadJS(src, id, callback) {
+    /**
+     * Dynamically loads a JavaScript file into the document body.
+     * Avoids loading the same file multiple times.
+     * Calls an optional callback function once the script is loaded.
+     * @param {string} src - The URL of the JS file.
+     * @param {string} id - A unique ID for the script element.
+     * @param {string} [callbackName] - Optional name of a global function to call after load.
+     */
+    function loadJS(src, id, callbackName) {
         if (document.getElementById(id)) {
-            // If script tag exists, assume script loaded, try calling callback
-             if (callback && typeof window[callback] === 'function') {
-                 console.log(`JS already loaded (${src}), calling ${callback}()`);
-                 window[callback]();
-             } else {
-                  console.log(`JS already loaded (${src}), no callback or callback invalid.`);
-             }
+            // If script tag exists, assume script loaded, try calling callback if provided
+            if (callbackName && typeof window[callbackName] === 'function') {
+                 console.log(`JS already loaded (${src}), calling ${callbackName}()`);
+                 window[callbackName]();
+            } else {
+                  console.log(`JS already loaded (${src}), no valid callback specified.`);
+            }
             return;
         }
         const script = document.createElement('script');
-        script.src = src; script.id = id; script.async = false; // Load sequentially if needed
+        script.src = src;
+        script.id = id;
+        script.async = false; // Load and execute script sequentially relative to other dynamic scripts if needed
         script.onload = () => {
             console.log(`JS loaded: ${src}`);
-            if (callback && typeof window[callback] === 'function') {
-                console.log(`Calling ${callback}()`);
-                window[callback]();
-            } else if (callback) {
-                console.warn(`JS ${src} loaded, but callback ${callback} not found or not a function.`);
+            // Check if the callback function exists globally *after* loading
+            if (callbackName && typeof window[callbackName] === 'function') {
+                console.log(`Calling ${callbackName}()`);
+                window[callbackName](); // Call the initializer function
+            } else if (callbackName) {
+                console.warn(`JS ${src} loaded, but callback ${callbackName} not found or not a function.`);
             }
         };
         script.onerror = () => console.error(`Failed to load script: ${src}`);
         document.body.appendChild(script);
     }
 
+    /**
+     * Removes dynamically loaded CSS and JS elements by their IDs.
+     * @param {string[]} ids - An array of element IDs to remove.
+     */
     function cleanupResources(ids = []) {
         ids.forEach(id => {
             const element = document.getElementById(id);
@@ -53,116 +82,197 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`Removed element: #${id}`);
             }
         });
-        // Add specific JS cleanup if needed (e.g., removing event listeners)
-        if (currentCleanup && typeof currentCleanup === 'function') {
-            console.log("Running specific view cleanup function.");
-            currentCleanup();
-            currentCleanup = null; // Reset cleanup function
-        }
     }
 
     // --- View Loading Functions ---
 
+    /**
+     * Loads and initializes the Developer (CLI) view.
+     */
     async function loadCliView() {
         try {
-            // Fetch HTML partial from the *shell* blueprint route
-            const response = await fetch('/view/cli'); // Route defined in shell/routes.py
+            // Fetch HTML partial from the shell route /view/cli
+            const response = await fetch('/view/cli');
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const html = await response.text();
-            viewContainer.innerHTML = html;
+            viewContainer.innerHTML = html; // Inject the HTML
 
-            // Define resources for CLI view
+            // Define resources specific to the CLI view
             const cssId = 'cli-css';
             const jsId = 'cli-js';
-            const cssPath = '/cli-static/css/terminal.css'; // Path relative to cli blueprint static folder
-            const jsPath = '/cli-static/js/terminal.js';   // Path relative to cli blueprint static folder
+            // Use the unique static URL path defined in the blueprint
+            const cssPath = '/cli-static/css/terminal.css';
+            const jsPath = '/cli-static/js/terminal.js';
+            const initializerCallback = 'initializeTerminalInterface'; // Function inside terminal.js
 
-            // Load CSS and JS, then initialize
+            // Load resources and initialize via callback
             loadCSS(cssPath, cssId);
-            // The callback 'initializeTerminalInterface' must be exposed globally by terminal.js
-            loadJS(jsPath, jsId, 'initializeTerminalInterface');
+            loadJS(jsPath, jsId, initializerCallback);
 
-            // Set cleanup function for when leaving CLI view
+            // Set the specific cleanup function for this view
             currentCleanup = () => {
                 console.log("Cleaning up CLI view resources...");
-                cleanupResources([cssId, jsId]);
-                // Add any CLI specific listener removals here if necessary
+                // Add any CLI specific listener removals or cleanup here if needed in future
+                cleanupResources([cssId, jsId]); // Remove CSS and JS tags
+                // Remove the global initializer if it causes conflicts (optional)
+                // delete window[initializerCallback];
             };
 
         } catch (error) {
             console.error("Error loading CLI view:", error);
-            viewContainer.innerHTML = `<p class="text-red-500 p-4 text-center self-center">Error loading Developer view: ${error.message}</p>`;
-            viewContainer.classList.add('items-center', 'justify-center');
+            // Display error within the view container
+            viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error loading Developer view: ${error.message}</p></div>`;
+            viewContainer.classList.add('items-center', 'justify-center'); // Center error
         }
     }
 
+    /**
+     * Loads and initializes the Recruiter (CYOA) view.
+     */
     async function loadRecruiterView() {
-        // Placeholder - TODO: Implement in future step
-        console.log("Loading Recruiter View (Placeholder)...");
-         viewContainer.innerHTML = `<p class="text-center text-xl p-10 self-center">Loading Recruiter Path... (Coming soon!)</p>`;
-         viewContainer.classList.add('items-center', 'justify-center');
-        currentCleanup = () => { console.log("Cleaning up placeholder Recruiter view"); }; // Basic cleanup
+         try {
+            // Fetch HTML partial from the shell route /view/recruiter
+            const response = await fetch('/view/recruiter');
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const html = await response.text();
+            viewContainer.innerHTML = html;
+
+            // Define resources
+            const cssId = 'recruiter-css';
+            const jsId = 'recruiter-js';
+            // Use the unique static URL path for the recruiter blueprint
+            const cssPath = '/recruiter-static/css/cyoa.css';
+            const jsPath = '/recruiter-static/js/cyoa.js';
+            const initializerCallback = 'initializeRecruiterView'; // Function inside cyoa.js
+            const cleanupCallback = 'cleanupRecruiterView'; // Optional cleanup function inside cyoa.js
+
+            // Load resources and initialize
+            loadCSS(cssPath, cssId);
+            loadJS(jsPath, jsId, initializerCallback);
+
+            // Set the specific cleanup function
+            currentCleanup = () => {
+                console.log("Cleaning up Recruiter view resources...");
+                 // Call the specific cleanup function from the view's JS if it exists
+                if (window[cleanupCallback] && typeof window[cleanupCallback] === 'function') {
+                     window[cleanupCallback]();
+                     // Optional: delete window[cleanupCallback];
+                }
+                cleanupResources([cssId, jsId]); // Remove CSS and JS tags
+                // Optional: delete window[initializerCallback];
+            };
+
+        } catch (error) {
+             console.error("Error loading Recruiter view:", error);
+             viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error loading Recruiter path: ${error.message}</p></div>`;
+             viewContainer.classList.add('items-center', 'justify-center');
+        }
     }
 
+    /**
+     * Placeholder function for loading the Visual view.
+     */
      async function loadVisualView() {
-        // Placeholder - TODO: Implement in future step
+        // Placeholder - TODO: Implement in Phase 4
         console.log("Loading Visual View (Placeholder)...");
-        viewContainer.innerHTML = `<p class="text-center text-xl p-10 self-center">Loading Visual Overview... (Coming soon!)</p>`;
+        viewContainer.innerHTML = `<div class="p-8 text-center self-center"><h2 class="text-2xl font-semibold mb-4">Loading Visual Overview...</h2><p class="text-gray-600">(Coming soon!)</p></div>`;
         viewContainer.classList.add('items-center', 'justify-center');
-        currentCleanup = () => { console.log("Cleaning up placeholder Visual view"); }; // Basic cleanup
+        // Basic cleanup for placeholder
+        currentCleanup = () => { console.log("Cleaning up placeholder Visual view"); };
     }
 
 
     // --- Main Flow Control ---
+
+    /**
+     * Hides the selector and loads the specified view.
+     * @param {string} viewName - The name of the view to load ('Developer', 'Recruiter', 'Visual').
+     */
     function showView(viewName) {
+        if (!viewName) return;
         console.log(`Attempting to show view: ${viewName}`);
+
+        // Hide selector and prepare container
         selectorContainer.style.display = 'none';
-        viewContainer.innerHTML = ''; // Clear previous content first
-        // Reset base classes for the container
-        viewContainer.className = 'active'; // Use class for active state styling
-        backButton.classList.remove('hidden');
+        viewContainer.innerHTML = ''; // Clear previous content
+        viewContainer.className = 'active'; // Base class for active view (used for CSS targeting/styling)
+        backButton.classList.remove('hidden'); // Show back button
         currentView = viewName;
 
-        // Reset container styles, specific views will add their needs
-         viewContainer.classList.remove('items-center', 'justify-center');
+        // Reset flex alignment potentially set by placeholders
+        viewContainer.classList.remove('items-center', 'justify-center');
 
-        // Call the appropriate loading function
-        if (viewName === 'Developer') {
-            loadCliView();
-        } else if (viewName === 'Recruiter') {
-            loadRecruiterView();
-        } else if (viewName === 'Visual') {
-            loadVisualView();
-        } else {
-            console.error(`Unknown view name: ${viewName}`);
-            viewContainer.innerHTML = `<p class="text-red-500 p-4">Error: Unknown view requested.</p>`;
+        // Call the appropriate loading function based on the view name
+        switch (viewName) {
+            case 'Developer':
+                loadCliView();
+                break;
+            case 'Recruiter':
+                loadRecruiterView();
+                break;
+            case 'Visual':
+                loadVisualView();
+                break;
+            default:
+                console.error(`Unknown view name requested: ${viewName}`);
+                viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error: Unknown view requested.</p></div>`;
+                viewContainer.classList.add('items-center', 'justify-center'); // Center error
         }
     }
 
+    /**
+     * Hides the current view, runs cleanup, and shows the selector again.
+     */
     function showSelector() {
         console.log("Returning to selector");
-        viewContainer.innerHTML = ''; // Clear view content
-        viewContainer.classList.add('hidden');
-        viewContainer.classList.remove('active'); // Remove active state class
-        backButton.classList.add('hidden');
-        selectorContainer.style.display = 'block'; // Show selector again
 
-        // Run cleanup for the view we are leaving
+        // Run cleanup for the view we are leaving *before* clearing HTML
         if (currentCleanup && typeof currentCleanup === 'function') {
             currentCleanup();
         } else {
-             // Fallback cleanup if specific function wasn't set
+             // Fallback cleanup if specific function wasn't set (might be too aggressive)
+             console.warn("No specific cleanup function found for current view. Running generic cleanup.");
              cleanupResources(['cli-css', 'cli-js', 'recruiter-css', 'recruiter-js', 'visual-css', 'visual-js']);
         }
 
+        // Clear and hide view container
+        viewContainer.innerHTML = '';
+        viewContainer.classList.add('hidden');
+        viewContainer.classList.remove('active');
+        backButton.classList.add('hidden');
+
+        // Show selector
+        selectorContainer.style.display = 'block'; // Or 'flex' depending on its layout needs
+
+        // Reset state
         currentView = null;
+        currentCleanup = null;
     }
 
     // --- Event Listeners ---
-    if (cliOption) cliOption.addEventListener('click', () => showView('Developer'));
-    if (recruiterOption) recruiterOption.addEventListener('click', () => showView('Recruiter'));
-    if (visualOption) visualOption.addEventListener('click', () => showView('Visual'));
-    if (backButton) backButton.addEventListener('click', showSelector);
+    if (cliOption) {
+        cliOption.addEventListener('click', () => showView('Developer'));
+    } else {
+        console.error("CLI option element not found");
+    }
+
+    if (recruiterOption) {
+        recruiterOption.addEventListener('click', () => showView('Recruiter'));
+    } else {
+        console.error("Recruiter option element not found");
+    }
+
+    if (visualOption) {
+        visualOption.addEventListener('click', () => showView('Visual'));
+    } else {
+        console.error("Visual option element not found");
+    }
+
+    if (backButton) {
+        backButton.addEventListener('click', showSelector);
+    } else {
+        console.error("Back button element not found");
+    }
 
     console.log("Selector view initialized and ready.");
-});
+}); // End DOMContentLoaded

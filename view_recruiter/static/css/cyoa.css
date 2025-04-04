@@ -1,0 +1,45 @@
+/* Styles specific to the Recruiter CYOA view */
+
+#cyoa-container {
+    /* Background for the overall view area if needed */
+    /* background-color: #eef2f7; */
+}
+
+#story-content {
+    /* Styles for the main content box */
+    min-height: 300px; /* Ensure it has some minimum size */
+}
+
+#story-text {
+    /* Styling for the main narrative text */
+}
+
+.cyoa-choice-button {
+    /* Base styling for choice buttons - Tailwind can override */
+    display: block; /* Make buttons block level */
+    text-align: left;
+    padding: 0.75rem 1.25rem; /* Equivalent to p-3 px-5 */
+    border: 1px solid transparent; /* Base border */
+    border-radius: 0.375rem; /* rounded-md */
+    font-weight: 500; /* medium */
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease;
+    cursor: pointer;
+    background-color: #f9fafb; /* gray-50 */
+    color: #374151; /* gray-700 */
+    border-color: #e5e7eb; /* gray-200 */
+}
+
+.cyoa-choice-button:hover {
+    background-color: #f3f4f6; /* gray-100 */
+    border-color: #d1d5db; /* gray-300 */
+    transform: translateY(-1px);
+}
+
+.cyoa-choice-button:active {
+     transform: translateY(0px);
+}
+
+/* Animate content fade-in */
+#story-content.loaded {
+    opacity: 1;
+}

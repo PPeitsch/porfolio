@@ -26,16 +26,29 @@ def selector():
 def get_view_partial(view_name):
     """Serves the HTML partial for a requested view."""
     logger.info(f"Serving partial for view: {view_name}")
-    if view_name == "cli":
-        # Render the template from the 'view_cli' blueprint's template folder
-        # Note: The actual template path is relative to the blueprint's template_folder
-        return render_template("cli_view.html")
-    elif view_name == "recruiter":
-        # Placeholder for future step
-        return render_template("recruiter_view.html")
-    elif view_name == "visual":
-        # Placeholder for future step
-        return render_template("visual_view.html")
+    view_map = {
+        "cli": "cli_view.html",
+        "recruiter": "recruiter_view.html",  # Add recruiter template
+        "visual": "visual_view.html",  # Add visual template (placeholder)
+    }
+    template_name = view_map.get(view_name)
+
+    if template_name:
+        # Render template. Blueprints need correct template_folder setup.
+        # For simplicity here, assume templates are found relative to *their* blueprint.
+        # Flask searches blueprint folders then application folder.
+        # We might need to specify blueprint name if templates clash: 'recruiter/recruiter_view.html'
+        try:
+            # This relies on Flask finding the template in the correct blueprint's folder
+            return render_template(template_name)
+        except Exception as e:
+            logger.error(
+                f"Error rendering template {template_name} for view {view_name}: {e}"
+            )
+            return (
+                f'<p class="text-red-500 p-4">Error rendering view template: {e}</p>',
+                500,
+            )
     else:
         logger.warning(f"Partial requested for unknown view: {view_name}")
         return '<p class="text-red-500 p-4">Error: View not found.</p>', 404
