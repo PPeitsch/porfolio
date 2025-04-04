@@ -1,0 +1,109 @@
+# Defines the Choose Your Own Adventure path for Recruiters
+
+# Special 'start' key defines the initial step
+start:
+  text: |
+    Hi there! Thanks for taking a look at my portfolio.
+    I focus on building efficient and practical solutions using Python and modern web technologies.
+    What area are you most interested in exploring first?
+  choices:
+    - text: "Tell me about your core technical skills."
+      next_step: core_skills
+    - text: "Show me projects focused on web applications (Flask/FastAPI)."
+      next_step: web_apps_overview
+    - text: "I'm interested in your automation and API integration work."
+      next_step: automation_apis_overview
+    - text: "What are you passionate about as a developer?"
+      next_step: passion_statement
+
+core_skills:
+  # Use placeholders like {{ cv.skills }} or {{ skill_list }}
+  # The backend API will need to replace these.
+  text: |
+    My core strengths lie in Python development, particularly with web frameworks and data handling.
+    Key skills include:
+
+    *   **Backend:** {{ core_backend_skills }}
+    *   **Frontend (Supporting):** {{ core_frontend_skills }}
+    *   **Databases:** {{ core_database_skills }}
+    *   **Tools & Concepts:** {{ core_tools }}
+
+    Would you like to see projects related to a specific skill area, or explore something else?
+  choices:
+    - text: "Show Flask projects."
+      next_step: project_tag_flask # We'll need a way to handle dynamic steps like this
+    - text: "Show API-related projects."
+      next_step: project_tag_api
+    - text: "Let's go back to the main overview."
+      next_step: start
+    - text: "Tell me about your approach to clean code."
+      next_step: clean_code_philosophy # Define this step later
+
+web_apps_overview:
+  # Use placeholders like {{ project_list_web }}
+  text: |
+    I've built several web applications using both Flask and FastAPI. Key examples include:
+
+    *   **Financial Tracking:** {{ desc_financial-tracking }}
+    *   **Minidoro/Pomodoro:** {{ desc_minidoro }}
+    *   **AutomateIQ (FastAPI):** {{ desc_automateiq }}
+
+    Which of these sounds most interesting to dive into?
+  choices:
+    - text: "Tell me more about Financial Tracking."
+      next_step: project_detail_financial-tracking # Dynamic step based on project ID
+    - text: "Let's look at AutomateIQ."
+      next_step: project_detail_automateiq
+    - text: "What's Minidoro?"
+      next_step: project_detail_minidoro
+    - text: "How about non-web projects?"
+      next_step: non_web_overview
+    - text: "Go back."
+      next_step: start
+
+automation_apis_overview:
+  # Use placeholders {{ project_list_automation }}
+  text: |
+    I enjoy connecting systems and automating processes. Relevant projects include:
+
+    *   **AutomateIQ:** {{ desc_automateiq }}
+    *   **BCRA API Connector:** {{ desc_bcra-connector }}
+
+    I believe good API design and robust automation are crucial for modern systems.
+    Where would you like to go next?
+  choices:
+    - text: "More details on AutomateIQ."
+      next_step: project_detail_automateiq
+    - text: "What is the BCRA API Connector?"
+      next_step: project_detail_bcra-connector
+    - text: "What other types of projects have you done?"
+      next_step: project_type_overview # Define later
+    - text: "Go back."
+      next_step: start
+
+# --- Example Placeholder Steps for later ---
+passion_statement:
+ text: |
+    I'm passionate about creating tools that are not just functional but also intuitive and reliable.
+    I enjoy the problem-solving aspect of development and finding elegant solutions to complex challenges.
+    Learning new technologies and applying them effectively is a key driver for me.
+ choices:
+    - { text: "Which technologies are you exploring now?", next_step: current_learning }
+    - { text: "Show me projects again.", next_step: project_type_overview }
+    - { text: "Back to start.", next_step: start }
+
+# --- Example Dynamic Step Handlers (These IDs won't exist directly) ---
+# The API will need logic to handle 'project_detail_*' or 'project_tag_*'
+# project_detail_financial-tracking: (Handled by API logic)
+# project_tag_flask: (Handled by API logic)
+
+# --- Default/Error Step ---
+step_not_found:
+  text: |
+    Apologies, I seem to have lost my place in the story or that path isn't fully built yet.
+    Let's get back on track.
+  choices:
+    - text: "Go back to the start."
+      next_step: start
+    - text: "Try exploring web projects."
+      next_step: web_apps_overview
