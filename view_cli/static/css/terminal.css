@@ -1,0 +1,78 @@
+/* Styles specific to the terminal view loaded by selector.js */
+/* Using Catppuccin Macchiato inspired colors */
+
+/* Ensure the container injected into (#terminal) fills its parent (#view-container) */
+#terminal {
+    /* Assuming parent (#view-container) provides dimensions (w-full h-full) */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#output {
+    /* Allows scrolling within the output area */
+    scrollbar-width: thin;
+    scrollbar-color: #585b70 #313244; /* Macchiato Surface1 / Surface0 */
+}
+/* Webkit scrollbar styling */
+#output::-webkit-scrollbar {
+    width: 8px;
+}
+#output::-webkit-scrollbar-track {
+    background: #313244; /* Macchiato Surface0 */
+}
+#output::-webkit-scrollbar-thumb {
+    background-color: #585b70; /* Macchiato Surface1 */
+    border-radius: 4px;
+    border: 2px solid #313244; /* Macchiato Surface0 */
+}
+
+
+.input-line {
+    border-color: #45475a; /* Macchiato Surface2 */
+}
+
+.prompt {
+    color: #89b4fa; /* Macchiato Blue */
+}
+
+.input {
+    color: #cdd6f4; /* Macchiato Text */
+    caret-color: #f5e0dc; /* Macchiato Rosewater cursor */
+}
+.input:focus {
+    outline: none; /* Remove browser default focus outline */
+}
+
+/* Link styling within the terminal output */
+a.terminal-link {
+    color: #89dceb; /* Macchiato Teal */
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+a.terminal-link:hover {
+    color: #94e2d5; /* Macchiato Green */
+    text-decoration: none;
+}
+
+/* Error message styling */
+.error-message {
+    color: #f38ba8; /* Macchiato Red */
+}
+
+/* Styling for the command echoed back to the user */
+.echo-command {
+    color: #a6adc8; /* Macchiato Subtext0 */
+    /* Optional: slightly dimmer */
+    /* opacity: 0.8; */
+}
+
+/* Styling for specific command output sections (examples) */
+#output .command-output-section { /* Hypothetical class for sections */
+    margin-bottom: 0.5em;
+}
+#output .command-output-title { /* Hypothetical class for titles */
+    color: #f9e2af; /* Macchiato Yellow */
+    font-weight: bold;
+    margin-bottom: 0.2em;
+}
