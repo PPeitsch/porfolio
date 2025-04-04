@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Experience</title>
+    <!-- Basic Styling - replace with Tailwind/proper CSS later -->
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #eee; margin: 0; }
+        .container { text-align: center; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .options { display: flex; gap: 20px; margin-top: 30px; justify-content: center; }
+        .option { border: 1px solid #ccc; padding: 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s ease; min-width: 150px; }
+        .option:hover { background-color: #f0f0f0; }
+        h1 { margin-bottom: 10px; }
+        p { color: #555; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container" id="selector-container">
+        <!-- Replace with actual name later -->
+        <h1>Welcome (Name Placeholder)</h1>
+        <p>Choose how you'd like to explore:</p>
+        <div class="options">
+            <div class="option" id="select-cli">
+                <h2>Developer</h2>
+                <small>(CLI Mode)</small>
+            </div>
+            <div class="option" id="select-recruiter">
+                <h2>Recruiter</h2>
+                <small>(Guided Path)</small>
+            </div>
+            <div class="option" id="select-visual">
+                <h2>Visual</h2>
+                <small>(Overview)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- This div will hold the dynamically loaded content -->
+    <div id="view-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;">
+         <!-- Content injected here -->
+          <button id="back-button" style="position: absolute; top: 15px; left: 15px; padding: 5px 10px; display: none;">← Back</button>
+    </div>
+
+    <!-- Load JS later -->
+    <!-- <script src="{{ url_for('shell.static', filename='js/selector.js') }}"></script> -->
+</body>
+</html>

@@ -1,0 +1,5 @@
+- id: placeholder_project
+  title: Placeholder Project Title
+  type: webapp
+  description: Replace with project description.
+  technologies: [Tech 1, Tech 2]

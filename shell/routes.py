@@ -1,0 +1,18 @@
+from flask import Blueprint, render_template, current_app
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+shell_bp = Blueprint('shell', __name__,
+                     template_folder='templates',
+                     static_folder='static',
+                     static_url_path='/shell-static')
+
+
+@shell_bp.route('/')
+def selector():
+    """Serves the initial view selector page."""
+    logger.info("Serving view selector page.")
+
+    return render_template('selector.html')
