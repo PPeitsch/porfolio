@@ -3,7 +3,7 @@ import logging
 import os
 import re
 
-from flask import abort, current_app, g, jsonify, send_from_directory
+from flask import abort, jsonify, send_from_directory
 
 from common.utils import load_cv_data, load_projects_data, load_recruiter_story_data
 
@@ -109,27 +109,26 @@ def _replace_placeholders(text, cv_data, projects_dict):
 
     # TODO: Add logic for project lists like {{ project_list_web }}
     if "{{ project_list_web }}" in text:
-        web_projects = [
-            p for p_id, p in projects_dict.items() if p.get("type") == "webapp"
-        ]
+        # Iterate over values() if you only need 'p'
+        web_projects = [p for p in projects_dict.values() if p.get("type") == "webapp"]
         proj_list_str = (
-            "\n".join([f"    * {p.get('title', p_id)}" for p in web_projects])
+            "\n".join([f"    * {p.get('title', p.get('id'))}" for p in web_projects])
             if web_projects
             else "    (No specific web apps listed)"
         )
         text = text.replace("{{ project_list_web }}", proj_list_str)
 
     if "{{ project_list_automation }}" in text:
-        # Define keywords or check project descriptions/tags if available
         auto_keywords = ["automateiq", "automation", "api", "n8n", "connector"]
+        # Iterate over values() if you only need 'p'
         auto_projects = [
             p
-            for p_id, p in projects_dict.items()
-            if any(k in p_id.lower() for k in auto_keywords)
+            for p in projects_dict.values()
+            if any(k in p.get("id", "").lower() for k in auto_keywords)
             or any(k in p.get("title", "").lower() for k in auto_keywords)
-        ]
+        ]  # Check 'id' on p
         proj_list_str = (
-            "\n".join([f"    * {p.get('title', p_id)}" for p in auto_projects])
+            "\n".join([f"    * {p.get('title', p.get('id'))}" for p in auto_projects])
             if auto_projects
             else "    (No specific automation/API projects listed)"
         )

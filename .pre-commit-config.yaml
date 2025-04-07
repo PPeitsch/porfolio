@@ -1,59 +1,54 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+# unified-portfolio/.pre-commit-config.yaml
 repos:
   # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0 # Use the latest stable version
+    rev: v4.6.0
     hooks:
-      - id: trailing-whitespace      # Trims trailing whitespace
-      - id: end-of-file-fixer        # Ensures files end with a newline
-      - id: check-yaml               # Checks yaml files for parseable syntax
-      - id: check-added-large-files  # Prevents committing large files
-      - id: check-toml               # Checks toml files for parseable syntax
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-toml
 
   # Black - Python code formatter
   - repo: https://github.com/psf/black
-    rev: 24.4.2 # Use the latest stable version compatible with your Python
+    rev: 24.4.2
     hooks:
       - id: black
-        language_version: python3.10 # Specify your python version
+        language_version: python3.10
+        # Black reads pyproject.toml automatically for line-length
 
   # isort - Python import sorter
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2 # Use the latest stable version
+    rev: 5.13.2
     hooks:
       - id: isort
         name: isort (python)
-        args: ["--profile", "black"] # Ensure compatibility with Black
+        # isort reads pyproject.toml automatically for profile=black
 
   # Flake8 - Python linter
   - repo: https://github.com/pycqa/flake8
     rev: 7.1.0 # Use the latest stable version
     hooks:
       - id: flake8
-        # Optionally add args like --config=setup.cfg if needed, but Flake8 usually finds it
-        # args: ["--config=setup.cfg"]
-        # Specify additional dependencies if flake8 plugins are used
-        # additional_dependencies: [flake8-bugbear]
+        # --- Explicitly pass arguments ---
+        args: [
+            "--max-line-length=88",
+            "--extend-ignore=E203,E501,W503", # Ignore rules compatible with Black
+            # Add per-file ignores directly here
+            "--per-file-ignores=shell/__init__.py:F541,view_cli/__init__.py:E402 F401,view_recruiter/__init__.py:E402 F401,view_visual/__init__.py:E402 F401"
+            # Note: Space-separated errors within the per-file ignore string
+          ]
+        # Exclude directories via args might be needed if config isn't read
+        # args: ["--exclude=.git,__pycache__,venv"] # Add more if needed
 
   # MyPy - Static type checker
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.0 # Use the latest stable version
+    rev: v1.11.0
     hooks:
       - id: mypy
-        # Pass arguments if necessary, like config file location
-        # args: ["--config-file", "mypy.ini"] # MyPy usually finds pyproject.toml
-        # Specify additional dependencies needed for mypy to run
-        # (e.g., your project's requirements, specific stubs)
+        # MyPy reads pyproject.toml reliably
         additional_dependencies: [
-            # Add libraries from requirements.txt that mypy needs to check
-            "Flask>=2.3",
-            "PyYAML>=6.0",
-            "python-dotenv>=1.0",
-            # Add needed stubs
+            "Flask>=2.3", "PyYAML>=6.0", "python-dotenv>=1.0",
             "types-PyYAML>=6.0"
-            # Add flask-stubs if you install and use them
           ]
-        # Consider running mypy only on changed files initially for speed
-        # pass_filenames: true
-        # entry: mypy --python-version 3.10 # Ensure version consistency

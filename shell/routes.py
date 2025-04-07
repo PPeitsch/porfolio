@@ -1,6 +1,6 @@
 import logging
 
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, render_template
 
 from common.utils import load_cv_data
 

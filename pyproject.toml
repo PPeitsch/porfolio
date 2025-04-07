@@ -1,16 +1,8 @@
 [tool.mypy]
 # Basic MyPy configuration
-python_version = "3.10"       # Set to your target Python version
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
-# Explicitly ignore missing imports for libraries that don't have stubs easily available yet
-# (Add more as needed if you use other untyped libraries)
-# ignore_missing_imports = true # Alternatively, ignore all missing imports (less strict)
-
-# --- Addressing "Source file found twice" ---
-# Tell MyPy that the project root is the base for packages.
-# This helps it consistently find modules like 'common.utils' instead of just 'utils'.
-# Note: This assumes you run mypy from the project root directory.
 explicit_package_bases = true
 # Define namespace packages if necessary (usually not needed for this structure)
 # namespace_packages = true
@@ -30,14 +22,8 @@ explicit_package_bases = true
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 88 # Ensure consistency
 
 [tool.black]
 line-length = 88
 # target-version = ['py310'] # Optional: Specify target versions if needed
-
-# Flake8 can also be configured here instead of setup.cfg
-# [tool.flake8]
-# max-line-length = 88
-# extend-ignore = E203, W503
-# exclude = .git,__pycache__,venv,.venv,env,ENV,instance,migrations,dist,build

@@ -65,11 +65,12 @@ def load_projects_data():
         if isinstance(loaded_data, list):
             g.projects_data = loaded_data
             # Ensure projects_dict is always created/updated when projects_data is loaded
-            g.projects_dict = (
-                {p.get("id", f"proj_{i}"): p for i, p in enumerate(g.projects_data)}
-                if g.projects_data
-                else {}
-            )
+            if g.projects_data:
+                g.projects_dict = {
+                    p.get("id", f"proj_{i}"): p for i, p in enumerate(g.projects_data)
+                }
+            else:
+                g.projects_dict = {}
         else:
             logger.warning("projects.yaml did not load as a list. Using empty list.")
             g.projects_data = []

@@ -2,7 +2,7 @@ import logging
 import os  # For constructing static path
 import textwrap  # For wrapping long descriptions
 
-from flask import abort, current_app, g, jsonify, send_from_directory
+from flask import abort, g, jsonify, send_from_directory
 
 from common.utils import load_cv_data, load_projects_data  # Import shared utils
 
