@@ -1,12 +1,10 @@
-from flask import jsonify, current_app, g, abort
+from flask import jsonify, current_app, g, abort, send_from_directory
 from . import recruiter_bp
-from common.utils import (
-    load_cv_data,
-    load_projects_data,
-    load_recruiter_story_data,
-)
+from common.utils import load_cv_data, load_projects_data, load_recruiter_story_data
 import logging
 import re
+import os
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +20,8 @@ def _replace_placeholders(text, cv_data, projects_dict):
         key = match.group(1).strip()  # e.g., 'name' or 'skills'
         value = cv_data.get(key, f"{{cv.{key}_not_found}}")
         if isinstance(value, list):
-            return ", ".join(value)  # Simple list join for skills etc.
+            # Simple list join for skills etc. Adjust formatting if needed.
+            return ", ".join(value) if value else "(None listed)"
         return str(value)
 
     text = re.sub(r"{{\s*cv\.(\w+)\s*}}", replace_cv, text)
@@ -40,9 +39,7 @@ def _replace_placeholders(text, cv_data, projects_dict):
     text = re.sub(r"{{\s*desc_([\w-]+)\s*}}", replace_proj_desc, text)
 
     # --- Add more complex placeholder replacements ---
-    # Example: {{ core_backend_skills }} - requires logic
     if "{{ core_backend_skills }}" in text:
-        # Define which skills are core backend (example logic)
         backend_keywords = [
             "python",
             "flask",
@@ -64,8 +61,6 @@ def _replace_placeholders(text, cv_data, projects_dict):
             ", ".join(skills) if skills else "Python, Web Frameworks, Databases",
         )
 
-    # Add similar replacements for frontend, database, tools, project lists etc.
-    # Example for {{ core_frontend_skills }}
     if "{{ core_frontend_skills }}" in text:
         frontend_keywords = [
             "html",
@@ -109,7 +104,33 @@ def _replace_placeholders(text, cv_data, projects_dict):
             ", ".join(skills) if skills else "Git, Docker, Automation Tools",
         )
 
-    # TODO: Add logic for {{ project_list_web }}, {{ project_list_automation }} etc.
+    # TODO: Add logic for project lists like {{ project_list_web }}
+    if "{{ project_list_web }}" in text:
+        web_projects = [
+            p for p_id, p in projects_dict.items() if p.get("type") == "webapp"
+        ]
+        proj_list_str = (
+            "\n".join([f"    * {p.get('title', p_id)}" for p in web_projects])
+            if web_projects
+            else "    (No specific web apps listed)"
+        )
+        text = text.replace("{{ project_list_web }}", proj_list_str)
+
+    if "{{ project_list_automation }}" in text:
+        # Define keywords or check project descriptions/tags if available
+        auto_keywords = ["automateiq", "automation", "api", "n8n", "connector"]
+        auto_projects = [
+            p
+            for p_id, p in projects_dict.items()
+            if any(k in p_id.lower() for k in auto_keywords)
+            or any(k in p.get("title", "").lower() for k in auto_keywords)
+        ]
+        proj_list_str = (
+            "\n".join([f"    * {p.get('title', p_id)}" for p in auto_projects])
+            if auto_projects
+            else "    (No specific automation/API projects listed)"
+        )
+        text = text.replace("{{ project_list_automation }}", proj_list_str)
 
     return text
 
@@ -124,26 +145,25 @@ def _get_dynamic_step_data(step_id, cv_data, projects_data, projects_dict, story
         project = projects_dict.get(project_id)
         if project:
             # Construct text and choices for a project detail view
-            text = f"**{project.get('title', 'Project Detail')}**\n\n"  # Use markdown? JS needs to parse.
-            text += f"Type: {project.get('type', '').capitalize()}\n"
-            text += f"Description: {project.get('description', 'N/A')}\n"
+            # Using Markdown-like syntax for JS to potentially parse
+            text = f"**{project.get('title', 'Project Detail')}**\n\n"
+            text += f"*Type:* {project.get('type', 'N/A').capitalize()}\n\n"
+            text += f"*Description:* {project.get('description', 'N/A')}\n\n"
             if project.get("technologies"):
-                text += f"Technologies: {', '.join(project.get('technologies',[]))}\n"
+                text += f"*Technologies:* {', '.join(project.get('technologies',[]))}\n"
 
             choices = []
+            # Add relevant links as choices with 'url' type
             if project.get("live_url"):
                 choices.append(
                     {
                         "text": f"View Live Demo ({project_id})",
                         "url": project["live_url"],
                     }
-                )  # Add URL type choice
+                )
             if project.get("github_url"):
                 choices.append(
-                    {
-                        "text": f"View Code on GitHub ({project_id})",
-                        "url": project["github_url"],
-                    }
+                    {"text": f"View Code ({project_id})", "url": project["github_url"]}
                 )
             if project.get("pypi_url"):
                 choices.append(
@@ -151,10 +171,7 @@ def _get_dynamic_step_data(step_id, cv_data, projects_data, projects_dict, story
                 )
             if project.get("docs_url"):
                 choices.append(
-                    {
-                        "text": f"View Documentation ({project_id})",
-                        "url": project["docs_url"],
-                    }
+                    {"text": f"View Docs ({project_id})", "url": project["docs_url"]}
                 )
 
             # Add navigation choices
@@ -172,53 +189,93 @@ def _get_dynamic_step_data(step_id, cv_data, projects_data, projects_dict, story
             )
             choices.append({"text": "Back to start.", "next_step": "start"})
 
-            return {"step_id": step_id, "text": text, "choices": choices}
+            # Replace placeholders within the dynamically generated text as well
+            final_text = _replace_placeholders(text, cv_data, projects_dict)
+            return {"step_id": step_id, "text": final_text, "choices": choices}
         else:
             logger.warning(f"Project ID not found for dynamic step: {project_id}")
-            return story_data.get(
+            # Return the 'step_not_found' structure from story data
+            not_found_step = story_data.get(
                 "step_not_found", {"text": "Error: Project not found.", "choices": []}
             )
+            not_found_step["step_id"] = step_id  # Reflect requested step in response
+            return not_found_step
 
     elif step_id.startswith("project_tag_"):
-        tag = step_id.replace("project_tag_", "")
-        # Find projects matching the tag (simple lowercase keyword check)
+        tag = step_id.replace(
+            "project_tag_", ""
+        ).lower()  # Ensure tag is lowercase for comparison
+        # Find projects matching the tag (simple lowercase keyword check in technologies list)
         matching_projects = [
             p
-            for p in projects_data
+            for p_id, p in projects_dict.items()
             if tag in [tech.lower() for tech in p.get("technologies", [])]
         ]
         if matching_projects:
             text = f"Here are projects related to **{tag.capitalize()}**:\n\n"
             choices = []
             for p in matching_projects:
-                text += f"*   **{p.get('title')}**: {p.get('short_description', p.get('description', ''))[:60]}...\n"  # Show short desc
+                # Using project ID in description text for clarity
+                short_desc = (
+                    p.get(
+                        "short_description",
+                        p.get("description", "No description available."),
+                    )[:80]
+                    + "..."
+                )
+                text += f"*   **{p.get('title', p.get('id'))}**: {short_desc}\n"
                 choices.append(
                     {
-                        "text": f"Tell me more about {p.get('title')}.",
+                        "text": f"Details on: {p.get('title', p.get('id'))}.",
                         "next_step": f"project_detail_{p.get('id')}",
                     }
                 )
 
+            # Add navigation choices
             choices.append(
                 {"text": "Explore core skills again.", "next_step": "core_skills"}
             )
             choices.append({"text": "Back to start.", "next_step": "start"})
-            return {"step_id": step_id, "text": text, "choices": choices}
+            # Replace placeholders in dynamically generated text
+            final_text = _replace_placeholders(text, cv_data, projects_dict)
+            return {"step_id": step_id, "text": final_text, "choices": choices}
         else:
             logger.warning(f"No projects found for dynamic tag step: {tag}")
-            # Go back to skills overview or provide other options
-            step_data = story_data.get("core_skills", {}).copy()  # Get base skills step
+            # Go back to skills overview, prepending a message
+            step_data = copy.deepcopy(
+                story_data.get("core_skills", {})
+            )  # Deep copy to avoid modifying cache
+            original_text = step_data.get("text", "")
             step_data["text"] = (
                 f"Sorry, I couldn't find specific projects tagged with '{tag}'.\n\n"
-                + step_data.get("text", "")
-            )  # Prepend message
+                + original_text
+            )
+            step_data["step_id"] = step_id  # Reflect requested step
+            # Replace placeholders in this fallback text too
+            step_data["text"] = _replace_placeholders(
+                step_data["text"], cv_data, projects_dict
+            )
             return step_data
-            # return story_data.get('step_not_found', {'text': f'Error: No projects found for tag "{tag}".', 'choices': []})
 
-    # Add more dynamic step handlers here...
+    # Add more dynamic step handlers here... e.g., specific skill deep dives
 
     logger.warning(f"Unhandled dynamic step ID pattern: {step_id}")
     return None  # Indicate dynamic handler didn't match
+
+
+# --- Route to serve static files for this blueprint ---
+@recruiter_bp.route("/static/<path:filename>")
+def static_files(filename):
+    """Serves static files specific to the Recruiter blueprint."""
+    # Construct path relative to the blueprint's root path
+    static_dir = os.path.join(recruiter_bp.root_path, "static")
+    logger.debug(f"Serving Recruiter static file: {filename} from {static_dir}")
+    # Use try-except for robustness
+    try:
+        return send_from_directory(static_dir, filename)
+    except FileNotFoundError:
+        logger.error(f"Static file not found: {os.path.join(static_dir, filename)}")
+        abort(404)
 
 
 # --- API Endpoint ---
@@ -227,10 +284,17 @@ def get_step_data_api(step_id):
     """Gets the data for a specific step in the recruiter story."""
     logger.info(f"Recruiter API requested step: {step_id}")
 
-    # Load necessary data
+    # Load necessary data using Flask 'g' for caching per request
     story_data = load_recruiter_story_data()
     cv_data = load_cv_data()
     projects_data, projects_dict = load_projects_data()
+
+    # Ensure data loaded correctly
+    if (
+        not story_data or not cv_data or projects_data is None
+    ):  # projects_data can be empty list
+        logger.error("Failed to load necessary data (Story, CV, or Projects).")
+        return jsonify({"error": "Failed to load backend data."}), 500
 
     step_content = None
 
@@ -256,22 +320,23 @@ def get_step_data_api(step_id):
                 "choices": [{"text": "Start Over", "next_step": "start"}],
             },
         )
-        # Ensure the step_id in the response reflects what was requested, even for errors
-        step_content["step_id"] = (
-            step_id  # Or maybe 'step_not_found'? Decide on desired behavior.
-        )
+        step_content["step_id"] = step_id  # Reflect requested step in response
 
-    # Make a deep copy to avoid modifying the cached data
-    import copy
-
+    # Make a deep copy to avoid modifying the cached data in 'g'
     response_data = copy.deepcopy(step_content)
 
-    # Replace placeholders in the text before sending
+    # Replace placeholders in the final text before sending
     if "text" in response_data:
         response_data["text"] = _replace_placeholders(
             response_data["text"], cv_data, projects_dict
         )
 
-    # Format choices if needed (e.g., replace placeholders in choice text) - currently not implemented
+    # Optionally replace placeholders in choice text too (if needed)
+    if "choices" in response_data:
+        for choice in response_data["choices"]:
+            if "text" in choice:
+                choice["text"] = _replace_placeholders(
+                    choice["text"], cv_data, projects_dict
+                )
 
     return jsonify(response_data)

@@ -100,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Define resources specific to the CLI view
             const cssId = 'cli-css';
             const jsId = 'cli-js';
-            // Use the unique static URL path defined in the blueprint
-            const cssPath = '/cli-static/css/terminal.css';
-            const jsPath = '/cli-static/js/terminal.js';
+            // Use the *new* explicit static file route path
+            const cssPath = '/cli/static/css/terminal.css';
+            const jsPath = '/cli/static/js/terminal.js';
             const initializerCallback = 'initializeTerminalInterface'; // Function inside terminal.js
 
             // Load resources and initialize via callback
@@ -140,9 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Define resources
             const cssId = 'recruiter-css';
             const jsId = 'recruiter-js';
-            // Use the unique static URL path for the recruiter blueprint
-            const cssPath = '/recruiter-static/css/cyoa.css';
-            const jsPath = '/recruiter-static/js/cyoa.js';
+            // Use the *new* explicit static file route path
+            const cssPath = '/recruiter/static/css/cyoa.css';
+            const jsPath = '/recruiter/static/js/cyoa.js';
             const initializerCallback = 'initializeRecruiterView'; // Function inside cyoa.js
             const cleanupCallback = 'cleanupRecruiterView'; // Optional cleanup function inside cyoa.js
 
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         backButton.classList.remove('hidden'); // Show back button
         currentView = viewName;
 
-        // Reset flex alignment potentially set by placeholders
+        // Reset common container styles, specific views will add their needs
         viewContainer.classList.remove('items-center', 'justify-center');
 
         // Call the appropriate loading function based on the view name
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear and hide view container
         viewContainer.innerHTML = '';
         viewContainer.classList.add('hidden');
-        viewContainer.classList.remove('active');
+        viewContainer.classList.remove('active'); // Remove active state class
         backButton.classList.add('hidden');
 
         // Show selector
@@ -253,25 +253,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cliOption) {
         cliOption.addEventListener('click', () => showView('Developer'));
     } else {
-        console.error("CLI option element not found");
+        console.error("CLI option element (#select-cli) not found");
     }
 
     if (recruiterOption) {
         recruiterOption.addEventListener('click', () => showView('Recruiter'));
     } else {
-        console.error("Recruiter option element not found");
+        console.error("Recruiter option element (#select-recruiter) not found");
     }
 
     if (visualOption) {
         visualOption.addEventListener('click', () => showView('Visual'));
     } else {
-        console.error("Visual option element not found");
+        console.error("Visual option element (#select-visual) not found");
     }
 
     if (backButton) {
         backButton.addEventListener('click', showSelector);
     } else {
-        console.error("Back button element not found");
+        console.error("Back button element (#back-button) not found");
     }
 
     console.log("Selector view initialized and ready.");
