@@ -1,9 +1,12 @@
-from flask import jsonify, current_app, g, send_from_directory, abort
-from . import cli_bp  # Import the blueprint defined in __init__.py
-from common.utils import load_cv_data, load_projects_data  # Import shared utils
 import logging
-import textwrap  # For wrapping long descriptions
 import os  # For constructing static path
+import textwrap  # For wrapping long descriptions
+
+from flask import abort, current_app, g, jsonify, send_from_directory
+
+from common.utils import load_cv_data, load_projects_data  # Import shared utils
+
+from . import cli_bp  # Import the blueprint defined in __init__.py
 
 logger = logging.getLogger(__name__)
 

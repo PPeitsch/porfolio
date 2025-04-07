@@ -1,6 +1,7 @@
-from flask import Flask
 import logging
 import os
+
+from flask import Flask
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

@@ -1,7 +1,8 @@
-import yaml
-import os
-from flask import current_app, g
 import logging
+import os
+
+import yaml
+from flask import current_app, g
 
 logger = logging.getLogger(__name__)
 

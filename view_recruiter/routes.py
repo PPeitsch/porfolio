@@ -1,10 +1,13 @@
-from flask import jsonify, current_app, g, abort, send_from_directory
-from . import recruiter_bp
-from common.utils import load_cv_data, load_projects_data, load_recruiter_story_data
-import logging
-import re
-import os
 import copy
+import logging
+import os
+import re
+
+from flask import abort, current_app, g, jsonify, send_from_directory
+
+from common.utils import load_cv_data, load_projects_data, load_recruiter_story_data
+
+from . import recruiter_bp
 
 logger = logging.getLogger(__name__)
 
