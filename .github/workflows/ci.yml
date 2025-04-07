@@ -3,18 +3,18 @@ name: Python CI Checks
 # Controls when the workflow will run
 on:
   push:
-    branches: [ "main" ] # Runs on pushes to main branch
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ] # Runs on PRs targeting main branch
-  workflow_dispatch: # Allows manual triggering from GitHub UI
+    branches: [ "main" ]
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  lint-and-test: # Combine linting and testing (or separate jobs)
-    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+  lint-and-test:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"] # Test on multiple Python versions
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       # Step 1: Check out the repository code
@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip' # Cache dependencies
+          cache: 'pip'
 
       # Step 3: Install dependencies (including dev dependencies)
       - name: Install dependencies
@@ -42,9 +42,13 @@ jobs:
       # Use --statistics to show counts, --count to show total errors
       - name: Lint with Flake8
         run: |
-          flake8 . --count --show-source --statistics
-          # Optional: exit-zero treats all errors as warnings (useful initially)
-          # flake8 . --count --exit-zero --show-source --statistics
+          # Pass arguments explicitly to ensure consistency with pre-commit
+          flake8 . --count --show-source --statistics \
+            --max-line-length=88 \
+            --extend-ignore=E203,W503 \
+            --per-file-ignores="shell/__init__.py:F541 view_cli/__init__.py:E402,F401 view_recruiter/__init__.py:E402,F401 view_visual/__init__.py:E402,F401"
+          # Note: Shell continuation '\' used for readability
+          # Ensure correct quoting for the per-file-ignores argument if needed by the shell
 
       # Step 5: Run Tests with Pytest (Placeholder - Add when tests exist)
       # - name: Test with Pytest
