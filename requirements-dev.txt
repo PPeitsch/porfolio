@@ -1,10 +1,11 @@
 # Development and CI tools
 flake8>=6.0,<8.0
-types-PyYAML>=6.0,<7.0 # Add type stubs for PyYAML
+types-PyYAML>=6.0,<7.0
+pre-commit>=3.0,<4.0   # Add pre-commit framework
+black>=23.0,<25.0     # Add Black formatter
+isort>=5.0,<6.0       # Add isort import sorter
+mypy>=1.0,<2.0         # Add MyPy type checker
 
-# Add other tools later like:
+# Add testing tools later when tests are written
 # pytest>=7.0,<9.0
 # pytest-cov>=4.0,<6.0
-# black>=23.0,<25.0
-# isort>=5.0,<6.0
-# mypy>=1.0,<2.0
