@@ -17,7 +17,7 @@ There are many ways to contribute, including:
 1.  **Fork & Clone:** Fork the repository on GitHub and clone your fork locally.
     ```bash
     git clone https://github.com/PPeitsch/porfolio.git
-    cd unified-portfolio
+    cd porfolio
     ```
 2.  **Create Virtual Environment:**
     ```bash
@@ -55,11 +55,11 @@ There are many ways to contribute, including:
     ```
 2.  Open a Pull Request (PR) against the `main` branch of the original repository.
 3.  Fill out the PR template with details about your changes.
-4.  Ensure any CI checks pass.
+4.  Ensure any CI checks pass (Workflows TBD).
 5.  Be prepared to discuss your changes and make adjustments based on feedback.
 
 ## Code of Conduct
 
-By participating in this project, you are expected to uphold our [Code of Conduct](CODE_OF_CONDUCT.md).
+By participating in this project, you are expected to uphold our **[Code of Conduct](CODE_OF_CONDUCT.md)**. <!-- Updated Link -->
 
 Thank you for contributing!
