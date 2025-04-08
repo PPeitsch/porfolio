@@ -1,5 +1,3 @@
-# unified-portfolio/pyproject.toml
-
 [tool.mypy]
 # Basic MyPy configuration
 python_version = "3.10"       # Set to your target Python version
