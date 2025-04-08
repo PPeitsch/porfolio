@@ -1,20 +1,23 @@
+# .github/workflows/ci.yml
+
 name: Python CI Checks
 
 # Controls when the workflow will run
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" ] # Runs on pushes to main branch
   pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches: [ "main" ] # Runs on PRs targeting main branch
+  workflow_dispatch: # Allows manual triggering from GitHub UI
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
+  lint-and-test: # Combine linting, type checking, and testing
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
     strategy:
+      fail-fast: false # Allow other matrix jobs to continue if one fails
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"] # Test on multiple Python versions
 
     steps:
       # Step 1: Check out the repository code
@@ -26,39 +29,49 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          cache: 'pip' # Cache dependencies based on lock files
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
 
-      # Step 3: Install dependencies (including dev dependencies)
+      # Step 3: Install dependencies using pinned files
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          # Install dev dependencies if the file exists
+          # Install directly from the pinned files for reproducibility
+          # Check if files exist first for robustness
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      # Step 4: Lint with Flake8
-      # The --config flag points to the config file (setup.cfg or pyproject.toml)
-      # Flake8 automatically finds setup.cfg/tox.ini/.flake8 in project root
-      # Use --statistics to show counts, --count to show total errors
+      # Step 4: Lint with Flake8 (Explicit Args for Consistency)
       - name: Lint with Flake8
         run: |
-          # Pass arguments explicitly to ensure consistency with pre-commit
           flake8 . --count --show-source --statistics \
             --max-line-length=88 \
-            --extend-ignore=E203,E501,W503 \
+            --extend-ignore=E203,W503,E501 \
+            --exclude=.git,__pycache__,venv,.venv,env,ENV,instance,migrations,dist,build \
+            # ^^^ Added --exclude argument ^^^
             --per-file-ignores="shell/__init__.py:F541 view_cli/__init__.py:E402,F401 view_recruiter/__init__.py:E402,F401 view_visual/__init__.py:E402,F401"
-          # Note: Shell continuation '\' used for readability
-          # Ensure correct quoting for the per-file-ignores argument if needed by the shell
 
-      # Step 5: Run Tests with Pytest (Placeholder - Add when tests exist)
+      # Step 5: Run Type Checking with MyPy
+      - name: Type Check with MyPy
+        run: |
+          # MyPy reads configuration reliably from pyproject.toml
+          mypy .
+
+      # Step 6: Run Tests with Pytest (Placeholder - Add when tests exist)
       # - name: Test with Pytest
       #   run: |
-      #     # pytest tests/ --cov=app --cov-report=xml
+      #     # Add command to run tests, e.g.:
+      #     # pytest tests/ --cov=common --cov=shell --cov=view_cli --cov-report=xml
       #     echo "Test execution placeholder - No tests configured yet."
 
-      # Step 6: Upload Coverage Report (Placeholder - Add when tests run)
+      # Step 7: Upload Coverage Report (Placeholder - Add when tests run and produce coverage.xml)
       # - name: Upload coverage reports to Codecov
       #   uses: codecov/codecov-action@v4.0.1
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }} # Add CODECOV_TOKEN to repo secrets
-      #     slug: PPeitsch/porfolio # Optional: Explicitly specify repository slug
+      #     files: ./coverage.xml # Specify coverage file if not default
+      #     slug: PPeitsch/porfolio # Your repository slug
+      #   env:
+      #       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
