@@ -28,29 +28,32 @@ def selector():
 def get_view_partial(view_name):
     """Serves the HTML partial for a requested view."""
     logger.info(f"Serving partial for view: {view_name}")
-    view_map = {
+    # Define template mapping more cleanly
+    view_template_map = {
         "cli": "cli_view.html",
-        "recruiter": "recruiter_view.html",  # Add recruiter template
-        "visual": "visual_view.html",  # Add visual template (placeholder)
+        "recruiter": "recruiter_view.html",
+        "visual": "visual_view.html",  # Add the visual template name
     }
-    template_name = view_map.get(view_name)
+    template_name = view_template_map.get(view_name)
 
     if template_name:
-        # Render template. Blueprints need correct template_folder setup.
-        # For simplicity here, assume templates are found relative to *their* blueprint.
-        # Flask searches blueprint folders then application folder.
-        # We might need to specify blueprint name if templates clash: 'recruiter/recruiter_view.html'
         try:
-            # This relies on Flask finding the template in the correct blueprint's folder
+            # Flask searches blueprint folders then application folder
+            # If blueprint name is needed: f'{view_name}/{template_name}'
+            # But usually just the name is fine if folders are unique.
             return render_template(template_name)
         except Exception as e:
             logger.error(
                 f"Error rendering template {template_name} for view {view_name}: {e}"
             )
+            # Provide error HTML that fits within the view container
             return (
-                f'<p class="text-red-500 p-4">Error rendering view template: {e}</p>',
+                f'<div class="p-8 text-center"><p class="text-red-500">Error rendering view template: {e}</p></div>',
                 500,
             )
     else:
         logger.warning(f"Partial requested for unknown view: {view_name}")
-        return '<p class="text-red-500 p-4">Error: View not found.</p>', 404
+        return (
+            '<div class="p-8 text-center"><p class="text-red-500">Error: View "{view_name}" not found.</p></div>',
+            404,
+        )

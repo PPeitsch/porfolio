@@ -1,0 +1,121 @@
+/* Styles specific to the Visual Overview view */
+
+#visual-container {
+    /* Base styles if needed beyond Tailwind */
+}
+
+.project-card-visual {
+    background-color: white;
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); /* shadow-md variant */
+    overflow: hidden;
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card-visual:hover {
+    transform: translateY(-5px);
+     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08); /* shadow-lg variant */
+}
+
+.project-card-visual img.project-image {
+    width: 100%;
+    height: 180px; /* Fixed height for image area */
+    object-fit: cover; /* Cover the area, might crop */
+    border-bottom: 1px solid #f3f4f6; /* gray-100 */
+}
+
+.project-card-visual .project-content {
+    padding: 1.25rem; /* p-5 */
+    flex-grow: 1; /* Allow content to grow */
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card-visual .project-title {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 600; /* semibold */
+    color: #1f2937; /* gray-800 */
+    margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.project-card-visual .project-description {
+    font-size: 0.875rem; /* text-sm */
+    color: #4b5563; /* gray-600 */
+    line-height: 1.4;
+    margin-bottom: 1rem; /* mb-4 */
+    flex-grow: 1; /* Push tags/links down */
+}
+
+.project-card-visual .project-tags {
+    margin-bottom: 1.25rem; /* mb-5 */
+    margin-top: auto; /* Push tags/links down */
+}
+.project-card-visual .project-tags .tech-tag-visual {
+    display: inline-block;
+    background-color: #eef2ff; /* indigo-50 */
+    color: #4338ca; /* indigo-700 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 500; /* medium */
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px; /* rounded-full */
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+}
+
+.project-card-visual .project-links {
+    border-top: 1px solid #f3f4f6; /* gray-100 */
+    padding-top: 1rem; /* pt-4 */
+    margin-top: 1rem; /* mt-4 */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem; /* gap-3 */
+}
+
+.project-card-visual .project-link-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem; /* space-x-1.5 */
+    padding: 0.4rem 0.8rem; /* py-1.5 px-3 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600; /* semibold */
+    border-radius: 0.375rem; /* rounded-md */
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+.project-card-visual .project-link-button.primary {
+     background-color: #4f46e5; /* indigo-600 */
+     color: white;
+}
+.project-card-visual .project-link-button.primary:hover {
+     background-color: #4338ca; /* indigo-700 */
+}
+.project-card-visual .project-link-button.secondary {
+     background-color: #e5e7eb; /* gray-200 */
+     color: #374151; /* gray-700 */
+}
+.project-card-visual .project-link-button.secondary:hover {
+     background-color: #d1d5db; /* gray-300 */
+}
+
+
+/* Basic Animation for cards appearing */
+.project-card-visual {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stagger animation delay */
+/* JS will need to add these delays */
+/* .project-card-visual:nth-child(1) { animation-delay: 0.1s; }
+.project-card-visual:nth-child(2) { animation-delay: 0.2s; }
+... etc ... */

@@ -1,6 +1,7 @@
+# .github/workflows/ci.yml
+
 name: Python CI Checks
 
-# Controls when the workflow will run
 on:
   push:
     branches: [ "main" ]
@@ -8,57 +9,63 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      # Step 1: Check out the repository code
+      # Step 1: Check out code
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Python environment for the current matrix version
+      # Step 2: Set up Python
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
 
-      # Step 3: Install dependencies (including dev dependencies)
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          # Install dev dependencies if the file exists
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      # Step 4: Lint with Flake8
-      # The --config flag points to the config file (setup.cfg or pyproject.toml)
-      # Flake8 automatically finds setup.cfg/tox.ini/.flake8 in project root
-      # Use --statistics to show counts, --count to show total errors
+      # Step 4: Lint with Flake8 (Combined per-file-ignores)
       - name: Lint with Flake8
         run: |
-          # Pass arguments explicitly to ensure consistency with pre-commit
           flake8 . --count --show-source --statistics \
             --max-line-length=88 \
-            --extend-ignore=E203,E501,W503 \
-            --per-file-ignores="shell/__init__.py:F541 view_cli/__init__.py:E402,F401 view_recruiter/__init__.py:E402,F401 view_visual/__init__.py:E402,F401"
-          # Note: Shell continuation '\' used for readability
-          # Ensure correct quoting for the per-file-ignores argument if needed by the shell
+            --extend-ignore=E203,W503,E501 \
+            --exclude=.git,__pycache__,venv,.venv,env,ENV,instance,migrations,dist,build \
+            --per-file-ignores="shell/__init__.py:F541,view_cli/__init__.py:E402 F401,view_recruiter/__init__.py:E402 F401,view_visual/__init__.py:E402 F401"
+          # Note: All per-file-ignores are combined into a single parameter
 
-      # Step 5: Run Tests with Pytest (Placeholder - Add when tests exist)
+      # Step 5: Run Type Checking with MyPy
+      - name: Type Check with MyPy
+        run: |
+          # MyPy reads configuration reliably from pyproject.toml
+          mypy .
+
+      # Step 6: Run Tests with Pytest (Placeholder - Add when tests exist)
       # - name: Test with Pytest
       #   run: |
-      #     # pytest tests/ --cov=app --cov-report=xml
       #     echo "Test execution placeholder - No tests configured yet."
 
-      # Step 6: Upload Coverage Report (Placeholder - Add when tests run)
+      # Step 7: Upload Coverage Report (Placeholder - Add when tests run and produce coverage.xml)
       # - name: Upload coverage reports to Codecov
       #   uses: codecov/codecov-action@v4.0.1
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }} # Add CODECOV_TOKEN to repo secrets
-      #     slug: PPeitsch/porfolio # Optional: Explicitly specify repository slug
+      #     files: ./coverage.xml # Specify coverage file if not default
+      #     slug: PPeitsch/porfolio # Your repository slug
+      #   env:
+      #       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
