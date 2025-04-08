@@ -152,7 +152,9 @@ def _get_dynamic_step_data(step_id, cv_data, projects_data, projects_dict, story
             text += f"*Type:* {project.get('type', 'N/A').capitalize()}\n\n"
             text += f"*Description:* {project.get('description', 'N/A')}\n\n"
             if project.get("technologies"):
-                text += f"*Technologies:* {', '.join(project.get('technologies',[]))}\n"
+                text += (
+                    f"*Technologies:* {', '.join(project.get('technologies', []))}\n"
+                )
 
             choices = []
             # Add relevant links as choices with 'url' type
