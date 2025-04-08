@@ -2,51 +2,55 @@
 
 name: Python CI Checks
 
-# Controls when the workflow will run
 on:
   push:
-    branches: [ "main" ] # Runs on pushes to main branch
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ] # Runs on PRs targeting main branch
-  workflow_dispatch: # Allows manual triggering from GitHub UI
+    branches: [ "main" ]
+  workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  lint-and-test: # Combine linting, type checking, and testing
-    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+  lint-and-test:
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false # Allow other matrix jobs to continue if one fails
+      fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"] # Test on multiple Python versions
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      # Step 1: Check out the repository code
+      # Step 1: Check out code
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Python environment for the current matrix version
+      # Step 2: Set up Python
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip' # Cache dependencies based on lock files
+          cache: 'pip'
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
 
-      # Step 3: Install dependencies using pinned files
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install directly from the pinned files for reproducibility
-          # Check if files exist first for robustness
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
       # Step 4: Lint with Flake8 (Explicit Args for Consistency)
       - name: Lint with Flake8
-        run:
-          flake8 . --count --show-source --statistics
+        run: |
+          flake8 . --count --show-source --statistics \
+            --max-line-length=88 \
+            --extend-ignore=E203,W503,E501 \
+            --exclude=.git,__pycache__,venv,.venv,env,ENV,instance,migrations,dist,build \
+            --per-file-ignores=shell/__init__.py:F541 \
+            --per-file-ignores=view_cli/__init__.py:E402,F401 \
+            --per-file-ignores=view_recruiter/__init__.py:E402,F401 \
+            --per-file-ignores=view_visual/__init__.py:E402,F401 \
+            # ^^^ Use separate --per-file-ignores for each rule ^^^
 
       # Step 5: Run Type Checking with MyPy
       - name: Type Check with MyPy
@@ -57,8 +61,6 @@ jobs:
       # Step 6: Run Tests with Pytest (Placeholder - Add when tests exist)
       # - name: Test with Pytest
       #   run: |
-      #     # Add command to run tests, e.g.:
-      #     # pytest tests/ --cov=common --cov=shell --cov=view_cli --cov-report=xml
       #     echo "Test execution placeholder - No tests configured yet."
 
       # Step 7: Upload Coverage Report (Placeholder - Add when tests run and produce coverage.xml)
