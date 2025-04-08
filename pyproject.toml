@@ -61,6 +61,11 @@ project_schema = [
     "github_url",        # URL to GitHub repository
 ]
 
+# Default values for optional fields
+[tool.portfolio.default_values]
+live_url = ""
+image = "placeholder.svg"
+
 # Project types and their display attributes
 project_types = [
     "webapp",            # Web applications

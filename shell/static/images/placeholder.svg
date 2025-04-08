@@ -1,0 +1,29 @@
+<svg viewBox="0 0 400 225" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo con borde redondeado -->
+  <rect x="10" y="10" width="380" height="205" rx="15" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/>
+
+  <!-- Ícono de código/documento -->
+  <g transform="translate(170, 80)">
+    <!-- Documento base -->
+    <rect x="-30" y="-35" width="60" height="70" rx="3" fill="#9ca3af"/>
+
+    <!-- Esquina doblada -->
+    <path d="M30,-35 L30,-20 L15,-35 Z" fill="#d1d5db"/>
+
+    <!-- Líneas de código -->
+    <rect x="-20" y="-25" width="30" height="4" rx="1" fill="#f3f4f6"/>
+    <rect x="-20" y="-15" width="40" height="4" rx="1" fill="#f3f4f6"/>
+    <rect x="-20" y="-5" width="25" height="4" rx="1" fill="#f3f4f6"/>
+    <rect x="-20" y="5" width="35" height="4" rx="1" fill="#f3f4f6"/>
+    <rect x="-20" y="15" width="20" height="4" rx="1" fill="#f3f4f6"/>
+  </g>
+
+  <!-- Texto -->
+  <text x="200" y="160" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#4b5563">Imagen del proyecto no disponible</text>
+
+  <!-- Patrones decorativos en las esquinas -->
+  <circle cx="30" cy="30" r="8" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <circle cx="370" cy="30" r="8" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <circle cx="30" cy="195" r="8" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <circle cx="370" cy="195" r="8" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+</svg>
