@@ -45,13 +45,8 @@ jobs:
 
       # Step 4: Lint with Flake8 (Explicit Args for Consistency)
       - name: Lint with Flake8
-        run: |
-          flake8 . --count --show-source --statistics \
-            --max-line-length=88 \
-            --extend-ignore=E203,W503,E501 \
-            --exclude=.git,__pycache__,venv,.venv,env,ENV,instance,migrations,dist,build \
-            # ^^^ Added --exclude argument ^^^
-            --per-file-ignores="shell/__init__.py:F541 view_cli/__init__.py:E402,F401 view_recruiter/__init__.py:E402,F401 view_visual/__init__.py:E402,F401"
+        run:
+          flake8 . --count --show-source --statistics
 
       # Step 5: Run Type Checking with MyPy
       - name: Type Check with MyPy

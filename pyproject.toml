@@ -1,33 +1,46 @@
 [tool.mypy]
 # Basic MyPy configuration
-python_version = "3.10"       # Set to your target Python version
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 explicit_package_bases = true
-# Define namespace packages if necessary (usually not needed for this structure)
-# namespace_packages = true
-
-# --- Optional: Stricter settings (enable gradually) ---
-# disallow_untyped_defs = true
-# disallow_incomplete_defs = true
-# check_untyped_defs = true
-# no_implicit_optional = true
-# warn_redundant_casts = true
-# warn_unused_ignores = true
-
-
-# [[tool.mypy.overrides]]
-# module = "flask.*"
-# ignore_missing_imports = true # If flask-stubs causes issues
 
 [tool.isort]
 profile = "black"
-line_length = 88 # Ensure consistency
+line_length = 88
+skip_glob = ["*/venv/*", "*/.venv/*", "*/env/*", "*/ENV/*"]
 
 [tool.black]
 line-length = 88
-# target-version = ['py310'] # Optional: Specify target versions if needed
+exclude = '''
+/(
+    \.git | \.hg | \.mypy_cache | \.tox | \.venv | venv | env | ENV
+  | _build | buck-out | build | dist
+  # Add other directories if needed, e.g.:
+  # | migrations
+)/
+'''
 
-# NOTE: Flake8 configuration is now handled via arguments passed in
-# .pre-commit-config.yaml and .github/workflows/ci.yml
-# to ensure consistency, as Flake8's pyproject.toml support can vary.
+# --- ADD BACK Flake8 Configuration ---
+[tool.flake8]
+# Increase default line length (compatible with Black)
+max-line-length = 88
+# Extend default ignore list
+# E203: whitespace before ':' (handled by Black)
+# W503: line break before binary operator (PEP 8 changed preference, Black handles)
+# E501: line too long (we handle manually or accept if Black formats it) - Add if you want to ignore globally
+extend-ignore = ["E203", "W503", "E501"] # Add E501 if you decided to ignore it everywhere
+# Exclude directories
+exclude = [
+    ".git", "__pycache__", "venv", ".venv", "env", "ENV",
+    "instance", "migrations", "dist", "build",
+]
+# Per-file ignores: Ignore E402 (import not at top) and F401 (unused import)
+# only in blueprint __init__.py files where it's standard practice.
+# Also ignore F541 (f-string missing placeholder) specifically in shell/__init__.py
+per-file-ignores = [
+    "shell/__init__.py:F541",
+    "view_cli/__init__.py:E402,F401",
+    "view_recruiter/__init__.py:E402,F401",
+    "view_visual/__init__.py:E402,F401", # Prepare for visual view
+]

@@ -30,14 +30,9 @@ repos:
     rev: 7.1.0
     hooks:
       - id: flake8
-        # --- Explicitly pass arguments ---
-        args: [
-            "--max-line-length=88",
-            "--extend-ignore=E203,W503,E501",
-            # Add --exclude argument here
-            "--exclude=.git,__pycache__,venv,.venv,env,ENV,instance,migrations,dist,build",
-            "--per-file-ignores=shell/__init__.py:F541 view_cli/__init__.py:E402,F401 view_recruiter/__init__.py:E402,F401 view_visual/__init__.py:E402,F401"
-          ]
+        # --- REMOVE the explicit args ---
+        # args: [ ... ]
+        # Flake8 should read pyproject.toml automatically
 
   # MyPy - Static type checker
   - repo: https://github.com/pre-commit/mirrors-mypy
