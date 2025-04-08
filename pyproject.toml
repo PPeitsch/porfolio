@@ -21,15 +21,16 @@ exclude = '''
 )/
 '''
 
-# --- ADD BACK Flake8 Configuration ---
+# --- Flake8 Configuration ---
 [tool.flake8]
 # Increase default line length (compatible with Black)
 max-line-length = 88
 # Extend default ignore list
 # E203: whitespace before ':' (handled by Black)
 # W503: line break before binary operator (PEP 8 changed preference, Black handles)
-# E501: line too long (we handle manually or accept if Black formats it) - Add if you want to ignore globally
-extend-ignore = ["E203", "W503", "E501"] # Add E501 if you decided to ignore it everywhere
+# E501: line too long (we handle manually or accept if Black formats it)
+# E231: missing whitespace after ',' (consistent across Python versions)
+extend-ignore = ["E203", "W503", "E501", "E231"]
 # Exclude directories
 exclude = [
     ".git", "__pycache__", "venv", ".venv", "env", "ENV",
@@ -42,5 +43,89 @@ per-file-ignores = [
     "shell/__init__.py:F541",
     "view_cli/__init__.py:E402,F401",
     "view_recruiter/__init__.py:E402,F401",
-    "view_visual/__init__.py:E402,F401", # Prepare for visual view
+    "view_visual/__init__.py:E402,F401",
 ]
+
+# --- Project Schema Definition ---
+[tool.portfolio]
+# Project schema definition to ensure consistency across the application
+project_schema = [
+    "id",                # Unique identifier for the project
+    "title",             # Display name of the project
+    "image",             # Filename only, e.g., minidoro.png
+    "short_description", # Brief overview for cards
+    "description",       # Full project description
+    "type",              # webapp, library, repo, etc.
+    "technologies",      # List of technologies used
+    "live_url",          # URL to live deployment (if applicable)
+    "github_url",        # URL to GitHub repository
+]
+
+# Project types and their display attributes
+project_types = [
+    "webapp",            # Web applications
+    "library",           # Software libraries/packages
+    "repo",              # General repositories
+    "tool",              # Command-line or utility tools
+    "api",               # API services
+    "mobile",            # Mobile applications
+]
+
+# Example projects (for schema reference)
+[[tool.portfolio.projects]]
+id = "portfolio"
+title = "Unified Portfolio"
+image = "portfolio.png"
+short_description = "Multi-persona portfolio website with CLI, recruiter, and visual views"
+description = """
+A modern, multi-view portfolio website built with Flask, showcasing projects and skills tailored to different audiences (Developers, Recruiters, General Visitors).
+Features include: interactive CLI interface, 'Choose Your Own Adventure' recruiter path, and a clean visual overview of projects.
+"""
+type = "webapp"
+technologies = ["Python", "Flask", "JavaScript", "Tailwind CSS", "YAML", "Jinja2"]
+github_url = "https://github.com/PPeitsch/porfolio"
+live_url = "https://ppeitsch.com.ar"
+
+[[tool.portfolio.projects]]
+id = "cli-view"
+title = "Terminal Portfolio Experience"
+image = "cli-view.png"
+short_description = "Interactive command-line interface for developers"
+description = """
+Developer-focused view that simulates a command-line interface within the browser.
+Features include custom commands to explore projects, experience, and skills in a familiar terminal environment.
+"""
+type = "webapp"
+technologies = ["Python", "Flask", "JavaScript", "xterm.js", "YAML"]
+github_url = "https://github.com/PPeitsch/porfolio"
+live_url = "https://ppeitsch.com.ar/cli"
+
+[[tool.portfolio.projects]]
+id = "recruiter-view"
+title = "Recruiter Story Path"
+image = "recruiter-view.png"
+short_description = "Interactive 'Choose Your Own Adventure' for recruiters"
+description = """
+Guided story experience designed specifically for recruiters and hiring managers.
+Features a 'Choose Your Own Adventure' style navigation that highlights relevant skills,
+projects, and experience based on the visitor's interests and needs.
+"""
+type = "webapp"
+technologies = ["Python", "Flask", "JavaScript", "Tailwind CSS", "YAML", "Jinja2"]
+github_url = "https://github.com/PPeitsch/porfolio"
+live_url = "https://ppeitsch.com.ar/recruiter"
+
+[[tool.portfolio.projects]]
+id = "visual-view"
+title = "Visual Project Gallery"
+image = "visual-view.png"
+short_description = "Clean, visual presentation of key projects and skills"
+description = """
+Minimalist visual overview of projects, skills, and experience.
+Features responsive cards, filterable project gallery, and a clean design
+that emphasizes visuals over text for a quick impression of capabilities.
+"""
+type = "webapp"
+technologies = ["Python", "Flask", "JavaScript", "Tailwind CSS", "YAML", "Jinja2"]
+github_url = "https://github.com/PPeitsch/porfolio"
+live_url = "https://ppeitsch.com.ar/visual"
