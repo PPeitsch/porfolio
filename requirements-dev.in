@@ -1,0 +1,13 @@
+-r requirements.in
+
+# Development and CI tools
+flake8>=7.0,<8.0 # Match pre-commit hook version if possible
+types-PyYAML>=6.0,<7.0
+pre-commit>=3.0,<4.0
+black>=24.0,<25.0 # Match pre-commit hook version if possible
+isort>=5.0,<6.0 # Match pre-commit hook version if possible
+mypy>=1.8,<2.0 # Match pre-commit hook version if possible
+
+# Testing tools (add when needed)
+# pytest>=7.0,<9.0
+# pytest-cov>=4.0,<6.0
