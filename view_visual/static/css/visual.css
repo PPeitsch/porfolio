@@ -19,11 +19,32 @@
      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08); /* shadow-lg variant */
 }
 
-.project-card-visual img.project-image {
+/* Estilos para el contenedor de imagen */
+.project-card-visual .image-container {
     width: 100%;
-    height: 180px; /* Fixed height for image area */
-    object-fit: cover; /* Cover the area, might crop */
-    border-bottom: 1px solid #f3f4f6; /* gray-100 */
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 0; /* Eliminamos cualquier padding */
+    overflow: hidden;
+}
+
+/* Regla general para todas las imágenes */
+.project-card-visual img.project-image {
+    width: 100%; /* Ocupar todo el ancho */
+    height: 100%; /* Ocupar toda la altura */
+    object-fit: cover; /* Para imágenes normales */
+}
+
+/* Regla específica para el SVG placeholder */
+.project-card-visual img.project-image[src$=".svg"] {
+    width: 100%; /* Ancho completo */
+    height: 100%; /* Altura completa */
+    padding: 0; /* Sin padding */
+    object-fit: fill; /* Llenar el espacio */
 }
 
 .project-card-visual .project-content {
