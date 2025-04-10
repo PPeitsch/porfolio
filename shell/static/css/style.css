@@ -1,33 +1,19 @@
-/* Add any global or shell-specific overrides here */
-/* For example, base font if not relying solely on Tailwind defaults */
 body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    /* Base background for the body behind the selector/views */
     background-color: #f4f7f6;
 }
 
 /* --- Transitions for View Switching --- */
-
 #selector-container,
 #view-container {
     transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out, visibility 0.4s linear;
-    /* Start hidden if needed, JS will toggle */
-    /* opacity: 0; */
-    /* visibility: hidden; */
 }
 
-/* State for hiding the selector */
 #selector-container.hidden-view {
     opacity: 0;
-    transform: translateY(20px); /* Optional: slight move down */
+    transform: translateY(20px);
     visibility: hidden;
-    /* Use display: none; only *after* transition if absolutely needed, but visibility is often better */
-    /* transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out, visibility 0s linear 0.4s; */
-    /* display: none; */
-
 }
-
-/* State for showing the selector */
 #selector-container.visible-view {
      opacity: 1;
      transform: translateY(0);
@@ -35,52 +21,93 @@ body {
      display: block; /* Or flex/grid depending on original display */
 }
 
-
-/* State for hiding the view container */
 #view-container.hidden-view {
     opacity: 0;
-    transform: scale(0.98); /* Optional: slight shrink */
+    transform: scale(0.98);
     visibility: hidden;
-    /* display: none; */ /* Avoid display:none if possible during transition */
 }
-
-/* State for showing the view container (was 'active' previously, rename for clarity) */
 #view-container.visible-view {
     opacity: 1;
     transform: scale(1);
     visibility: visible;
-    display: block; /* Or flex/grid depending on content needs */
-    /* Ensure it still covers the screen */
+    /* display: block; NO - Use flex for content alignment */
+    display: flex; /* Use flexbox to manage child dimensions */
+    flex-direction: column; /* Stack content vertically */
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background-color: #fff; /* Default bg, view-specific CSS might override */
+    background-color: #fff; /* Default background */
     z-index: 10;
-    overflow-y: auto;
+    /* overflow-y: auto; Move overflow handling to inner content wrappers */
+    overflow: hidden; /* Prevent container itself from scrolling */
 }
 
-/* Style for the back button to be above the view */
+/* --- View Specific Container Styles --- */
+/* Add dark background ONLY when CLI is active */
+#view-container.view-active-cli {
+    background-color: #1e1e2e; /* Match terminal background */
+}
+/* Add specific background for recruiter if needed */
+#view-container.view-active-recruiter {
+     background-color: #f8f9fa; /* Slightly off-white example */
+}
+/* Add specific background for visual if needed */
+#view-container.view-active-visual {
+     /* Keep default white or set another bg */
+     background-color: #fcfdff; /* Example slightly blueish white */
+}
+
+/* --- Inner Content Wrapper --- */
+/* Apply this class to the top-level div INSIDE each view partial */
+/* This pushes content down and allows internal scrolling */
+.view-content-wrapper {
+    padding-top: 4rem; /* Space for the back button (adjust as needed) */
+    flex-grow: 1; /* Take remaining vertical space */
+    overflow-y: auto; /* Allow THIS element to scroll */
+    width: 100%;
+}
+
+
+/* --- Back Button Styling --- */
 #back-button {
-    position: fixed; /* Use fixed to stay relative to viewport */
-    top: 1rem; /* 16px */
-    left: 1rem; /* 16px */
-    z-index: 20; /* Ensure it's above view-container */
-     /* Add transitions for button appearance */
+    /* Positioning */
+    position: fixed;
+    top: 0.75rem; /* 12px */
+    left: 0.75rem; /* 12px */
+    z-index: 20;
+
+    /* Appearance using Tailwind-like approach (apply classes in HTML) */
+    /* Default classes applied in HTML: */
+    /* bg-white text-gray-600 hover:bg-gray-100 shadow */
+    /* border border-gray-300 rounded-full */
+    /* w-9 h-9 flex items-center justify-center text-sm */
+
+    /* Transitions */
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease-in-out 0.2s, visibility 0s linear 0.5s; /* Delay appearance slightly */
+    transition: opacity 0.3s ease-in-out 0.2s, visibility 0s linear 0.5s, transform 0.2s ease-out;
+    transform: scale(0.9); /* Start slightly small */
 }
 
 #back-button.visible-view {
     opacity: 1;
     visibility: visible;
-    transition: opacity 0.3s ease-in-out, visibility 0s linear;
+    transition: opacity 0.3s ease-in-out, visibility 0s linear, transform 0.2s ease-out;
+    transform: scale(1.0); /* Scale to normal size */
+}
+#back-button:hover {
+    transform: scale(1.05); /* Slight grow on hover */
+}
+#back-button:active {
+    transform: scale(0.95); /* Slight shrink on click */
 }
 
-
-/* Optional: Style individual selector cards during transition */
-#selector-container.hidden-view .selector-card {
-    /* Example: fade out cards slightly faster? */
-    /* transition-delay: 0s; */
-    /* opacity: 0; */
+/* Optional: Adjust button style based on active view background */
+#view-container.view-active-cli #back-button {
+     background-color: #313244; /* Darker bg for CLI */
+     color: #cdd6f4; /* Lighter text */
+     border-color: #45475a;
+}
+#view-container.view-active-cli #back-button:hover {
+    background-color: #45475a;
 }
