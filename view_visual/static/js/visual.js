@@ -27,6 +27,10 @@ function initializeVisualView() {
         // Stagger the animation delay
         card.style.animationDelay = `${index * 0.08}s`;
 
+        // --- Image Container ---
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'image-container';
+
         // --- Image ---
         // Use the image_url provided by the API
         const imageSrc = project.image_url || '/shell-static/images/placeholder.svg'; // Fallback
@@ -35,7 +39,14 @@ function initializeVisualView() {
         img.alt = `${project.title || 'Project'} Screenshot`;
         img.className = 'project-image'; // Class from visual.css
         img.loading = 'lazy'; // Improve performance
-        card.appendChild(img);
+
+        // Detectar si es un SVG para aplicar clases específicas
+        if (imageSrc.toLowerCase().endsWith('.svg')) {
+            img.classList.add('svg-image');
+        }
+
+        imageContainer.appendChild(img);
+        card.appendChild(imageContainer);
 
         // --- Content Area ---
         const contentDiv = document.createElement('div');
