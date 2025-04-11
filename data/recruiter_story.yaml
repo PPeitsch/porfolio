@@ -92,18 +92,112 @@ passion_statement:
     - { text: "Show me projects again.", next_step: project_type_overview }
     - { text: "Back to start.", next_step: start }
 
-# --- Example Dynamic Step Handlers (These IDs won't exist directly) ---
-# The API will need logic to handle 'project_detail_*' or 'project_tag_*'
-# project_detail_financial-tracking: (Handled by API logic)
-# project_tag_flask: (Handled by API logic)
+# --- Add new steps branching from core_skills ---
+project_tag_flask: # Dynamic handler example (already in routes.py)
+  # This step ID triggers logic in routes.py to find Flask projects
+  # The text/choices below might be overridden by the dynamic handler if projects are found
+  text: Searching for Flask projects...
+  choices:
+    - { text: "Try again?", next_step: core_skills }
+
+project_tag_api: # Dynamic handler example (already in routes.py)
+  text: Searching for API-related projects...
+  choices:
+    - { text: "Try again?", next_step: core_skills }
+
+testing_approach:
+  text: |
+    I value testing to ensure reliability. My approach includes:
+
+    *   **Unit Tests:** Using `pytest` to test individual functions and components in isolation. Aiming for good coverage of core logic.
+    *   **Integration Tests:** Verifying interactions between different parts of an application (e.g., API endpoint calling a service).
+    *   **End-to-End Tests:** (Less frequent, more for critical user flows) Simulating user interaction using tools like Selenium or Playwright (experience varies by project).
+    *   **CI Integration:** Running tests automatically via GitHub Actions on pushes and PRs (Workflow TBD/exists).
+
+    I believe automated testing is key for catching regressions and maintaining code quality, especially in collaborative environments.
+  choices:
+    - { text: "Which projects have notable tests?", next_step: project_tag_pytest } # Dynamic? Or list manually?
+    - { text: "Tell me about CI/CD.", next_step: ci_cd_experience } # Define this
+    - { text: "Back to skills.", next_step: core_skills }
+    - { text: "Back to start.", next_step: start }
+
+# --- Add new steps branching from project overviews ---
+non_web_overview:
+  text: |
+    Beyond standard web apps, I've worked on:
+
+    *   **Libraries/API Clients:** Like the {{ desc_bcra-connector }}.
+    *   **Automation:** Using Python scripts and platforms like n8n (featured in AutomateIQ).
+    *   **Data Processing:** Exploratory work and precursor analysis (see economic analysis repo).
+
+    Which of these areas is most relevant?
+  choices:
+    - { text: "Libraries (BCRA Connector).", next_step: project_detail_bcra-connector }
+    - { text: "Automation (AutomateIQ).", next_step: project_detail_automateiq }
+    - { text: "Data Analysis Repo.", next_step: project_detail_economic-analysis } # Need dynamic step handler for 'repo' type
+    - { text: "Back to web apps.", next_step: web_apps_overview }
+    - { text: "Back to start.", next_step: start }
+
+# --- New step from Library Overview ---
+project_docs_bcra-connector: # Dynamic handler example (already in routes.py)
+  text: Checking documentation status for BCRA Connector...
+  choices:
+    - { text: "Back", next_step: library_overview }
+
+
+# --- New step from Passion Statement ---
+current_learning:
+  text: |
+    I'm always looking to expand my skillset. Currently, I'm focusing on:
+
+    *   Deepening my understanding of asynchronous programming in Python (AsyncIO, FastAPI).
+    *   Exploring modern frontend frameworks more (e.g., React, Vue) to better collaborate on full-stack projects.
+    *   Improving my knowledge of cloud deployment and infrastructure (e.g., Docker orchestration, serverless).
+
+    I enjoy staying updated with evolving best practices.
+  choices:
+    - { text: "How does async apply to your projects?", next_step: async_application } # Define this
+    - { text: "Back to passion statement.", next_step: passion_statement }
+    - { text: "Back to start.", next_step: start }
+
+# --- Add more steps as needed ---
+# Example:
+library_overview:
+  text: |
+    I've developed reusable Python libraries, focusing on clear APIs and good documentation. The main public example is:
+
+    {{ project_list_library }}
+
+    This involved understanding external APIs, handling data fetching/parsing, and packaging for PyPI.
+  choices:
+    - { text: "More details on the BCRA Connector.", next_step: project_detail_bcra-connector }
+    - { text: "Did you document it?", next_step: project_docs_bcra-connector }
+    - { text: "What other project types?", next_step: project_type_overview }
+    - { text: "Back to start.", next_step: start }
+
+data_analysis_overview:
+  text: |
+    My background includes exploratory data analysis, often as preliminary work for larger projects. Key activities involved:
+
+    *   Using Pandas for data manipulation and cleaning.
+    *   Basic statistical analysis and generating insights.
+    *   Creating visualizations (Matplotlib, Seaborn) - examples in the repo below.
+
+    Main Example:
+    *   **Economic Analysis Repo:** {{ desc_economic-analysis }}
+  choices:
+    - { text: "Explore the Economic Analysis Repo details.", next_step: project_detail_economic-analysis }
+    - { text: "What tools did you use besides Pandas?", next_step: data_tools_detail } # Define
+    - { text: "See other project types.", next_step: project_type_overview }
+    - { text: "Back to start.", next_step: start }
+
 
 # --- Default/Error Step ---
 step_not_found:
   text: |
-    Apologies, I seem to have lost my place in the story or that path isn't fully built yet.
-    Let's get back on track.
+    Apologies, I seem to have lost my place or that specific path isn't fully detailed yet.
+    How about we try one of these?
   choices:
-    - text: "Go back to the start."
-      next_step: start
-    - text: "Try exploring web projects."
-      next_step: web_apps_overview
+    - { text: "Go back to the start.", next_step: start }
+    - { text: "Explore web projects.", next_step: web_apps_overview }
+    - { text: "See core skills.", next_step: core_skills }
