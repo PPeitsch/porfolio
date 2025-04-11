@@ -1,11 +1,14 @@
-// unified-portfolio/view_visual/static/js/visual.js
-// Step 5.3: Refine card creation, add overlay
-
 function initializeVisualView() {
     console.log("Attempting to initialize Visual Overview View...");
+
     const gridContainer = document.getElementById('project-grid');
-    if (!gridContainer) { /* ... error handling ... */ return; }
-    let projectsData = null;
+
+    if (!gridContainer) {
+        console.error("Visual view init failed: #project-grid container not found!");
+        return;
+    }
+
+    let projectsData = null; // Store fetched data if needed later
 
     /**
      * Creates an HTML project card element.
@@ -22,7 +25,7 @@ function initializeVisualView() {
         const imageContainer = document.createElement('div');
         imageContainer.className = 'image-container'; // Class from visual.css
 
-        const imageSrc = project.image_url || '/shell-static/images/placeholder.svg';
+        const imageSrc = project.image_url || '/shell-static/images/placeholder.svg'; // Fallback defined in Step 5.1.1 correction
         const img = document.createElement('img');
         img.src = imageSrc;
         img.alt = `${project.title || 'Project'} Screenshot`;
@@ -37,7 +40,7 @@ function initializeVisualView() {
         // --- Add Image Overlay ---
         const overlay = document.createElement('div');
         overlay.className = 'image-overlay'; // Class from visual.css
-        // Add content to overlay (e.g., view link if available)
+        // Add content to overlay
         if (project.live_url && project.type === 'webapp') {
              const overlayText = document.createElement('div');
              overlayText.className = 'overlay-text';
@@ -51,8 +54,7 @@ function initializeVisualView() {
              overlayLink.className = 'overlay-link';
              overlayLink.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> Go';
              overlay.appendChild(overlayLink);
-        } else if (project.github_url) {
-             // Show GitHub link if no live link
+        } else if (project.github_url) { // Show GitHub if no live link
              const overlayText = document.createElement('div');
              overlayText.className = 'overlay-text';
              overlayText.textContent = 'View Source Code';
@@ -65,56 +67,155 @@ function initializeVisualView() {
              overlayLink.className = 'overlay-link';
              overlayLink.innerHTML = '<i class="fab fa-github fa-xs"></i> GitHub';
              overlay.appendChild(overlayLink);
-        } else {
-             // Fallback text if no primary link
+        } else { // Fallback text if no primary link
               const overlayText = document.createElement('div');
              overlayText.className = 'overlay-text';
-             overlayText.textContent = project.title || 'Project'; // Just show title maybe
+             overlayText.textContent = project.title || 'Project'; // Just show title
              overlay.appendChild(overlayText);
         }
-        imageContainer.appendChild(overlay); // Add overlay to image container
+        imageContainer.appendChild(overlay);
         // --- End Image Overlay ---
 
-        card.appendChild(imageContainer); // Add image container (with image and overlay) to card
+        card.appendChild(imageContainer); // Add image container to card
 
-        // --- Content Area (Title, Desc, Tags, Links - Keep as before) ---
+        // --- Content Area ---
         const contentDiv = document.createElement('div');
         contentDiv.className = 'project-content';
+
+        // Title
         const title = document.createElement('h3');
         title.className = 'project-title';
         title.textContent = project.title || 'Untitled Project';
         contentDiv.appendChild(title);
+
+        // Description
         const description = document.createElement('p');
         description.className = 'project-description';
         description.textContent = project.short_desc || 'No description available.';
         contentDiv.appendChild(description);
-        if (project.technologies && project.technologies.length > 0) { /* ... create tags ... */ const tagsContainer = document.createElement('div'); tagsContainer.className = 'project-tags'; project.technologies.forEach(tag => { const tagSpan = document.createElement('span'); tagSpan.className = 'tech-tag-visual'; tagSpan.textContent = tag; tagsContainer.appendChild(tagSpan); }); contentDiv.appendChild(tagsContainer); }
-        const linksContainer = document.createElement('div');
-        linksContainer.className = 'project-links';
-        let hasLinks = false;
-        if (project.live_url && project.type === 'webapp') { /* ... create live link ... */ const link = document.createElement('a'); link.href = project.live_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'project-link-button primary'; link.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> View Live'; linksContainer.appendChild(link); hasLinks = true; }
-        if (project.github_url) { /* ... create code link ... */ const link = document.createElement('a'); link.href = project.github_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'project-link-button secondary'; link.innerHTML = '<i class="fab fa-github fa-xs"></i> Code'; linksContainer.appendChild(link); hasLinks = true; }
-        if (project.pypi_url && project.type === 'library') { /* ... create pypi link ... */ const link = document.createElement('a'); link.href = project.pypi_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'project-link-button secondary'; link.innerHTML = '<i class="fab fa-python fa-xs"></i> PyPI'; linksContainer.appendChild(link); hasLinks = true; }
-        if (project.docs_url && project.type === 'library') { /* ... create docs link ... */ const link = document.createElement('a'); link.href = project.docs_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'project-link-button secondary'; link.innerHTML = '<i class="fas fa-book fa-xs"></i> Docs'; linksContainer.appendChild(link); hasLinks = true; }
-        if (hasLinks) { contentDiv.appendChild(linksContainer); }
 
-        card.appendChild(contentDiv);
+        // Tags (Conditional) - **Restored Logic**
+        if (project.technologies && project.technologies.length > 0) {
+            const tagsContainer = document.createElement('div');
+            tagsContainer.className = 'project-tags'; // Class from visual.css
+            project.technologies.forEach(tag => {
+                const tagSpan = document.createElement('span');
+                tagSpan.className = 'tech-tag-visual'; // Class from visual.css
+                tagSpan.textContent = tag;
+                tagsContainer.appendChild(tagSpan);
+            });
+            contentDiv.appendChild(tagsContainer); // Appended before links
+        }
+
+        // Links (Conditional) - **Restored Logic**
+        const linksContainer = document.createElement('div');
+        linksContainer.className = 'project-links'; // Class from visual.css
+        let hasLinks = false;
+
+        if (project.live_url && project.type === 'webapp') {
+            const link = document.createElement('a');
+            link.href = project.live_url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'project-link-button primary'; // Class from visual.css
+            link.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> View Live';
+            linksContainer.appendChild(link);
+            hasLinks = true;
+        }
+        if (project.github_url) {
+             const link = document.createElement('a');
+             link.href = project.github_url;
+             link.target = '_blank';
+             link.rel = 'noopener noreferrer';
+             link.className = 'project-link-button secondary'; // Class from visual.css
+             link.innerHTML = '<i class="fab fa-github fa-xs"></i> Code';
+             linksContainer.appendChild(link);
+             hasLinks = true;
+        }
+        if (project.pypi_url && project.type === 'library') {
+             const link = document.createElement('a');
+             link.href = project.pypi_url;
+             link.target = '_blank';
+             link.rel = 'noopener noreferrer';
+             link.className = 'project-link-button secondary'; // Adjust class if needed
+             link.innerHTML = '<i class="fab fa-python fa-xs"></i> PyPI';
+             linksContainer.appendChild(link);
+             hasLinks = true;
+        }
+         if (project.docs_url && project.type === 'library') {
+             const link = document.createElement('a');
+             link.href = project.docs_url;
+             link.target = '_blank';
+             link.rel = 'noopener noreferrer';
+             link.className = 'project-link-button secondary'; // Adjust class if needed
+             link.innerHTML = '<i class="fas fa-book fa-xs"></i> Docs';
+             linksContainer.appendChild(link);
+             hasLinks = true;
+        }
+
+        // Only append the links container if there were any links
+        if (hasLinks) {
+            contentDiv.appendChild(linksContainer);
+        }
+
+        card.appendChild(contentDiv); // Add content to card
         return card;
     }
 
     /**
      * Fetches project data from the API and renders the cards.
      */
-    async function fetchAndRenderProjects() { /* ... Keep as before ... */ console.log("Fetching project data for visual view..."); gridContainer.innerHTML = '<div class="text-center col-span-full p-10 text-gray-500 animate-pulse">Loading projects...</div>'; try { const response = await fetch('/visual/api/projects'); if (!response.ok) throw new Error(`HTTP Error: ${response.status}`); projectsData = await response.json(); gridContainer.innerHTML = ''; if (!projectsData || projectsData.length === 0) { gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-gray-500">No projects to display.</p>'; return; } projectsData.forEach((project, index) => { if (project && project.id) { const card = createProjectCard(project, index); gridContainer.appendChild(card); } else { console.warn("Skipping invalid project data item:", project); } }); } catch (error) { console.error("Error fetching or rendering projects:", error); gridContainer.innerHTML = `<p class="text-center col-span-full p-10 text-red-500">Could not load projects: ${error.message}</p>`; } }
+    async function fetchAndRenderProjects() {
+        console.log("Fetching project data for visual view...");
+        // Display loading state
+        gridContainer.innerHTML = '<div class="text-center col-span-full p-10 text-gray-500 animate-pulse">Loading projects...</div>';
+
+        try {
+            // Fetch simplified project data from the visual blueprint's API
+            const response = await fetch('/visual/api/projects'); // API route in visual/routes.py
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            projectsData = await response.json(); // Store fetched data
+
+            gridContainer.innerHTML = ''; // Clear loading message
+
+            if (!projectsData || projectsData.length === 0) {
+                 gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-gray-500">No projects to display.</p>';
+                 return;
+            }
+
+            // Optional: Sort projects maybe?
+            // projectsData.sort((a, b) => a.title.localeCompare(b.title));
+
+            // Create and append cards
+            projectsData.forEach((project, index) => {
+                if (project && project.id) { // Basic check for valid project data
+                    const card = createProjectCard(project, index);
+                    gridContainer.appendChild(card);
+                } else {
+                    console.warn("Skipping invalid project data item:", project);
+                }
+            });
+
+        } catch (error) {
+            console.error("Error fetching or rendering projects:", error);
+            gridContainer.innerHTML = `<p class="text-center col-span-full p-10 text-red-500">Could not load projects: ${error.message}</p>`;
+        }
+    }
 
     // --- Initial Load ---
-    fetchAndRenderProjects();
+    fetchAndRenderProjects(); // Fetch data and build the grid when the view initializes
     console.log("Visual Overview View Initialized.");
 
-    // --- Cleanup Function ---
-    window.cleanupVisualView = () => { /* ... Keep as before ... */ console.log("Running cleanup for Visual view..."); projectsData = null; };
+    // --- Cleanup Function (if needed) ---
+    window.cleanupVisualView = () => {
+        console.log("Running cleanup for Visual view...");
+        // No complex listeners added yet, just clear data reference
+        projectsData = null;
+    };
 
 } // End of initializeVisualView
 
+// Make initializer globally accessible for selector.js
 window.initializeVisualView = initializeVisualView;
+// Define cleanup function globally
 window.cleanupVisualView = window.cleanupVisualView || (() => { console.log("Default Visual cleanup"); });
