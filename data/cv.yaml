@@ -1,6 +1,32 @@
-name: Your Name Here
-title: Your Title Here
-summary: Replace with your summary.
+ # Replace with your original data
+name: Pablo Peitsch
+title: Python Developer & System Professional
+email: "pablo.peitsch@gmail.com"
+linkedin: "https://www.linkedin.com/in/pablo-peitsch/"
+github: "https://github.com/PPeitsch"
+website: "https://ppeitsch.com.ar"
+summary: |
+  Highly motivated and skilled Python Developer with experience in building web applications,
+  automation tools, libraries and data connectors. Passionate about clean code, efficient solutions,
+  and leveraging technology to solve real-world problems. Proven ability to work
+  with Flask, FastAPI, databases, and cloud technologies.
 skills:
-  - Skill 1
-  - Skill 2
+  - Python
+  - Flask
+  - FastAPI
+  - SQLAlchemy
+  - PostgreSQL
+  - n8n
+  - API Development
+  - Docker
+  - Git
+  - Linux
+  - HTML
+  - CSS (Tailwind)
+  - JavaScript
+  - Pre-commit
+  - Pytest
+  - MyPy
+social_links:
+  github: "https://github.com/PPeitsch"
+  linkedin: "https://www.linkedin.com/in/pablo-peitsch/"

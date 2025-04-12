@@ -1,10 +1,16 @@
+/* unified-portfolio/view_cli/static/css/terminal.css */
+/* Version for Step 5.4 (Added Marker Styles) */
+
 /* Styles specific to the terminal view loaded by selector.js */
 /* Using Catppuccin Macchiato inspired colors */
 
-/* Ensure the container injected into (#terminal) fills its parent (#view-container) */
 #terminal {
     /* Assuming parent (#view-container) provides dimensions (w-full h-full) */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background-color: #1e1e2e; /* Macchiato Base */
+    color: #cdd6f4; /* Macchiato Text */
+    border-radius: 0px; /* Remove rounding if it's inside a padded wrapper */
+    overflow: hidden;
+    /* box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); Remove shadow if container handles it */
 }
 
 #output {
@@ -24,10 +30,15 @@
     border-radius: 4px;
     border: 2px solid #313244; /* Macchiato Surface0 */
 }
+/* Add some bottom padding to output to prevent input overlap */
+#output {
+    padding-bottom: 1rem;
+}
 
 
 .input-line {
     border-color: #45475a; /* Macchiato Surface2 */
+    flex-shrink: 0; /* Prevent input line from shrinking */
 }
 
 .prompt {
@@ -60,19 +71,28 @@ a.terminal-link:hover {
     color: #f38ba8; /* Macchiato Red */
 }
 
-/* Styling for the command echoed back to the user */
+/* Echoed command styling */
 .echo-command {
     color: #a6adc8; /* Macchiato Subtext0 */
-    /* Optional: slightly dimmer */
-    /* opacity: 0.8; */
+    opacity: 0.8;
 }
 
-/* Styling for specific command output sections (examples) */
-#output .command-output-section { /* Hypothetical class for sections */
-    margin-bottom: 0.5em;
+/* --- Styles for Output Markers --- */
+
+/* Style for lines marked as informational headers etc. */
+.info-message {
+    color: #a6e3a1; /* Macchiato Green */
+    font-weight: 500; /* Medium weight */
 }
-#output .command-output-title { /* Hypothetical class for titles */
+
+/* Style for section titles related to links */
+.link-section-title {
     color: #f9e2af; /* Macchiato Yellow */
-    font-weight: bold;
-    margin-bottom: 0.2em;
+    font-weight: 500;
+    margin-top: 0.4em; /* Add some space above link sections */
+    display: block; /* Ensure it takes its own line */
 }
+
+/* Add more styles as needed */
+/* .warning-message { color: #fab387; } // Peach */
+/* .success-message { color: #a6e3a1; } // Green */
