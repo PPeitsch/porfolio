@@ -1,13 +1,14 @@
 <!-- This HTML fragment is loaded into #view-container -->
 
-<!-- Wrapper Div: Adds padding-top for back button and enables vertical scrolling -->
-<div class="view-content-wrapper p-2 md:p-4">
-    <div id="terminal" class="w-full h-full flex flex-col font-mono text-sm bg-[#1e1e2e] text-[#cdd6f4] overflow-hidden">
-        <div id="output" class="flex-grow overflow-y-auto p-3 whitespace-pre-wrap break-words">
-        </div>
-        <div id="input-line" class="input-line flex p-2 border-t border-[#313244] flex-shrink-0">
-            <span id="prompt" class="prompt text-[#89b4fa] mr-2 whitespace-nowrap">portfolio:~ $</span>
-            <input type="text" id="input" class="input bg-transparent border-none text-[#cdd6f4] flex-grow outline-none caret-[#f5e0dc]" autofocus autocomplete="off" spellcheck="false" aria-label="Command Input">
+<div class="view-content-wrapper">
+    <div class="p-4 md:p-6 lg:p-8 w-full h-full flex flex-col" style="padding-top: 4.5rem;">
+        <div id="terminal" class="w-full h-full flex flex-col font-mono text-sm bg-[#1e1e2e] text-[#cdd6f4] overflow-hidden rounded-lg">
+            <div id="output" class="flex-grow overflow-y-auto p-3 whitespace-pre-wrap break-words">
+            </div>
+            <div id="input-line" class="input-line flex p-2 border-t border-[#313244] flex-shrink-0">
+                <span id="prompt" class="prompt text-[#89b4fa] mr-2 whitespace-nowrap">portfolio:~ $</span>
+                <input type="text" id="input" class="input bg-transparent border-none text-[#cdd6f4] flex-grow outline-none caret-[#f5e0dc]" autofocus autocomplete="off" spellcheck="false" aria-label="Command Input">
+            </div>
         </div>
     </div>
 </div>

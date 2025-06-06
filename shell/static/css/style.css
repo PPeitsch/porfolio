@@ -77,7 +77,6 @@ body {
 }
 
 .view-content-wrapper {
-    padding-top: 4.5rem;
     flex-grow: 1;
     overflow-y: auto;
     width: 100%;
