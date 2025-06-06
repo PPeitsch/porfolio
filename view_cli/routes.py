@@ -1,20 +1,30 @@
 import logging
 import os
-import textwrap  # For wrapping long descriptions
+import textwrap
 
 from flask import abort, g, jsonify, send_from_directory
 
 from common.utils import load_cv_data, load_projects_data
 
-from . import cli_bp  # Import the blueprint defined in __init__.py
+from . import cli_bp
 
 logger = logging.getLogger(__name__)
 
 
-# --- Helper to get cached data within the context of this blueprint ---
 def get_cached_data(data_type="cv"):
-    """Helper to load data once per app context for CLI."""
-    # Use Flask's application context global 'g'
+    """Gets cached data from Flask's 'g' context, loading if not present.
+
+    This helper function ensures that data files (like cv.yaml and
+    projects.yaml) are loaded from disk only once per request context,
+    improving performance.
+
+    Args:
+        data_type (str): The type of data to get ('cv' or 'projects').
+
+    Returns:
+        The cached data, which varies based on data_type. For 'projects',
+        it returns a tuple of (list, dict). Returns None for unknown types.
+    """
     if data_type == "cv":
         if "cv_data" not in g:
             g.cv_data = load_cv_data()  # Assumes load_cv_data is robust
@@ -22,9 +32,7 @@ def get_cached_data(data_type="cv"):
         return g.cv_data
     elif data_type == "projects":
         if "projects_data" not in g:
-            g.projects_data, g.projects_dict = (
-                load_projects_data()
-            )  # Assumes this returns tuple
+            g.projects_data, g.projects_dict = load_projects_data()
             logger.info("CLI: Projects data loaded into context g")
         # Ensure projects_dict is populated if projects_data exists from previous g context
         elif "projects_data" in g and "projects_dict" not in g:
@@ -41,10 +49,20 @@ def get_cached_data(data_type="cv"):
     return None
 
 
-# --- Route to serve static files for this blueprint ---
 @cli_bp.route("/static/<path:filename>")
 def static_files(filename):
-    """Serves static files specific to the CLI blueprint."""
+    """Serves static files specific to the CLI blueprint.
+
+    This route is necessary because the blueprint's static folder is not
+    automatically served when using this modular structure. It handles
+    requests for files like terminal.css and terminal.js.
+
+    Args:
+        filename (str): The name of the file to serve from the static folder.
+
+    Returns:
+        Response: The requested static file or a 404 error if not found.
+    """
     static_dir = os.path.join(
         os.path.dirname(__file__), "static"
     )  # Relative to this routes.py file
@@ -56,19 +74,27 @@ def static_files(filename):
         abort(404)
 
 
-# --- API Endpoint for CLI Commands (Enhanced) ---
 @cli_bp.route("/api/command/<path:command_line>")
 def handle_command_api(command_line):
-    """Processes a 'command' from the JS terminal via API."""
+    """API endpoint to process a command string from the CLI view.
+
+    It parses the command, retrieves necessary data, formats a response with
+    informational markers, and returns it as JSON. This is the core logic
+    engine for the interactive terminal.
+
+    Args:
+        command_line (str): The full command line string entered by the user.
+
+    Returns:
+        Response: A JSON response containing 'output' (list of strings),
+                  'error' (string or None), and the original 'command'.
+    """
     logger.debug(f"CLI API received command: {command_line}")
-    # --- Load data using the helper ---
     CV_DATA = get_cached_data("cv")
     PROJECTS_DATA, PROJECTS_DICT = get_cached_data("projects")
 
-    # Basic check if data loading failed severely upstream
-    if not CV_DATA or PROJECTS_DATA is None:  # PROJECTS_DATA can be empty list
+    if not CV_DATA or PROJECTS_DATA is None:
         logger.error("CLI API failed: CV or Projects data not loaded into context.")
-        # Return error in JSON format for JS
         return (
             jsonify({"output": [], "error": "[ERROR] Failed to load backend data."}),
             500,
@@ -83,14 +109,11 @@ def handle_command_api(command_line):
     terminal_width = 80  # Approximate width for formatting
 
     try:
-        # --- Refined Command Processing Logic ---
         if command == "help":
-            output.append("[INFO] Available commands:")  # Use markers
+            output.append("[INFO] Available commands:")
             output.append("  whoami         - Display summary about me")
             output.append("  skills         - List my technical skills")
-            output.append(
-                "  contact        - Show contact information"
-            )  # Added command
+            output.append("  contact        - Show contact information")
             output.append("  ls projects    - List available projects")
             output.append("  show <project> - Show details for a project (use ID)")
             output.append("  links          - Show social/repository links")
@@ -102,18 +125,16 @@ def handle_command_api(command_line):
             output.append(f"Title:   {CV_DATA.get('title', 'N/A')}")
             summary = CV_DATA.get("summary", "No summary available.")
             output.append("Summary:")
-            # Wrap summary text nicely
             wrapped_summary = textwrap.wrap(
                 summary, width=terminal_width - 2, subsequent_indent="  "
-            )  # Indent subsequent lines
-            output.extend(wrapped_summary)  # Add wrapped lines directly
+            )
+            output.extend(wrapped_summary)
 
         elif command == "skills":
             output.append("[INFO] Technical Skills:")
             if CV_DATA.get("skills"):
                 skills_list = CV_DATA["skills"]
                 if len(skills_list) > 0:
-                    # Simple comma-separated wrapping
                     skills_line = ", ".join(skills_list)
                     wrapped_skills = textwrap.wrap(
                         skills_line,
@@ -127,49 +148,36 @@ def handle_command_api(command_line):
             else:
                 output.append("  (Skills data unavailable)")
 
-        # --- NEW: Contact Command ---
         elif command == "contact":
             output.append("[INFO] Contact Information:")
             contact_found = False
-            # Check for email in main CV data first
             if CV_DATA.get("email"):
-                # Use mailto: for clickable email links
                 output.append(f"  - Email:    <link>mailto:{CV_DATA['email']}</link>")
                 contact_found = True
-            # Check social links section for others
             social_links = CV_DATA.get("social_links", {})
             if social_links.get("linkedin"):
                 output.append(f"  - LinkedIn: <link>{social_links['linkedin']}</link>")
                 contact_found = True
-            if social_links.get("github"):  # GitHub often in social links
+            if social_links.get("github"):
                 output.append(f"  - GitHub:   <link>{social_links['github']}</link>")
                 contact_found = True
-            # Add website if present in main CV data
             if CV_DATA.get("website"):
                 output.append(f"  - Website:  <link>{CV_DATA['website']}</link>")
                 contact_found = True
-
             if not contact_found:
                 output.append("  (No contact details available in cv.yaml)")
 
         elif command == "ls" and args and args[0] == "projects":
             output.append("[INFO] Projects (use 'show <id>' for details):")
-            if PROJECTS_DATA:  # Checks if list is not None
-                if not PROJECTS_DATA:  # Check if list is empty
+            if PROJECTS_DATA:
+                if not PROJECTS_DATA:
                     output.append("  (No projects found in projects.yaml)")
                 else:
                     try:
-                        # Calculate padding based on longest ID
                         max_id_len = max(len(p.get("id", "")) for p in PROJECTS_DATA)
-                        max_id_len = max(
-                            max_id_len, 4
-                        )  # Ensure minimum width for 'ID' header
-                        # Header
+                        max_id_len = max(max_id_len, 4)
                         output.append(f"  {'ID'.ljust(max_id_len)}  | Title")
-                        output.append(
-                            f"  {'-' * max_id_len}  + {'-' * 40}"
-                        )  # Separator line
-                        # Project rows
+                        output.append(f"  {'-' * max_id_len}  + {'-' * 40}")
                         for p in PROJECTS_DATA:
                             proj_id = p.get("id", "N/A")
                             proj_title = p.get("title", "N/A")
@@ -179,24 +187,20 @@ def handle_command_api(command_line):
                     except Exception as e:
                         logger.error(f"Error formatting ls projects: {e}")
                         output.append("  (Error formatting project list)")
-                        # Fallback basic list if formatting fails
                         for p in PROJECTS_DATA:
                             output.append(
                                 f"  - {p.get('id', 'N/A')} : {p.get('title', 'N/A')}"
                             )
             else:
-                # This case should ideally not be reached if get_cached_data ensures list return
-                output.append("  (Project data could not be loaded or is unavailable)")
+                output.append("  (Project data could not be loaded)")
 
-        # --- ENHANCED: Show Command ---
         elif command == "show" and args:
             project_id = args[0]
-            if PROJECTS_DICT is None:  # Check if dict loading failed
+            if PROJECTS_DICT is None:
                 error = "[ERROR] Project data dictionary not loaded."
             else:
                 project = PROJECTS_DICT.get(project_id)
                 if project:
-                    # Use markers for sections
                     output.append(f"--- Project: {project.get('title', 'N/A')} ---")
                     output.append(
                         f"[INFO] Type: {project.get('type', 'N/A').capitalize()}"
@@ -214,7 +218,6 @@ def handle_command_api(command_line):
                     technologies = project.get("technologies")
                     if technologies:
                         output.append("[INFO] Technologies:")
-                        # Use simple comma join for CLI, maybe wrap
                         tech_line = ", ".join(technologies)
                         wrapped_tech = textwrap.wrap(
                             tech_line,
@@ -226,9 +229,8 @@ def handle_command_api(command_line):
                     else:
                         output.append("[INFO] Technologies: (Not specified)")
 
-                    output.append("[LINK] Links:")  # Use marker
+                    output.append("[LINK] Links:")
                     link_found = False
-                    # Use descriptive labels
                     if project.get("live_url"):
                         output.append(
                             f"  - Live Demo: <link>{project['live_url']}</link>"
@@ -249,58 +251,34 @@ def handle_command_api(command_line):
                             f"  - Docs:      <link>{project['docs_url']}</link>"
                         )
                         link_found = True
-
                     if not link_found:
                         output.append("  (No external links available)")
                 else:
-                    # Use marker for error
                     error = f"[ERROR] Project '{project_id}' not found. Use 'ls projects' for IDs."
 
         elif command == "links":
             output.append("[INFO] Social & Repo Links:")
             link_found = False
-            # Prefer social_links structure if present
-            if CV_DATA.get("social_links"):
-                for key, url in CV_DATA["social_links"].items():
+            social_links = CV_DATA.get("social_links", {})
+            if social_links:
+                for key, url in social_links.items():
                     platform_name = key.replace("_", " ").capitalize()
                     output.append(f"  - {platform_name}: <link>{url}</link>")
                     link_found = True
-            # Fallback to top-level keys if social_links missing but others exist
-            elif CV_DATA.get("github") or CV_DATA.get("linkedin"):
-                if CV_DATA.get("linkedin"):
-                    output.append(f"  - LinkedIn: <link>{CV_DATA['linkedin']}</link>")
-                    link_found = True
-                if CV_DATA.get("github"):
-                    output.append(f"  - GitHub:   <link>{CV_DATA['github']}</link>")
-                    link_found = True
-            # Add website if present
-            if CV_DATA.get("website"):
-                output.append(f"  - Website:  <link>{CV_DATA['website']}</link>")
-                link_found = True
-
             if not link_found:
-                output.append("  (No social links configured in cv.yaml)")
+                output.append("  (No social links configured)")
 
         elif command == "clear":
-            # Command acknowledged by API, but action is frontend only
             pass
         elif command == "":
-            # No output for empty command
             pass
         else:
-            # Command not recognized
-            error = (
-                f"[ERROR] Command not found: '{command}'. Type 'help'."  # Use marker
-            )
-        # --- End Refined Command Logic ---
+            error = f"[ERROR] Command not found: '{command}'. Type 'help'."
 
     except Exception as e:
-        # Log the full error traceback for server-side debugging
         logger.error(
             f"CLI API exception processing command '{command_line}': {e}", exc_info=True
         )
-        # Provide a more generic error message to the user
-        error = "[ERROR] Internal server error occurred. Please check server logs."  # Use marker
+        error = "[ERROR] Internal server error occurred. Please check server logs."
 
-    # Return JSON response including the original command (useful for 'clear')
     return jsonify({"output": output, "error": error, "command": command})
