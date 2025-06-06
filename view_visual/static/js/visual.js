@@ -1,11 +1,7 @@
-// unified-portfolio/view_visual/static/js/visual.js
-
 function initializeVisualView() {
     console.log("Attempting to initialize Visual Overview View...");
 
     const gridContainer = document.getElementById('project-grid');
-    // Optional: Get other elements if needed, e.g., skills container
-    // const skillsContainer = document.getElementById('visual-skills');
 
     if (!gridContainer) {
         console.error("Visual view init failed: #project-grid container not found!");
@@ -22,49 +18,83 @@ function initializeVisualView() {
      */
     function createProjectCard(project, index) {
         const card = document.createElement('div');
-        // Apply base classes and animation class
-        card.className = 'project-card-visual'; // Base class includes animation trigger
-        // Stagger the animation delay
+        card.className = 'project-card-visual';
         card.style.animationDelay = `${index * 0.08}s`;
 
         // --- Image Container ---
         const imageContainer = document.createElement('div');
-        imageContainer.className = 'image-container';
+        imageContainer.className = 'image-container'; // Class from visual.css
 
-        // --- Image ---
-        // Use the image_url provided by the API
-        const imageSrc = project.image_url || '/shell-static/images/placeholder.svg'; // Fallback
+        const imageSrc = project.image_url || '/shell-static/images/placeholder.svg'; // Fallback defined in Step 5.1.1 correction
         const img = document.createElement('img');
         img.src = imageSrc;
         img.alt = `${project.title || 'Project'} Screenshot`;
-        img.className = 'project-image'; // Class from visual.css
-        img.loading = 'lazy'; // Improve performance
+        img.className = 'project-image';
+        img.loading = 'lazy';
 
-        // Detectar si es un SVG para aplicar clases específicas
         if (imageSrc.toLowerCase().endsWith('.svg')) {
-            img.classList.add('svg-image');
+            img.classList.add('svg-image'); // Add class for SVG styling
         }
-
         imageContainer.appendChild(img);
-        card.appendChild(imageContainer);
+
+        // --- Add Image Overlay ---
+        const overlay = document.createElement('div');
+        overlay.className = 'image-overlay'; // Class from visual.css
+        // Add content to overlay
+        if (project.live_url && project.type === 'webapp') {
+             const overlayText = document.createElement('div');
+             overlayText.className = 'overlay-text';
+             overlayText.textContent = 'View Live Project';
+             overlay.appendChild(overlayText);
+
+             const overlayLink = document.createElement('a');
+             overlayLink.href = project.live_url;
+             overlayLink.target = '_blank';
+             overlayLink.rel = 'noopener noreferrer';
+             overlayLink.className = 'overlay-link';
+             overlayLink.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> Go';
+             overlay.appendChild(overlayLink);
+        } else if (project.github_url) { // Show GitHub if no live link
+             const overlayText = document.createElement('div');
+             overlayText.className = 'overlay-text';
+             overlayText.textContent = 'View Source Code';
+             overlay.appendChild(overlayText);
+
+             const overlayLink = document.createElement('a');
+             overlayLink.href = project.github_url;
+             overlayLink.target = '_blank';
+             overlayLink.rel = 'noopener noreferrer';
+             overlayLink.className = 'overlay-link';
+             overlayLink.innerHTML = '<i class="fab fa-github fa-xs"></i> GitHub';
+             overlay.appendChild(overlayLink);
+        } else { // Fallback text if no primary link
+              const overlayText = document.createElement('div');
+             overlayText.className = 'overlay-text';
+             overlayText.textContent = project.title || 'Project'; // Just show title
+             overlay.appendChild(overlayText);
+        }
+        imageContainer.appendChild(overlay);
+        // --- End Image Overlay ---
+
+        card.appendChild(imageContainer); // Add image container to card
 
         // --- Content Area ---
         const contentDiv = document.createElement('div');
-        contentDiv.className = 'project-content'; // Class from visual.css
+        contentDiv.className = 'project-content';
 
         // Title
         const title = document.createElement('h3');
-        title.className = 'project-title'; // Class from visual.css
+        title.className = 'project-title';
         title.textContent = project.title || 'Untitled Project';
         contentDiv.appendChild(title);
 
         // Description
         const description = document.createElement('p');
-        description.className = 'project-description'; // Class from visual.css
+        description.className = 'project-description';
         description.textContent = project.short_desc || 'No description available.';
         contentDiv.appendChild(description);
 
-        // Tags (Conditional)
+        // Tags (Conditional) - **Restored Logic**
         if (project.technologies && project.technologies.length > 0) {
             const tagsContainer = document.createElement('div');
             tagsContainer.className = 'project-tags'; // Class from visual.css
@@ -77,7 +107,7 @@ function initializeVisualView() {
             contentDiv.appendChild(tagsContainer); // Appended before links
         }
 
-        // Links (Conditional)
+        // Links (Conditional) - **Restored Logic**
         const linksContainer = document.createElement('div');
         linksContainer.className = 'project-links'; // Class from visual.css
         let hasLinks = false;
@@ -153,7 +183,7 @@ function initializeVisualView() {
                  return;
             }
 
-            // Sort projects maybe? (Optional)
+            // Optional: Sort projects maybe?
             // projectsData.sort((a, b) => a.title.localeCompare(b.title));
 
             // Create and append cards

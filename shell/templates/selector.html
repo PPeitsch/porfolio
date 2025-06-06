@@ -3,46 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Use the name from loaded CV data -->
     <title>{{ cv.get('name', 'Portfolio') }} - Select Your Experience</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- External CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Link to your custom CSS (even if empty for now) -->
     <link rel="stylesheet" href="{{ url_for('shell.static', filename='css/style.css') }}">
-    <!-- Optional: Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <!-- Inline styles for simple card hover effect -->
     <style>
-        /* Custom styles if needed */
-        html, body { height: 100%; margin: 0; }
-        body { background-color: #f4f7f6; /* Slightly off-white */ font-family: system-ui, sans-serif; }
-        .selector-card {
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-            border: 1px solid #e5e7eb; /* gray-200 */
-        }
-        .selector-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 10px -6px rgba(0, 0, 0, 0.1); /* shadow-lg variant */
-        }
-        /* Ensure view container covers everything when active */
-        #view-container.active {
-             display: block; /* or flex, grid depending on content */
-             position: fixed; /* Cover viewport */
-             top: 0; left: 0;
-             width: 100%; height: 100%;
-             background-color: #fff; /* Default background for views */
-             z-index: 10;
-             overflow-y: auto; /* Allow scrolling within the view */
-        }
+        .selector-card { transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; border: 1px solid #e5e7eb; }
+        .selector-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 10px -6px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
 <body class="flex items-center justify-center">
 
-    <!-- Selector Container -->
-    <div id="selector-container" class="text-center p-6 md:p-10 max-w-5xl w-full mx-auto">
-        <!-- Use name from cv data -->
+    <!-- ===== Main Selector View ===== -->
+    <div id="selector-container" class="text-center p-6 md:p-10 max-w-5xl w-full mx-auto visible-view">
+        <!-- Header Section -->
         <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{{ cv.get('name', 'Welcome') }}</h1>
         <p class="text-lg text-gray-600 mb-10 md:mb-16">How would you like to explore my portfolio?</p>
 
+        <!-- Options Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
 
             <!-- Developer / CLI Option -->
@@ -66,16 +46,24 @@
                 <p class="text-gray-500 text-sm">Quick graphical overview.</p>
             </div>
 
-        </div>
+        </div> <!-- End Options Grid -->
+    </div> <!-- End Main Selector View -->
+
+
+    <!-- ===== Dynamic View Container ===== -->
+    <!-- This div holds the content for the selected view (CLI, Recruiter, or Visual) -->
+    <div id="view-container" class="hidden-view">
     </div>
 
-    <!-- View Container - Initially hidden, covers screen when active -->
-    <div id="view-container" class="hidden">
-         <!-- Content injected here -->
-          <button id="back-button" class="fixed top-4 left-4 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md text-sm shadow-sm z-20 hidden">← Back</button>
-    </div>
 
-    <!-- Load Selector JS -->
+    <!-- ===== Global UI Elements ===== -->
+    <button id="back-button" class="hidden-view fixed top-3 left-3 z-20 bg-white text-gray-600 hover:bg-gray-100 shadow border border-gray-300 rounded-full w-9 h-9 flex items-center justify-center text-sm" aria-label="Go Back">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+
+    <!-- ===== Scripts ===== -->
     <script src="{{ url_for('shell.static', filename='js/selector.js') }}"></script>
+
 </body>
 </html>
