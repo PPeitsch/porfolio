@@ -1,0 +1,183 @@
+.project-card-visual {
+    background-color: var(--color-background-card);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.project-card-visual:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+}
+
+.project-card-visual .image-container {
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.project-card-visual img.project-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease-out;
+}
+
+.project-card-visual:hover img.project-image {
+     transform: scale(1.05);
+}
+
+.project-card-visual img.project-image.svg-image {
+    object-fit: contain;
+    padding: 1rem;
+    width: auto;
+    max-width: 80%;
+    max-height: 80%;
+}
+
+.project-card-visual:hover img.project-image.svg-image {
+     transform: scale(1.0);
+}
+
+.project-card-visual .image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(29, 78, 216, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+}
+.project-card-visual:hover .image-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+.project-card-visual .overlay-text {
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+.project-card-visual .overlay-link {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--color-primary-base);
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+.project-card-visual .overlay-link:hover {
+    background-color: white;
+}
+
+.project-card-visual .project-content {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card-visual .project-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-headings);
+    margin-bottom: 0.5rem;
+}
+
+.project-card-visual .project-description {
+    font-size: 0.875rem;
+    color: var(--color-text-base);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.project-card-visual .project-tags {
+    margin-bottom: 1.25rem;
+    margin-top: auto;
+}
+.project-card-visual .project-tags .tech-tag-visual {
+    display: inline-block;
+    background-color: #e0e7ff;
+    color: #3730a3;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.2rem 0.7rem;
+    border-radius: 9999px;
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+}
+
+.project-card-visual .project-links {
+    border-top: 1px solid #f3f4f6;
+    padding-top: 1rem;
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.project-card-visual .project-link-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+.project-card-visual .project-link-button:active {
+     transform: scale(0.95);
+}
+
+.project-card-visual .project-link-button.primary {
+     background-color: var(--color-primary-base);
+     color: var(--color-primary-text);
+     border-color: var(--color-primary-base);
+}
+.project-card-visual .project-link-button.primary:hover {
+     background-color: var(--color-primary-hover);
+     border-color: var(--color-primary-hover);
+}
+
+.project-card-visual .project-link-button.secondary {
+     background-color: var(--color-secondary-base);
+     color: var(--color-secondary-text);
+     border-color: #d1d5db;
+}
+.project-card-visual .project-link-button.secondary:hover {
+     background-color: var(--color-secondary-hover);
+     border-color: #9ca3af;
+}
+
+.project-card-visual {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.5s ease-out forwards;
+}
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }

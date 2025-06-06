@@ -3,29 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Use the name from loaded CV data -->
     <title>{{ cv.get('name', 'Portfolio') }} - Select Your Experience</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- External CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Link Shell CSS FIRST -->
     <link rel="stylesheet" href="{{ url_for('shell.static', filename='css/style.css') }}">
-    <!-- Optional: Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    <!-- Specific View CSS will be loaded dynamically -->
+    <!-- Inline styles for simple card hover effect -->
     <style>
-        /* Keep minimal inline styles if necessary, prefer style.css */
         .selector-card { transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; border: 1px solid #e5e7eb; }
         .selector-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 10px -6px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
 <body class="flex items-center justify-center">
 
-    <!-- Selector Container - Initially Visible -->
+    <!-- ===== Main Selector View ===== -->
     <div id="selector-container" class="text-center p-6 md:p-10 max-w-5xl w-full mx-auto visible-view">
-        <!-- Use name from cv data -->
+        <!-- Header Section -->
         <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{{ cv.get('name', 'Welcome') }}</h1>
         <p class="text-lg text-gray-600 mb-10 md:mb-16">How would you like to explore my portfolio?</p>
 
+        <!-- Options Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
 
             <!-- Developer / CLI Option -->
@@ -49,23 +46,24 @@
                 <p class="text-gray-500 text-sm">Quick graphical overview.</p>
             </div>
 
-        </div>
-    </div>
+        </div> <!-- End Options Grid -->
+    </div> <!-- End Main Selector View -->
 
-    <!-- View Container - Initially hidden, covers screen when active -->
-    <!-- JS adds/removes 'visible-view' and 'view-active-*' classes -->
+
+    <!-- ===== Dynamic View Container ===== -->
+    <!-- This div holds the content for the selected view (CLI, Recruiter, or Visual) -->
     <div id="view-container" class="hidden-view">
-         <!-- Dynamically loaded content (CLI, Recruiter, or Visual partial) goes here -->
-         <!-- The wrapper div *inside* the partials will handle padding and scrolling -->
     </div>
 
-     <!-- Back Button - Initially hidden -->
-     <!-- Styled with Tailwind classes -->
-     <button id="back-button" class="hidden-view fixed top-3 left-3 z-20 bg-white text-gray-600 hover:bg-gray-100 shadow border border-gray-300 rounded-full w-9 h-9 flex items-center justify-center text-sm" aria-label="Go Back">
-        <i class="fas fa-arrow-left"></i> <!-- Using FontAwesome icon -->
-     </button>
 
-    <!-- Load Selector JS -->
+    <!-- ===== Global UI Elements ===== -->
+    <button id="back-button" class="hidden-view fixed top-3 left-3 z-20 bg-white text-gray-600 hover:bg-gray-100 shadow border border-gray-300 rounded-full w-9 h-9 flex items-center justify-center text-sm" aria-label="Go Back">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+
+    <!-- ===== Scripts ===== -->
     <script src="{{ url_for('shell.static', filename='js/selector.js') }}"></script>
+
 </body>
 </html>
