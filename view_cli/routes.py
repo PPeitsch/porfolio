@@ -249,7 +249,8 @@ def handle_command_api(command_line):
 
     except Exception as e:
         logger.error(
-            f"CLI API exception processing command '{command_line}': {e}", exc_info=True
+            f"CLI API exception processing command '{command_line}': {e}",
+            exc_info=True,
         )
         error = "[ERROR] Internal server error occurred. Please check server logs."
 
