@@ -1,5 +1,3 @@
-# .github/workflows/ci.yml
-
 name: Python CI Checks
 
 on:
@@ -39,33 +37,14 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-      # Step 4: Lint with Flake8 (Combined per-file-ignores)
+      # Step 4: Lint with Flake8
       - name: Lint with Flake8
         run: |
-          flake8 . --count --show-source --statistics \
-            --max-line-length=88 \
-            --extend-ignore=E203,W503,E501 \
-            --exclude=.git,__pycache__,venv,.venv,env,ENV,instance,migrations,dist,build \
-            --per-file-ignores="shell/__init__.py:F541,view_cli/__init__.py:E402 F401,view_recruiter/__init__.py:E402 F401,view_visual/__init__.py:E402 F401"
-          # Note: All per-file-ignores are combined into a single parameter
+          # Flake8 will read its configuration from pyproject.toml
+          flake8 . --count --show-source --statistics
 
       # Step 5: Run Type Checking with MyPy
       - name: Type Check with MyPy
         run: |
-          # MyPy reads configuration reliably from pyproject.toml
+          # MyPy reads configuration from pyproject.toml
           mypy .
-
-      # Step 6: Run Tests with Pytest (Placeholder - Add when tests exist)
-      # - name: Test with Pytest
-      #   run: |
-      #     echo "Test execution placeholder - No tests configured yet."
-
-      # Step 7: Upload Coverage Report (Placeholder - Add when tests run and produce coverage.xml)
-      # - name: Upload coverage reports to Codecov
-      #   uses: codecov/codecov-action@v4.0.1
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }} # Add CODECOV_TOKEN to repo secrets
-      #     files: ./coverage.xml # Specify coverage file if not default
-      #     slug: PPeitsch/porfolio # Your repository slug
-      #   env:
-      #       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
