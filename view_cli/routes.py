@@ -226,7 +226,9 @@ def handle_command_api(command_line):
                     if not link_found:
                         output.append("  (No external links available)")
                 else:
-                    error = f"[ERROR] Project '{project_id}' not found. Use 'ls projects' for IDs."
+                    error = (
+                        f"[ERROR] Project '{project_id}' not found. Use 'ls projects'."
+                    )
 
         elif command == "links":
             output.append("[INFO] Social & Repo Links:")
