@@ -1,7 +1,7 @@
 import logging
 import textwrap
 
-from flask import abort, g, jsonify
+from flask import g, jsonify
 
 from common.utils import load_cv_data, load_projects_data
 
