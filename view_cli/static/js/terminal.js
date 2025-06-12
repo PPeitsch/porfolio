@@ -15,50 +15,103 @@
     const inputElem = terminal.querySelector("#input");
     const promptSpan = terminal.querySelector("#prompt");
 
-    // Check for essential elements
-    if (!titleBar || !terminal || !outputDiv || !inputElem || !promptSpan) {
-        console.error("One or more essential CLI elements are missing!");
+    // Window Controls
+    const closeBtn = document.getElementById("cli-close");
+    const minimizeBtn = document.getElementById("cli-minimize");
+    const maximizeBtn = document.getElementById("cli-maximize");
+    const backButton = document.getElementById("back-button"); // From shell
+
+    if (
+        !titleBar ||
+        !terminal ||
+        !closeBtn ||
+        !minimizeBtn ||
+        !maximizeBtn ||
+        !backButton
+    ) {
+        console.error("One or more essential CLI or shell elements are missing!");
         return;
     }
+
+    // --- Window State ---
+    let isMaximized = false;
+    let lastPosition = { top: "", left: "", width: "", height: "" };
+
+    // --- Window Controls Logic ---
+    function handleClose() {
+        // Trigger the main back button to return to selector view
+        backButton.click();
+    }
+
+    function handleMinimize() {
+        // Toggle the minimized state
+        cliWindow.classList.toggle("minimized");
+        if (!cliWindow.classList.contains("minimized")) {
+            inputElem.focus();
+        }
+    }
+
+    function handleMaximize() {
+        if (isMaximized) {
+            // Restore from maximized state
+            cliWindow.style.top = lastPosition.top;
+            cliWindow.style.left = lastPosition.left;
+            cliWindow.style.width = lastPosition.width;
+            cliWindow.style.height = lastPosition.height;
+            cliWindow.classList.remove("maximized");
+        } else {
+            // Save current state before maximizing
+            const rect = cliWindow.getBoundingClientRect();
+            lastPosition = {
+                top: `${rect.top}px`,
+                left: `${rect.left}px`,
+                width: `${rect.width}px`,
+                height: `${rect.height}px`,
+            };
+            cliWindow.classList.add("maximized");
+        }
+        isMaximized = !isMaximized;
+        inputElem.focus();
+    }
+
+    closeBtn.addEventListener("click", handleClose);
+    minimizeBtn.addEventListener("click", handleMinimize);
+    maximizeBtn.addEventListener("click", handleMaximize);
+    titleBar.addEventListener("dblclick", handleMaximize); // Double-click to maximize
 
     // --- Window Dragging Logic ---
     let isDragging = false;
     let offsetX, offsetY;
 
     function onMouseDown(e) {
-        // Only drag with the primary mouse button and if the target is the title bar itself
         if (e.button !== 0 || e.target.classList.contains("control-btn")) {
             return;
         }
+        // Prevent dragging when window is maximized
+        if (isMaximized) return;
 
         isDragging = true;
-        // Calculate the initial offset from the top-left corner of the window
         offsetX = e.clientX - cliWindow.offsetLeft;
         offsetY = e.clientY - cliWindow.offsetTop;
 
-        // Add listeners to the document to capture mouse movement anywhere on the page
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
-        document.addEventListener("mouseleave", onMouseUp); // Stop dragging if mouse leaves window
+        document.addEventListener("mouseleave", onMouseUp);
 
-        titleBar.style.cursor = "grabbing"; // Change cursor to indicate dragging
-        cliWindow.style.userSelect = "none"; // Prevent text selection while dragging
+        titleBar.style.cursor = "grabbing";
+        cliWindow.style.userSelect = "none";
     }
 
     function onMouseMove(e) {
         if (!isDragging) return;
-
-        // Calculate new position
         let newX = e.clientX - offsetX;
         let newY = e.clientY - offsetY;
 
-        // Get viewport dimensions to constrain the window
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = document.documentElement.clientHeight;
         const windowWidth = cliWindow.offsetWidth;
         const windowHeight = cliWindow.offsetHeight;
 
-        // Constrain the window within the viewport
         newX = Math.max(0, Math.min(newX, viewportWidth - windowWidth));
         newY = Math.max(0, Math.min(newY, viewportHeight - windowHeight));
 
@@ -69,17 +122,13 @@
     function onMouseUp() {
         if (!isDragging) return;
         isDragging = false;
-
-        // Clean up event listeners
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
         document.removeEventListener("mouseleave", onMouseUp);
-
-        titleBar.style.cursor = "grab"; // Revert cursor
-        cliWindow.style.userSelect = ""; // Re-enable text selection
+        titleBar.style.cursor = "grab";
+        cliWindow.style.userSelect = "";
     }
 
-    // Attach the initial event listener to the title bar
     titleBar.addEventListener("mousedown", onMouseDown);
 
     // --- Terminal Logic (adapted from original file) ---
@@ -92,9 +141,14 @@
         line.innerHTML = text.replace(/<link>(.*?)<\/link>/g, (match, url) => {
             const isMail = url.startsWith("mailto:");
             if (isMail || url.startsWith("http")) {
+                const cleanUrl = url.replace("mailto:", "");
+                const linkText =
+                    cleanUrl.length > 50
+                        ? cleanUrl.substring(0, 47) + "..."
+                        : cleanUrl;
                 return `<a href="${url}" ${
                     !isMail ? 'target="_blank" rel="noopener noreferrer"' : ""
-                } class="terminal-link">${url.replace("mailto:", "")}</a>`;
+                } class="terminal-link" title="${cleanUrl}">${linkText}</a>`;
             }
             return url;
         });
