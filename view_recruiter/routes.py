@@ -87,9 +87,7 @@ def _replace_placeholders(text, cv_data, projects_dict):
                 "svg",
                 "frontend",
             ]
-            default_text = (
-                "HTML, CSS, JavaScript (including frameworks like Tailwind/Bootstrap)"
-            )
+            default_text = "HTML, CSS, JavaScript (including frameworks)"
         elif skill_type == "core_database_skills":
             db_keywords = [
                 "sql",
@@ -105,7 +103,10 @@ def _replace_placeholders(text, cv_data, projects_dict):
             if skills:
                 return ", ".join(skills)
             else:
-                return "Experience with relational (PostgreSQL, SQLite) and non-relational databases"
+                return (
+                    "Experience with relational (PostgreSQL, SQLite) and "
+                    "non-relational databases"
+                )
         elif skill_type == "core_tools":
             keywords = [
                 "git",
@@ -302,8 +303,7 @@ def _get_dynamic_step_data(step_id, cv_data, projects_data, projects_dict, story
             step_data = copy.deepcopy(story_data.get("core_skills", {}))
             original_text = step_data.get("text", "")
             step_data["text"] = (
-                f"_(Sorry, I couldn't find specific projects tagged with '{tag}' in their technologies list.)_\n\n"
-                + original_text
+                f"_(Sorry, no projects found for '{tag}'.)_\n\n" + original_text
             )
             step_data["step_id"] = step_id
 
@@ -334,8 +334,9 @@ def _get_dynamic_step_data(step_id, cv_data, projects_data, projects_dict, story
                 story_data,
             )
             if step_data:
+                title = project.get("title", project_id)
                 step_data["text"] = (
-                    f"_(Note: Specific documentation link not found for {project.get('title', project_id)}.)_\n\n"
+                    f"_(Note: Docs link not found for {title}.)_\n\n"
                     + step_data["text"]
                 )
             else:

@@ -15,7 +15,6 @@ repos:
     hooks:
       - id: black
         language_version: python3.10
-        # Black reads pyproject.toml automatically for line-length
 
   # isort - Python import sorter
   - repo: https://github.com/pycqa/isort
@@ -23,30 +22,19 @@ repos:
     hooks:
       - id: isort
         name: isort (python)
-        # isort reads pyproject.toml automatically for profile=black
 
   # Flake8 - Python linter
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.0 # Use the latest stable version
+    rev: 7.1.0
     hooks:
       - id: flake8
-        # --- Explicitly pass arguments ---
-        args: [
-            "--max-line-length=88",
-            "--extend-ignore=E203,E501,W503", # Ignore rules compatible with Black
-            # Add per-file ignores directly here
-            "--per-file-ignores=shell/__init__.py:F541,view_cli/__init__.py:E402 F401,view_recruiter/__init__.py:E402 F401,view_visual/__init__.py:E402 F401"
-            # Note: Space-separated errors within the per-file ignore string
-          ]
-        # Exclude directories via args might be needed if config isn't read
-        # args: ["--exclude=.git,__pycache__,venv"] # Add more if needed
+        # Flake8 will automatically read its configuration from pyproject.toml
 
   # MyPy - Static type checker
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.11.0
     hooks:
       - id: mypy
-        # MyPy reads pyproject.toml reliably
         additional_dependencies: [
             "Flask>=2.3", "PyYAML>=6.0", "python-dotenv>=1.0",
             "types-PyYAML>=6.0"

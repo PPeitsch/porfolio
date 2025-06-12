@@ -16,35 +16,8 @@ exclude = '''
 /(
     \.git | \.hg | \.mypy_cache | \.tox | \.venv | venv | env | ENV
   | _build | buck-out | build | dist
-  # Add other directories if needed, e.g.:
-  # | migrations
 )/
 '''
-
-# --- Flake8 Configuration ---
-[tool.flake8]
-# Increase default line length (compatible with Black)
-max-line-length = 88
-# Extend default ignore list
-# E203: whitespace before ':' (handled by Black)
-# W503: line break before binary operator (PEP 8 changed preference, Black handles)
-# E501: line too long (we handle manually or accept if Black formats it)
-# E231: missing whitespace after ',' (consistent across Python versions)
-extend-ignore = ["E203", "W503", "E501", "E231"]
-# Exclude directories
-exclude = [
-    ".git", "__pycache__", "venv", ".venv", "env", "ENV",
-    "instance", "migrations", "dist", "build",
-]
-# Per-file ignores: Ignore E402 (import not at top) and F401 (unused import)
-# only in blueprint __init__.py files where it's standard practice.
-# Also ignore F541 (f-string missing placeholder) specifically in shell/__init__.py
-per-file-ignores = [
-    "shell/__init__.py:F541",
-    "view_cli/__init__.py:E402,F401",
-    "view_recruiter/__init__.py:E402,F401",
-    "view_visual/__init__.py:E402,F401",
-]
 
 # --- Project Schema Definition ---
 [tool.portfolio]
@@ -111,7 +84,7 @@ title = "Recruiter Story Path"
 image = "recruiter-view.png"
 short_description = "Interactive 'Choose Your Own Adventure' for recruiters"
 description = """
-Guided story experience designed specifically for recruiters and hiring managers.
+Guided story experience designed for recruiters and hiring managers.
 Features a 'Choose Your Own Adventure' style navigation that highlights relevant skills,
 projects, and experience based on the visitor's interests and needs.
 """

@@ -27,7 +27,7 @@ def selector():
         Response: The rendered selector.html template.
     """
     logger.info("Serving view selector page.")
-    cv_data = load_cv_data()  # Load CV data to get the name
+    cv_data = load_cv_data()
     return render_template("selector.html", cv=cv_data)
 
 
@@ -62,14 +62,15 @@ def get_view_partial(view_name):
             logger.error(
                 f"Error rendering template {template_name} for view {view_name}: {e}"
             )
-            # Provide error HTML that fits within the view container
-            return (
-                f'<div class="p-8 text-center"><p class="text-red-500">Error rendering view template: {e}</p></div>',
-                500,
+            error_html = (
+                '<div class="p-8 text-center"><p class="text-red-500">'
+                f"Error rendering view template: {e}</p></div>"
             )
+            return error_html, 500
     else:
         logger.warning(f"Partial requested for unknown view: {view_name}")
-        return (
-            f'<div class="p-8 text-center"><p class="text-red-500">Error: View "{view_name}" not found.</p></div>',
-            404,
+        error_html = (
+            '<div class="p-8 text-center"><p class="text-red-500">'
+            f'Error: View "{view_name}" not found.</p></div>'
         )
+        return error_html, 404

@@ -1,8 +1,7 @@
 import logging
-import os
 import textwrap
 
-from flask import abort, g, jsonify, send_from_directory
+from flask import g, jsonify
 
 from common.utils import load_cv_data, load_projects_data
 
@@ -27,14 +26,13 @@ def get_cached_data(data_type="cv"):
     """
     if data_type == "cv":
         if "cv_data" not in g:
-            g.cv_data = load_cv_data()  # Assumes load_cv_data is robust
+            g.cv_data = load_cv_data()
             logger.info("CLI: CV data loaded into context g")
         return g.cv_data
     elif data_type == "projects":
         if "projects_data" not in g:
             g.projects_data, g.projects_dict = load_projects_data()
             logger.info("CLI: Projects data loaded into context g")
-        # Ensure projects_dict is populated if projects_data exists from previous g context
         elif "projects_data" in g and "projects_dict" not in g:
             g.projects_dict = (
                 {p.get("id", f"proj_{i}"): p for i, p in enumerate(g.projects_data)}
@@ -44,34 +42,8 @@ def get_cached_data(data_type="cv"):
             logger.info(
                 "CLI: Populated projects_dict from existing projects_data in context g"
             )
-        # Return potentially empty list/dict if loading failed or no data
         return g.get("projects_data", []), g.get("projects_dict", {})
     return None
-
-
-@cli_bp.route("/static/<path:filename>")
-def static_files(filename):
-    """Serves static files specific to the CLI blueprint.
-
-    This route is necessary because the blueprint's static folder is not
-    automatically served when using this modular structure. It handles
-    requests for files like terminal.css and terminal.js.
-
-    Args:
-        filename (str): The name of the file to serve from the static folder.
-
-    Returns:
-        Response: The requested static file or a 404 error if not found.
-    """
-    static_dir = os.path.join(
-        os.path.dirname(__file__), "static"
-    )  # Relative to this routes.py file
-    logger.debug(f"Serving CLI static file: {filename} from {static_dir}")
-    try:
-        return send_from_directory(static_dir, filename)
-    except FileNotFoundError:
-        logger.error(f"CLI Static file not found: {os.path.join(static_dir, filename)}")
-        abort(404)
 
 
 @cli_bp.route("/api/command/<path:command_line>")
@@ -106,7 +78,7 @@ def handle_command_api(command_line):
 
     output = []
     error = None
-    terminal_width = 80  # Approximate width for formatting
+    terminal_width = 80
 
     try:
         if command == "help":
@@ -254,7 +226,9 @@ def handle_command_api(command_line):
                     if not link_found:
                         output.append("  (No external links available)")
                 else:
-                    error = f"[ERROR] Project '{project_id}' not found. Use 'ls projects' for IDs."
+                    error = (
+                        f"[ERROR] Project '{project_id}' not found. Use 'ls projects'."
+                    )
 
         elif command == "links":
             output.append("[INFO] Social & Repo Links:")
@@ -277,7 +251,8 @@ def handle_command_api(command_line):
 
     except Exception as e:
         logger.error(
-            f"CLI API exception processing command '{command_line}': {e}", exc_info=True
+            f"CLI API exception processing command '{command_line}': {e}",
+            exc_info=True,
         )
         error = "[ERROR] Internal server error occurred. Please check server logs."
 
