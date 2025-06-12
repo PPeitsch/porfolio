@@ -1,37 +1,102 @@
-// Wrap entire logic in a function to be called after loading
-function initializeTerminalInterface() {
-    console.log("Attempting to initialize Terminal Interface..."); // Debug log
-
-    const terminal = document.getElementById('terminal');
-    if (!terminal) {
-        console.error("Terminal container (#terminal) not found in loaded HTML!");
-        return; // Stop if the main container isn't there
+(function () {
+    // Ensure this script runs only once and finds the necessary elements
+    const cliWindow = document.getElementById("cli-window");
+    if (!cliWindow || cliWindow.dataset.initialized) {
+        return;
     }
-    // Find elements *within* the terminal container
-    const outputDiv = terminal.querySelector('#output');
-    const inputLine = terminal.querySelector('#input-line');
-    const promptSpan = terminal.querySelector('#prompt');
-    const inputElem = terminal.querySelector('#input');
+    cliWindow.dataset.initialized = "true";
 
-    if (!outputDiv || !inputLine || !promptSpan || !inputElem) {
-         console.error("One or more essential terminal child elements (#output, #input-line, #prompt, #input) are missing!");
-         return; // Stop if core elements aren't found
+    console.log("Attempting to initialize CLI Window Interface...");
+
+    // --- DOM Element Selection ---
+    const titleBar = document.getElementById("cli-title-bar");
+    const terminal = document.getElementById("terminal");
+    const outputDiv = terminal.querySelector("#output");
+    const inputElem = terminal.querySelector("#input");
+    const promptSpan = terminal.querySelector("#prompt");
+
+    // Check for essential elements
+    if (!titleBar || !terminal || !outputDiv || !inputElem || !promptSpan) {
+        console.error("One or more essential CLI elements are missing!");
+        return;
     }
 
+    // --- Window Dragging Logic ---
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    function onMouseDown(e) {
+        // Only drag with the primary mouse button and if the target is the title bar itself
+        if (e.button !== 0 || e.target.classList.contains("control-btn")) {
+            return;
+        }
+
+        isDragging = true;
+        // Calculate the initial offset from the top-left corner of the window
+        offsetX = e.clientX - cliWindow.offsetLeft;
+        offsetY = e.clientY - cliWindow.offsetTop;
+
+        // Add listeners to the document to capture mouse movement anywhere on the page
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+        document.addEventListener("mouseleave", onMouseUp); // Stop dragging if mouse leaves window
+
+        titleBar.style.cursor = "grabbing"; // Change cursor to indicate dragging
+        cliWindow.style.userSelect = "none"; // Prevent text selection while dragging
+    }
+
+    function onMouseMove(e) {
+        if (!isDragging) return;
+
+        // Calculate new position
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
+
+        // Get viewport dimensions to constrain the window
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const windowWidth = cliWindow.offsetWidth;
+        const windowHeight = cliWindow.offsetHeight;
+
+        // Constrain the window within the viewport
+        newX = Math.max(0, Math.min(newX, viewportWidth - windowWidth));
+        newY = Math.max(0, Math.min(newY, viewportHeight - windowHeight));
+
+        cliWindow.style.left = `${newX}px`;
+        cliWindow.style.top = `${newY}px`;
+    }
+
+    function onMouseUp() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        // Clean up event listeners
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.removeEventListener("mouseleave", onMouseUp);
+
+        titleBar.style.cursor = "grab"; // Revert cursor
+        cliWindow.style.userSelect = ""; // Re-enable text selection
+    }
+
+    // Attach the initial event listener to the title bar
+    titleBar.addEventListener("mousedown", onMouseDown);
+
+    // --- Terminal Logic (adapted from original file) ---
     const commandHistory = [];
     let historyIndex = -1;
     let isFetching = false;
 
-    // --- Helper Functions ---
     function writeOutput(text, className = null) {
-        const line = document.createElement('div');
-        // Parse <link> tags into clickable anchors
+        const line = document.createElement("div");
         line.innerHTML = text.replace(/<link>(.*?)<\/link>/g, (match, url) => {
-            // Basic check to ensure it looks like a URL before creating link
-            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="terminal-link">${url}</a>`;
+            const isMail = url.startsWith("mailto:");
+            if (isMail || url.startsWith("http")) {
+                return `<a href="${url}" ${
+                    !isMail ? 'target="_blank" rel="noopener noreferrer"' : ""
+                } class="terminal-link">${url.replace("mailto:", "")}</a>`;
             }
-            return url; // Return text if not a valid link format
+            return url;
         });
 
         if (className) {
@@ -42,7 +107,7 @@ function initializeTerminalInterface() {
     }
 
     function clearScreen() {
-        outputDiv.innerHTML = '';
+        outputDiv.innerHTML = "";
     }
 
     function scrollToBottom() {
@@ -54,13 +119,13 @@ function initializeTerminalInterface() {
         isFetching = true;
         inputElem.disabled = true;
 
-        writeOutput(promptSpan.textContent + commandLine, 'echo-command');
-        if (commandLine) { // Only add non-empty commands to history
+        writeOutput(promptSpan.textContent + commandLine, "echo-command");
+        if (commandLine) {
             commandHistory.push(commandLine);
         }
-        historyIndex = commandHistory.length; // Reset index AFTER push
+        historyIndex = commandHistory.length;
 
-        if (commandLine.toLowerCase() === 'clear') {
+        if (commandLine.toLowerCase() === "clear") {
             clearScreen();
             isFetching = false;
             inputElem.disabled = false;
@@ -68,96 +133,91 @@ function initializeTerminalInterface() {
             return;
         }
 
-        // Send command to backend API (Note the /cli prefix)
         try {
-            const response = await fetch(`/cli/api/command/${encodeURIComponent(commandLine)}`);
+            const response = await fetch(
+                `/cli/api/command/${encodeURIComponent(commandLine)}`
+            );
             if (!response.ok) {
-                 // Try to get error message from server response body
-                 let errorMsg = `Server error: ${response.status}`;
-                 try {
-                     const errorData = await response.json();
-                     if(errorData && errorData.error) {
-                         errorMsg = `Server error: ${errorData.error}`;
-                     }
-                 } catch(e) { /* Ignore if response is not JSON */ }
-                 throw new Error(errorMsg);
+                let errorMsg = `Server error: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData && errorData.error) {
+                        errorMsg = `Server error: ${errorData.error}`;
+                    }
+                } catch (e) {
+                    /* Ignore if response is not JSON */
+                }
+                throw new Error(errorMsg);
             }
             const data = await response.json();
 
             if (data.output && data.output.length > 0) {
-                data.output.forEach(line => writeOutput(line));
+                data.output.forEach((line) => writeOutput(line));
             }
             if (data.error) {
-                writeOutput(data.error, 'error-message');
+                writeOutput(data.error, "error-message");
             }
-
         } catch (error) {
-            console.error('Error processing command:', error);
-            writeOutput(`Error: ${error.message}`, 'error-message');
+            console.error("Error processing command:", error);
+            writeOutput(`Error: ${error.message}`, "error-message");
         } finally {
             isFetching = false;
             inputElem.disabled = false;
-            // Small timeout to ensure focus happens after potential DOM updates
             setTimeout(() => inputElem.focus(), 0);
             scrollToBottom();
         }
     }
 
-    // --- Event Listeners ---
-    inputElem.addEventListener('keydown', (event) => {
-        // Use key property (modern) instead of keyCode
-        if (event.key === 'Enter') {
+    inputElem.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
             event.preventDefault();
             const commandLine = inputElem.value.trim();
-            inputElem.value = ''; // Clear input immediately
+            inputElem.value = "";
             processCommand(commandLine);
-        } else if (event.key === 'ArrowUp') {
-             event.preventDefault();
-             if (commandHistory.length > 0 && historyIndex > 0) {
-                 historyIndex--;
-                 inputElem.value = commandHistory[historyIndex];
-                 inputElem.setSelectionRange(inputElem.value.length, inputElem.value.length);
-             }
-         } else if (event.key === 'ArrowDown') {
-             event.preventDefault();
-             if (commandHistory.length > 0 && historyIndex < commandHistory.length - 1) {
-                 historyIndex++;
-                 inputElem.value = commandHistory[historyIndex];
-                 inputElem.setSelectionRange(inputElem.value.length, inputElem.value.length);
-             } else if (historyIndex === commandHistory.length - 1) {
-                 historyIndex++; // Move past the last command
-                 inputElem.value = ''; // Clear input
-             }
-         } else if (event.key === 'Tab') {
-             event.preventDefault();
-             // TODO: Implement tab completion
-             console.log("Tab completion not implemented.");
-         } else if (event.key === 'l' && event.ctrlKey) {
-             // Optional: Ctrl+L to clear screen (like Linux terminal)
-             event.preventDefault();
-             processCommand('clear');
-         }
-    });
-
-    // Focus input when clicking inside the terminal output area
-    outputDiv.addEventListener('click', (event) => {
-        // Only focus if the click wasn't on a link
-        if (event.target.tagName !== 'A') {
-             inputElem.focus();
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            if (commandHistory.length > 0 && historyIndex > 0) {
+                historyIndex--;
+                inputElem.value = commandHistory[historyIndex];
+                inputElem.setSelectionRange(
+                    inputElem.value.length,
+                    inputElem.value.length
+                );
+            }
+        } else if (event.key === "ArrowDown") {
+            event.preventDefault();
+            if (
+                commandHistory.length > 0 &&
+                historyIndex < commandHistory.length - 1
+            ) {
+                historyIndex++;
+                inputElem.value = commandHistory[historyIndex];
+                inputElem.setSelectionRange(
+                    inputElem.value.length,
+                    inputElem.value.length
+                );
+            } else if (historyIndex === commandHistory.length - 1) {
+                historyIndex++;
+                inputElem.value = "";
+            }
+        } else if (event.key === "l" && event.ctrlKey) {
+            event.preventDefault();
+            processCommand("clear");
         }
     });
 
+    outputDiv.addEventListener("click", (event) => {
+        if (event.target.tagName !== "A") {
+            inputElem.focus();
+        }
+    });
 
     // --- Initial Setup ---
-    clearScreen(); // Start with a clean slate
-    writeOutput("Welcome to PPeitsch CLI Portfolio!");
-    writeOutput("Type 'help' for a list of commands.");
-    writeOutput(""); // Add an empty line
+    clearScreen();
+    writeOutput("Welcome to the PPeitsch CLI Portfolio!");
+    writeOutput("Type 'help' for a list of available commands.");
+    writeOutput("You can drag this window by its title bar.");
+    writeOutput("");
     inputElem.focus();
-    console.log("Terminal Interface Initialized and ready.");
-
-} // End of initializeTerminalInterface
-
-// Make the initializer globally accessible IF NEEDED by selector.js
-// If using modules later, this would be exported.
-window.initializeTerminalInterface = initializeTerminalInterface;
+    console.log("CLI Window Interface Initialized.");
+})();
