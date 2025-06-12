@@ -1,9 +1,86 @@
-#terminal {
-    background-color: #1e1e2e;
-    color: #cdd6f4;
+/* --- OS-style Window Styles --- */
+.cli-window {
+    position: absolute;
+    width: 90%;
+    max-width: 720px;
+    height: 500px;
+    background-color: #1e1e2e; /* Catppuccin Macchiato Base */
+    border: 1px solid #494d64; /* Catppuccin Macchiato Overlay0 */
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    /* On small screens, let's not have a border-radius if it's edge-to-edge */
-    border-radius: 0;
+    /* Start with a fade-in animation */
+    opacity: 0;
+    transform: scale(0.95);
+    animation: fadeInWindow 0.3s ease-out forwards;
+}
+
+@keyframes fadeInWindow {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.title-bar {
+    flex-shrink: 0;
+    height: 32px;
+    background-color: #363a4f; /* Catppuccin Macchiato Surface1 */
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    cursor: grab;
+    user-select: none;
+    border-bottom: 1px solid #494d64;
+}
+
+.title-bar:active {
+    cursor: grabbing;
+}
+
+.window-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: auto; /* Push title text to the center */
+}
+
+.control-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.control-btn.close { background-color: #ed8796; } /* Red */
+.control-btn.minimize { background-color: #eed49f; } /* Yellow */
+.control-btn.maximize { background-color: #a6da95; } /* Green */
+
+.control-btn:hover {
+    filter: brightness(1.1);
+}
+
+.title-text {
+    flex-grow: 1;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #cad3f5; /* Catppuccin Macchiato Text */
+    pointer-events: none; /* Make text non-selectable during drag */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- Terminal Content Styles --- */
+#terminal {
+    flex-grow: 1;
+    background-color: transparent; /* The window now provides the background */
+    border-radius: 0 0 8px 8px;
 }
 
 #output {
@@ -75,16 +152,17 @@ a.terminal-link:hover {
 }
 
 /* --- Responsive Adjustments --- */
-@media (min-width: 768px) {
-    /* On larger screens, add back the border radius */
-    #terminal {
-        border-radius: 0.5rem; /* rounded-lg */
+@media (max-width: 640px) {
+    .cli-window {
+        width: 100%;
+        height: 100%;
+        top: 0 !important;
+        left: 0 !important;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
     }
-}
-
-/* Reduce font size on very small screens to prevent overflow */
-@media (max-width: 400px) {
-    #terminal {
-        font-size: 0.8rem; /* Smaller font */
+    .title-bar {
+        border-radius: 0;
     }
 }
