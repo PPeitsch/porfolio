@@ -4,8 +4,8 @@
     width: 90%;
     max-width: 720px;
     height: 500px;
-    background-color: #1e1e2e; /* Catppuccin Macchiato Base */
-    border: 1px solid #494d64; /* Catppuccin Macchiato Overlay0 */
+    background-color: #1e1e2e;
+    border: 1px solid #494d64;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     display: flex;
@@ -15,6 +15,11 @@
     opacity: 0;
     transform: scale(0.95);
     animation: fadeInWindow 0.3s 0.1s ease-out forwards;
+}
+
+/* Disable transitions during drag for instant feedback */
+.cli-window.is-dragging {
+    transition: none;
 }
 
 @keyframes fadeInWindow {

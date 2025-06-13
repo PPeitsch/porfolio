@@ -23,49 +23,41 @@
         return;
     }
 
-    // --- Window State Management (Refactored) ---
-    let windowState = "normal"; // can be 'normal', 'maximized', 'minimized'
+    // --- Window State Management ---
+    let windowState = "normal";
     let lastPosition = { top: cliWindow.offsetTop, left: cliWindow.offsetLeft };
 
-    // --- Window Controls Logic (Refactored) ---
-
+    // --- Window Controls Logic ---
     function handleClose() {
         backButton.click();
     }
 
     function handleMinimize() {
         if (windowState === "minimized") {
-            // Un-minimize
             cliWindow.classList.remove("minimized");
             windowState = "normal";
             inputElem.focus();
         } else if (windowState === "normal") {
-            // Minimize from normal state
             cliWindow.classList.add("minimized");
             windowState = "minimized";
         }
-        // If maximized, do nothing. User must restore first. This prevents state conflicts.
     }
 
     function handleMaximize() {
         if (windowState === "maximized") {
-            // Restore from maximized state
             cliWindow.classList.remove("maximized");
             cliWindow.style.top = `${lastPosition.top}px`;
             cliWindow.style.left = `${lastPosition.left}px`;
             windowState = "normal";
         } else {
             if (windowState === "minimized") {
-                // If minimized, un-minimize first before maximizing
                 cliWindow.classList.remove("minimized");
             }
-            // Save position before maximizing
             lastPosition = {
                 top: cliWindow.offsetTop,
                 left: cliWindow.offsetLeft,
             };
             cliWindow.classList.add("maximized");
-            // Remove inline styles so the CSS class can take over
             cliWindow.style.top = "";
             cliWindow.style.left = "";
             windowState = "maximized";
@@ -78,56 +70,72 @@
     maximizeBtn.addEventListener("click", handleMaximize);
     titleBar.addEventListener("dblclick", handleMaximize);
 
-    // --- Window Dragging Logic ---
+    // --- High-Performance Window Dragging Logic (Refactored) ---
     let isDragging = false;
-    let offsetX, offsetY;
+    let dragStartX, dragStartY;
+    let initialLeft, initialTop;
 
     function onMouseDown(e) {
         if (e.button !== 0 || e.target.classList.contains("control-btn")) {
             return;
         }
-        if (windowState === "maximized") return; // Prevent dragging when maximized
+        if (windowState === "maximized") return;
 
         isDragging = true;
-        offsetX = e.clientX - cliWindow.offsetLeft;
-        offsetY = e.clientY - cliWindow.offsetTop;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        initialLeft = cliWindow.offsetLeft;
+        initialTop = cliWindow.offsetTop;
+
+        // Use a class to disable transitions only during drag for snappy response
+        cliWindow.classList.add('is-dragging');
 
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
-        document.addEventListener("mouseleave", onMouseUp);
-
-        titleBar.style.cursor = "grabbing";
-        cliWindow.style.userSelect = "none";
     }
 
     function onMouseMove(e) {
         if (!isDragging) return;
-        let newX = e.clientX - offsetX;
-        let newY = e.clientY - offsetY;
 
+        // Calculate delta from the start of the drag
+        const deltaX = e.clientX - dragStartX;
+        const deltaY = e.clientY - dragStartY;
+
+        // Apply delta via transform for smooth hardware-accelerated movement
+        cliWindow.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+    }
+
+    function onMouseUp(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        cliWindow.classList.remove('is-dragging');
+
+        // Calculate the final position
+        const deltaX = e.clientX - dragStartX;
+        const deltaY = e.clientY - dragStartY;
+        let finalX = initialLeft + deltaX;
+        let finalY = initialTop + deltaY;
+
+        // --- Constrain to viewport ---
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = document.documentElement.clientHeight;
         const windowWidth = cliWindow.offsetWidth;
         const windowHeight = cliWindow.offsetHeight;
 
-        newX = Math.max(0, Math.min(newX, viewportWidth - windowWidth));
-        newY = Math.max(0, Math.min(newY, viewportHeight - windowHeight));
+        finalX = Math.max(0, Math.min(finalX, viewportWidth - windowWidth));
+        finalY = Math.max(0, Math.min(finalY, viewportHeight - windowHeight));
 
-        cliWindow.style.left = `${newX}px`;
-        cliWindow.style.top = `${newY}px`;
-    }
+        // "Bake" the position into top/left and reset transform
+        cliWindow.style.transform = 'none'; // Reset transform
+        cliWindow.style.left = `${finalX}px`; // Set final layout position
+        cliWindow.style.top = `${finalY}px`;
 
-    function onMouseUp() {
-        if (!isDragging) return;
-        isDragging = false;
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
-        document.removeEventListener("mouseleave", onMouseUp);
-        titleBar.style.cursor = "grab";
-        cliWindow.style.userSelect = "";
     }
 
     titleBar.addEventListener("mousedown", onMouseDown);
+
 
     // --- Terminal Logic (Existing code, unchanged) ---
     const commandHistory = [];
