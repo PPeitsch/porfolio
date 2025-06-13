@@ -70,10 +70,9 @@
     maximizeBtn.addEventListener("click", handleMaximize);
     titleBar.addEventListener("dblclick", handleMaximize);
 
-    // --- High-Performance Window Dragging Logic (Refactored) ---
+    // --- Window Dragging Logic (Corrected for Real-time Movement) ---
     let isDragging = false;
-    let dragStartX, dragStartY;
-    let initialLeft, initialTop;
+    let offsetX, offsetY;
 
     function onMouseDown(e) {
         if (e.button !== 0 || e.target.classList.contains("control-btn")) {
@@ -82,56 +81,50 @@
         if (windowState === "maximized") return;
 
         isDragging = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        initialLeft = cliWindow.offsetLeft;
-        initialTop = cliWindow.offsetTop;
 
-        // Use a class to disable transitions only during drag for snappy response
+        // Calculate offset from the element's top-left corner to the mouse position
+        offsetX = e.clientX - cliWindow.offsetLeft;
+        offsetY = e.clientY - cliWindow.offsetTop;
+
+        // Add class to disable CSS transitions for immediate response
         cliWindow.classList.add('is-dragging');
 
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
+        document.addEventListener("mouseleave", onMouseUp);
     }
 
     function onMouseMove(e) {
         if (!isDragging) return;
 
-        // Calculate delta from the start of the drag
-        const deltaX = e.clientX - dragStartX;
-        const deltaY = e.clientY - dragStartY;
+        // Calculate the new top-left position of the window
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
 
-        // Apply delta via transform for smooth hardware-accelerated movement
-        cliWindow.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-    }
-
-    function onMouseUp(e) {
-        if (!isDragging) return;
-        isDragging = false;
-        cliWindow.classList.remove('is-dragging');
-
-        // Calculate the final position
-        const deltaX = e.clientX - dragStartX;
-        const deltaY = e.clientY - dragStartY;
-        let finalX = initialLeft + deltaX;
-        let finalY = initialTop + deltaY;
-
-        // --- Constrain to viewport ---
+        // Constrain to viewport
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = document.documentElement.clientHeight;
         const windowWidth = cliWindow.offsetWidth;
         const windowHeight = cliWindow.offsetHeight;
 
-        finalX = Math.max(0, Math.min(finalX, viewportWidth - windowWidth));
-        finalY = Math.max(0, Math.min(finalY, viewportHeight - windowHeight));
+        newX = Math.max(0, Math.min(newX, viewportWidth - windowWidth));
+        newY = Math.max(0, Math.min(newY, viewportHeight - windowHeight));
 
-        // "Bake" the position into top/left and reset transform
-        cliWindow.style.transform = 'none'; // Reset transform
-        cliWindow.style.left = `${finalX}px`; // Set final layout position
-        cliWindow.style.top = `${finalY}px`;
+        // Directly update top and left. Because .is-dragging has transition:none, this is fast.
+        cliWindow.style.left = `${newX}px`;
+        cliWindow.style.top = `${newY}px`;
+    }
+
+    function onMouseUp() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        // Re-enable CSS transitions by removing the class
+        cliWindow.classList.remove('is-dragging');
 
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
+        document.removeEventListener("mouseleave", onMouseUp);
     }
 
     titleBar.addEventListener("mousedown", onMouseDown);
