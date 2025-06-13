@@ -23,23 +23,37 @@
         return;
     }
 
-    // --- Window State Management ---
-    let windowState = "normal";
+    // --- Window State Management (Refactored for better minimize logic) ---
+    let windowState = "normal"; // can be 'normal', 'maximized', 'minimized'
+    let stateBeforeMinimize = "normal"; // stores the state before minimizing
     let lastPosition = { top: cliWindow.offsetTop, left: cliWindow.offsetLeft };
 
-    // --- Window Controls Logic ---
+    // --- Window Controls Logic (Refactored) ---
     function handleClose() {
         backButton.click();
     }
 
     function handleMinimize() {
-        if (windowState === "minimized") {
-            cliWindow.classList.remove("minimized");
-            windowState = "normal";
-            inputElem.focus();
-        } else if (windowState === "normal") {
-            cliWindow.classList.add("minimized");
+        if (windowState !== "minimized") {
+            // Save the current state before minimizing
+            stateBeforeMinimize = windowState;
             windowState = "minimized";
+
+            // Add 'minimized' and ensure 'maximized' is removed to avoid style conflicts
+            cliWindow.classList.add("minimized");
+            cliWindow.classList.remove("maximized");
+        } else {
+            // Restore to the state it was in before minimizing
+            cliWindow.classList.remove("minimized");
+            windowState = stateBeforeMinimize;
+
+            // If it was maximized before, re-apply the maximized class
+            if (windowState === "maximized") {
+                cliWindow.classList.add("maximized");
+            }
+
+            // Focus input for immediate use
+            inputElem.focus();
         }
     }
 
@@ -51,6 +65,7 @@
             windowState = "normal";
         } else {
             if (windowState === "minimized") {
+                // Un-minimize before maximizing
                 cliWindow.classList.remove("minimized");
             }
             lastPosition = {
@@ -70,7 +85,7 @@
     maximizeBtn.addEventListener("click", handleMaximize);
     titleBar.addEventListener("dblclick", handleMaximize);
 
-    // --- Window Dragging Logic (Corrected for Real-time Movement) ---
+    // --- Window Dragging Logic ---
     let isDragging = false;
     let offsetX, offsetY;
 
@@ -81,14 +96,9 @@
         if (windowState === "maximized") return;
 
         isDragging = true;
-
-        // Calculate offset from the element's top-left corner to the mouse position
         offsetX = e.clientX - cliWindow.offsetLeft;
         offsetY = e.clientY - cliWindow.offsetTop;
-
-        // Add class to disable CSS transitions for immediate response
         cliWindow.classList.add('is-dragging');
-
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
         document.addEventListener("mouseleave", onMouseUp);
@@ -96,21 +106,14 @@
 
     function onMouseMove(e) {
         if (!isDragging) return;
-
-        // Calculate the new top-left position of the window
         let newX = e.clientX - offsetX;
         let newY = e.clientY - offsetY;
-
-        // Constrain to viewport
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = document.documentElement.clientHeight;
         const windowWidth = cliWindow.offsetWidth;
         const windowHeight = cliWindow.offsetHeight;
-
         newX = Math.max(0, Math.min(newX, viewportWidth - windowWidth));
         newY = Math.max(0, Math.min(newY, viewportHeight - windowHeight));
-
-        // Directly update top and left. Because .is-dragging has transition:none, this is fast.
         cliWindow.style.left = `${newX}px`;
         cliWindow.style.top = `${newY}px`;
     }
@@ -118,17 +121,13 @@
     function onMouseUp() {
         if (!isDragging) return;
         isDragging = false;
-
-        // Re-enable CSS transitions by removing the class
         cliWindow.classList.remove('is-dragging');
-
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
         document.removeEventListener("mouseleave", onMouseUp);
     }
 
     titleBar.addEventListener("mousedown", onMouseDown);
-
 
     // --- Terminal Logic (Existing code, unchanged) ---
     const commandHistory = [];
