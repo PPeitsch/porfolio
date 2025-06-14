@@ -1,130 +1,32 @@
 (function () {
     const cliWindow = document.getElementById("cli-window");
-    if (!cliWindow || cliWindow.dataset.initialized) {
+    if (!cliWindow || cliWindow.dataset.viewInitialized) {
         return;
     }
-    cliWindow.dataset.initialized = "true";
+    cliWindow.dataset.viewInitialized = "true";
+    console.log("Initializing CLI View Specifics...");
 
-    console.log("Initializing CLI Window Interface...");
-
-    // --- DOM Element Selection ---
-    const titleBar = document.getElementById("cli-title-bar");
-    const terminal = document.getElementById("terminal");
-    const outputDiv = terminal.querySelector("#output");
-    const inputElem = terminal.querySelector("#input");
-    const promptSpan = terminal.querySelector("#prompt");
-    const closeBtn = document.getElementById("cli-close");
-    const minimizeBtn = document.getElementById("cli-minimize");
-    const maximizeBtn = document.getElementById("cli-maximize");
-    const backButton = document.getElementById("back-button");
-
-    if (!titleBar || !terminal || !closeBtn || !minimizeBtn || !maximizeBtn || !backButton) {
-        console.error("One or more essential CLI or shell elements are missing!");
-        return;
-    }
-
-    // --- Window State Management ---
-    let windowState = "normal";
-    let stateBeforeMinimize = "normal";
-    let lastPosition = { top: cliWindow.offsetTop, left: cliWindow.offsetLeft };
-
-    // --- Window Controls Logic ---
-    function handleClose() { backButton.click(); }
-    function handleMinimize() {
-        if (windowState !== "minimized") {
-            stateBeforeMinimize = windowState;
-            windowState = "minimized";
-            cliWindow.classList.add("minimized");
-            cliWindow.classList.remove("maximized");
-        }
-    }
-    function handleRestore() {
-        if (windowState === "minimized") {
-            cliWindow.classList.remove("minimized");
-            windowState = stateBeforeMinimize;
-            if (windowState === "maximized") {
-                cliWindow.classList.add("maximized");
-            }
-            inputElem.focus();
-        } else if (windowState === "maximized") { handleMaximize(); }
-    }
-    function handleMaximize() {
-        if (windowState === "maximized") {
-            cliWindow.classList.remove("maximized");
-            cliWindow.style.top = `${lastPosition.top}px`;
-            cliWindow.style.left = `${lastPosition.left}px`;
-            windowState = "normal";
-        } else {
-            if (windowState === "minimized") { cliWindow.classList.remove("minimized"); }
-            lastPosition = { top: cliWindow.offsetTop, left: cliWindow.offsetLeft };
-            cliWindow.classList.add("maximized");
-            cliWindow.style.top = "";
-            cliWindow.style.left = "";
-            windowState = "maximized";
-        }
-        inputElem.focus();
-    }
-    function handleReset() {
-        cliWindow.classList.remove('maximized', 'minimized');
-        const viewportWidth = document.documentElement.clientWidth;
-        const viewportHeight = document.documentElement.clientHeight;
-        const defaultWidth = Math.min(720, viewportWidth * 0.9);
-        const defaultHeight = Math.min(500, viewportHeight * 0.9);
-        const newLeft = (viewportWidth - defaultWidth) / 2;
-        const newTop = (viewportHeight - defaultHeight) / 2;
-        cliWindow.style.width = `${defaultWidth}px`;
-        cliWindow.style.height = `${defaultHeight}px`;
-        cliWindow.style.left = `${newLeft}px`;
-        cliWindow.style.top = `${newTop}px`;
-        lastPosition = { top: newTop, left: newLeft };
-        windowState = 'normal';
-        inputElem.focus();
-    }
-
-    closeBtn.addEventListener("click", handleClose);
-    minimizeBtn.addEventListener("click", () => {
-        if (windowState === 'minimized') handleRestore();
-        else handleMinimize();
+    // Initialize the draggable window functionality
+    const windowControls = initializeDraggableWindow({
+        windowId: "cli-window",
+        titleBarId: "cli-title-bar",
+        contentId: "terminal-content",
+        closeBtnId: "cli-close",
+        minimizeBtnId: "cli-minimize",
+        maximizeBtnId: "cli-maximize",
+        backButtonId: "back-button",
     });
-    maximizeBtn.addEventListener("click", handleMaximize);
-    titleBar.addEventListener("dblclick", handleMaximize);
 
-    // --- Window Dragging Logic ---
-    let isDragging = false;
-    let offsetX, offsetY;
-    function onMouseDown(e) {
-        if (e.button !== 0 || e.target.classList.contains("control-btn")) { return; }
-        if (windowState === "maximized") return;
-        isDragging = true;
-        offsetX = e.clientX - cliWindow.offsetLeft;
-        offsetY = e.clientY - cliWindow.offsetTop;
-        cliWindow.classList.add('is-dragging');
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-        document.addEventListener("mouseleave", onMouseUp);
+    // --- DOM Element Selection for Terminal ---
+    const terminalContent = document.getElementById("terminal-content");
+    const outputDiv = terminalContent.querySelector("#output");
+    const inputElem = terminalContent.querySelector("#input");
+    const promptSpan = terminalContent.querySelector("#prompt");
+
+    if (!terminalContent || !outputDiv || !inputElem || !promptSpan) {
+        console.error("One or more essential terminal content elements are missing!");
+        return;
     }
-    function onMouseMove(e) {
-        if (!isDragging) return;
-        let newX = e.clientX - offsetX;
-        let newY = e.clientY - offsetY;
-        const viewportWidth = document.documentElement.clientWidth;
-        const viewportHeight = document.documentElement.clientHeight;
-        const windowWidth = cliWindow.offsetWidth;
-        const windowHeight = cliWindow.offsetHeight;
-        newX = Math.max(0, Math.min(newX, viewportWidth - windowWidth));
-        newY = Math.max(0, Math.min(newY, viewportHeight - windowHeight));
-        cliWindow.style.left = `${newX}px`;
-        cliWindow.style.top = `${newY}px`;
-    }
-    function onMouseUp() {
-        if (!isDragging) return;
-        isDragging = false;
-        cliWindow.classList.remove('is-dragging');
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.removeEventListener("mouseleave", onMouseUp);
-    }
-    titleBar.addEventListener("mousedown", onMouseDown);
 
     // --- Terminal Logic ---
     const commandHistory = [];
@@ -160,12 +62,12 @@
 
         // --- Local Command Interceptor ---
         const localCommands = {
-            'maximize': handleMaximize,
-            'minimize': handleMinimize,
-            'restore': handleRestore,
-            'close': handleClose,
-            'exit': handleClose,
-            'win-reset': handleReset,
+            'maximize': windowControls.maximize,
+            'minimize': windowControls.minimize,
+            'restore': () => { if (cliWindow.classList.contains('minimized')) windowControls.minimize(); else windowControls.maximize(); }, // Simplified restore
+            'close': windowControls.close,
+            'exit': windowControls.close,
+            'win-reset': windowControls.reset,
             'clear': clearScreen,
         };
 
@@ -253,5 +155,5 @@
     writeOutput("You can drag this window by its title bar.");
     writeOutput("");
     inputElem.focus();
-    console.log("CLI Window Interface Initialized.");
+    console.log("CLI View Specifics Initialized.");
 })();

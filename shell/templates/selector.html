@@ -34,9 +34,9 @@
 
             <!-- Recruiter / CYOA Option -->
             <div id="select-recruiter" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
-                <i class="fas fa-route fa-3x text-sky-500 mb-5"></i>
+                <i class="fas fa-comments fa-3x text-sky-500 mb-5"></i>
                 <h2 class="text-xl font-semibold text-gray-700 mb-1">Recruiter</h2>
-                <p class="text-gray-500 text-sm">Guided skills & impact tour.</p>
+                <p class="text-gray-500 text-sm">AI-powered chat assistant.</p>
             </div>
 
             <!-- Visual / Simple Option -->
@@ -63,6 +63,22 @@
 
 
     <!-- ===== Scripts ===== -->
+    <script>
+        // Pass Flask URLs to a global JS object
+        const _app_urls = {
+            view_cli: '{{ url_for("shell.get_view_partial", view_name="cli") }}',
+            view_recruiter: '{{ url_for("shell.get_view_partial", view_name="recruiter") }}',
+            view_visual: '{{ url_for("shell.get_view_partial", view_name="visual") }}',
+            shared_window_css: '{{ url_for("shell.static", filename="css/window.css") }}',
+            shared_window_js: '{{ url_for("shell.static", filename="js/window.js") }}',
+            cli_css: '{{ url_for("cli.static", filename="css/terminal.css") }}',
+            cli_js: '{{ url_for("cli.static", filename="js/terminal.js") }}',
+            recruiter_css: '{{ url_for("recruiter.static", filename="css/chat.css") }}',
+            recruiter_js: '{{ url_for("recruiter.static", filename="js/chat.js") }}',
+            visual_css: '{{ url_for("visual.static", filename="css/visual.css") }}',
+            visual_js: '{{ url_for("visual.static", filename="js/visual.js") }}',
+        };
+    </script>
     <script src="{{ url_for('shell.static', filename='js/selector.js') }}"></script>
 
 </body>
