@@ -11,19 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_cached_data(data_type="cv"):
-    """Gets cached data from Flask's 'g' context, loading if not present.
-
-    This helper function ensures that data files (like cv.yaml and
-    projects.yaml) are loaded from disk only once per request context,
-    improving performance.
-
-    Args:
-        data_type (str): The type of data to get ('cv' or 'projects').
-
-    Returns:
-        The cached data, which varies based on data_type. For 'projects',
-        it returns a tuple of (list, dict). Returns None for unknown types.
-    """
+    """Gets cached data from Flask's 'g' context, loading if not present."""
     if data_type == "cv":
         if "cv_data" not in g:
             g.cv_data = load_cv_data()
@@ -48,19 +36,7 @@ def get_cached_data(data_type="cv"):
 
 @cli_bp.route("/api/command/<path:command_line>")
 def handle_command_api(command_line):
-    """API endpoint to process a command string from the CLI view.
-
-    It parses the command, retrieves necessary data, formats a response with
-    informational markers, and returns it as JSON. This is the core logic
-    engine for the interactive terminal.
-
-    Args:
-        command_line (str): The full command line string entered by the user.
-
-    Returns:
-        Response: A JSON response containing 'output' (list of strings),
-                  'error' (string or None), and the original 'command'.
-    """
+    """API endpoint to process a command string from the CLI view."""
     logger.debug(f"CLI API received command: {command_line}")
     CV_DATA = get_cached_data("cv")
     PROJECTS_DATA, PROJECTS_DICT = get_cached_data("projects")
@@ -82,15 +58,23 @@ def handle_command_api(command_line):
 
     try:
         if command == "help":
-            output.append("[INFO] Available commands:")
+            output.append("[INFO] Portfolio Commands:")
             output.append("  whoami         - Display summary about me")
             output.append("  skills         - List my technical skills")
             output.append("  contact        - Show contact information")
+            output.append("  links          - Show social and repository links")
             output.append("  ls projects    - List available projects")
-            output.append("  show <project> - Show details for a project (use ID)")
-            output.append("  links          - Show social/repository links")
+            output.append("  show <project> - Show details for a specific project")
+            output.append("")
+            output.append("[INFO] Window Management Commands:")
+            output.append("  maximize       - Maximize the terminal window")
+            output.append("  minimize       - Minimize the terminal window")
+            output.append("  restore        - Restore window from min/max state")
+            output.append(
+                "  win-reset      - Reset window to default size and position"
+            )
             output.append("  clear          - Clear the terminal screen")
-            output.append("  help           - Show this help message")
+            output.append("  exit / close   - Close the terminal window")
 
         elif command == "whoami":
             output.append(f"Name:    {CV_DATA.get('name', 'N/A')}")
@@ -242,8 +226,6 @@ def handle_command_api(command_line):
             if not link_found:
                 output.append("  (No social links configured)")
 
-        elif command == "clear":
-            pass
         elif command == "":
             pass
         else:

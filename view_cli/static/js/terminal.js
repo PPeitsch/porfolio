@@ -23,37 +23,35 @@
         return;
     }
 
-    // --- Window State Management (Refactored for better minimize logic) ---
-    let windowState = "normal"; // can be 'normal', 'maximized', 'minimized'
-    let stateBeforeMinimize = "normal"; // stores the state before minimizing
+    // --- Window State Management ---
+    let windowState = "normal";
+    let stateBeforeMinimize = "normal";
     let lastPosition = { top: cliWindow.offsetTop, left: cliWindow.offsetLeft };
 
-    // --- Window Controls Logic (Refactored) ---
+    // --- Window Controls Logic ---
     function handleClose() {
         backButton.click();
     }
 
     function handleMinimize() {
         if (windowState !== "minimized") {
-            // Save the current state before minimizing
             stateBeforeMinimize = windowState;
             windowState = "minimized";
-
-            // Add 'minimized' and ensure 'maximized' is removed to avoid style conflicts
             cliWindow.classList.add("minimized");
             cliWindow.classList.remove("maximized");
-        } else {
-            // Restore to the state it was in before minimizing
+        }
+    }
+
+    function handleRestore() {
+        if (windowState === "minimized") {
             cliWindow.classList.remove("minimized");
             windowState = stateBeforeMinimize;
-
-            // If it was maximized before, re-apply the maximized class
             if (windowState === "maximized") {
                 cliWindow.classList.add("maximized");
             }
-
-            // Focus input for immediate use
             inputElem.focus();
+        } else if (windowState === "maximized") {
+            handleMaximize();
         }
     }
 
@@ -65,7 +63,6 @@
             windowState = "normal";
         } else {
             if (windowState === "minimized") {
-                // Un-minimize before maximizing
                 cliWindow.classList.remove("minimized");
             }
             lastPosition = {
@@ -80,8 +77,33 @@
         inputElem.focus();
     }
 
+    function handleReset() {
+        cliWindow.classList.remove('maximized', 'minimized');
+
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = document.documentElement.clientHeight;
+        const defaultWidth = Math.min(720, viewportWidth * 0.9);
+        const defaultHeight = Math.min(500, viewportHeight * 0.9);
+
+        const newLeft = (viewportWidth - defaultWidth) / 2;
+        const newTop = (viewportHeight - defaultHeight) / 2;
+
+        cliWindow.style.width = `${defaultWidth}px`;
+        cliWindow.style.height = `${defaultHeight}px`;
+        cliWindow.style.left = `${newLeft}px`;
+        cliWindow.style.top = `${newTop}px`;
+
+        // CRITICAL FIX: Update lastPosition to the new reset state
+        lastPosition = { top: newTop, left: newLeft };
+        windowState = 'normal';
+        inputElem.focus();
+    }
+
     closeBtn.addEventListener("click", handleClose);
-    minimizeBtn.addEventListener("click", handleMinimize);
+    minimizeBtn.addEventListener("click", () => {
+        if (windowState === 'minimized') handleRestore();
+        else handleMinimize();
+    });
     maximizeBtn.addEventListener("click", handleMaximize);
     titleBar.addEventListener("dblclick", handleMaximize);
 
@@ -90,11 +112,8 @@
     let offsetX, offsetY;
 
     function onMouseDown(e) {
-        if (e.button !== 0 || e.target.classList.contains("control-btn")) {
-            return;
-        }
+        if (e.button !== 0 || e.target.classList.contains("control-btn")) { return; }
         if (windowState === "maximized") return;
-
         isDragging = true;
         offsetX = e.clientX - cliWindow.offsetLeft;
         offsetY = e.clientY - cliWindow.offsetTop;
@@ -129,10 +148,20 @@
 
     titleBar.addEventListener("mousedown", onMouseDown);
 
-    // --- Terminal Logic (Existing code, unchanged) ---
+    // --- Terminal Logic ---
     const commandHistory = [];
     let historyIndex = -1;
     let isFetching = false;
+
+    const localCommands = {
+        'maximize': handleMaximize,
+        'minimize': handleMinimize,
+        'restore': handleRestore,
+        'close': handleClose,
+        'exit': handleClose,
+        'win-reset': handleReset,
+        'clear': clearScreen,
+    };
 
     function writeOutput(text, className = null) {
         const line = document.createElement("div");
@@ -140,67 +169,49 @@
             const isMail = url.startsWith("mailto:");
             if (isMail || url.startsWith("http")) {
                 const cleanUrl = url.replace("mailto:", "");
-                const linkText =
-                    cleanUrl.length > 50
-                        ? cleanUrl.substring(0, 47) + "..."
-                        : cleanUrl;
-                return `<a href="${url}" ${
-                    !isMail ? 'target="_blank" rel="noopener noreferrer"' : ""
-                } class="terminal-link" title="${cleanUrl}">${linkText}</a>`;
+                const linkText = cleanUrl.length > 50 ? cleanUrl.substring(0, 47) + "..." : cleanUrl;
+                return `<a href="${url}" ${!isMail ? 'target="_blank" rel="noopener noreferrer"' : ""} class="terminal-link" title="${cleanUrl}">${linkText}</a>`;
             }
             return url;
         });
-
-        if (className) {
-            line.classList.add(className);
-        }
+        if (className) { line.classList.add(className); }
         outputDiv.appendChild(line);
         scrollToBottom();
     }
 
-    function clearScreen() {
-        outputDiv.innerHTML = "";
-    }
-
-    function scrollToBottom() {
-        outputDiv.scrollTop = outputDiv.scrollHeight;
-    }
+    function clearScreen() { outputDiv.innerHTML = ""; }
+    function scrollToBottom() { outputDiv.scrollTop = outputDiv.scrollHeight; }
 
     async function processCommand(commandLine) {
         if (isFetching) return;
-        isFetching = true;
-        inputElem.disabled = true;
+
         writeOutput(promptSpan.textContent + commandLine, "echo-command");
-        if (commandLine) {
-            commandHistory.push(commandLine);
-        }
+        if (commandLine) { commandHistory.push(commandLine); }
         historyIndex = commandHistory.length;
-        if (commandLine.toLowerCase() === "clear") {
-            clearScreen();
-            isFetching = false;
-            inputElem.disabled = false;
+
+        const command = commandLine.toLowerCase().trim();
+        if (localCommands[command]) {
+            localCommands[command]();
             inputElem.focus();
             return;
         }
+
+        isFetching = true;
+        inputElem.disabled = true;
+
         try {
             const response = await fetch(`/cli/api/command/${encodeURIComponent(commandLine)}`);
             if (!response.ok) {
                 let errorMsg = `Server error: ${response.status}`;
                 try {
                     const errorData = await response.json();
-                    if (errorData && errorData.error) {
-                        errorMsg = `Server error: ${errorData.error}`;
-                    }
+                    if (errorData && errorData.error) { errorMsg = `Server error: ${errorData.error}`; }
                 } catch (e) {}
                 throw new Error(errorMsg);
             }
             const data = await response.json();
-            if (data.output && data.output.length > 0) {
-                data.output.forEach((line) => writeOutput(line));
-            }
-            if (data.error) {
-                writeOutput(data.error, "error-message");
-            }
+            if (data.output && data.output.length > 0) { data.output.forEach((line) => writeOutput(line)); }
+            if (data.error) { writeOutput(data.error, "error-message"); }
         } catch (error) {
             console.error("Error processing command:", error);
             writeOutput(`Error: ${error.message}`, "error-message");
@@ -241,11 +252,7 @@
         }
     });
 
-    outputDiv.addEventListener("click", (event) => {
-        if (event.target.tagName !== "A") {
-            inputElem.focus();
-        }
-    });
+    outputDiv.addEventListener("click", (event) => { if (event.target.tagName !== "A") { inputElem.focus(); } });
 
     // --- Initial Setup ---
     clearScreen();
