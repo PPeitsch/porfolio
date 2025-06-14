@@ -249,12 +249,12 @@ def handle_command_api(command_line):
             info = [
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
                 "-----------------------",
-                f"OS: FlaskOS Portfolio",
+                "OS: FlaskOS Portfolio",
                 f"Host: {name}'s Portfolio",
                 f"Title: {title}",
                 f"Projects: {project_count}",
                 f"Skills: {skill_count}",
-                f"Shell: Web-CLI",
+                "Shell: Web-CLI",
             ]
 
             for i in range(max(len(logo), len(info))):
