@@ -29,10 +29,7 @@
     let lastPosition = { top: cliWindow.offsetTop, left: cliWindow.offsetLeft };
 
     // --- Window Controls Logic ---
-    function handleClose() {
-        backButton.click();
-    }
-
+    function handleClose() { backButton.click(); }
     function handleMinimize() {
         if (windowState !== "minimized") {
             stateBeforeMinimize = windowState;
@@ -41,7 +38,6 @@
             cliWindow.classList.remove("maximized");
         }
     }
-
     function handleRestore() {
         if (windowState === "minimized") {
             cliWindow.classList.remove("minimized");
@@ -50,11 +46,8 @@
                 cliWindow.classList.add("maximized");
             }
             inputElem.focus();
-        } else if (windowState === "maximized") {
-            handleMaximize();
-        }
+        } else if (windowState === "maximized") { handleMaximize(); }
     }
-
     function handleMaximize() {
         if (windowState === "maximized") {
             cliWindow.classList.remove("maximized");
@@ -62,13 +55,8 @@
             cliWindow.style.left = `${lastPosition.left}px`;
             windowState = "normal";
         } else {
-            if (windowState === "minimized") {
-                cliWindow.classList.remove("minimized");
-            }
-            lastPosition = {
-                top: cliWindow.offsetTop,
-                left: cliWindow.offsetLeft,
-            };
+            if (windowState === "minimized") { cliWindow.classList.remove("minimized"); }
+            lastPosition = { top: cliWindow.offsetTop, left: cliWindow.offsetLeft };
             cliWindow.classList.add("maximized");
             cliWindow.style.top = "";
             cliWindow.style.left = "";
@@ -76,24 +64,18 @@
         }
         inputElem.focus();
     }
-
     function handleReset() {
         cliWindow.classList.remove('maximized', 'minimized');
-
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = document.documentElement.clientHeight;
         const defaultWidth = Math.min(720, viewportWidth * 0.9);
         const defaultHeight = Math.min(500, viewportHeight * 0.9);
-
         const newLeft = (viewportWidth - defaultWidth) / 2;
         const newTop = (viewportHeight - defaultHeight) / 2;
-
         cliWindow.style.width = `${defaultWidth}px`;
         cliWindow.style.height = `${defaultHeight}px`;
         cliWindow.style.left = `${newLeft}px`;
         cliWindow.style.top = `${newTop}px`;
-
-        // CRITICAL FIX: Update lastPosition to the new reset state
         lastPosition = { top: newTop, left: newLeft };
         windowState = 'normal';
         inputElem.focus();
@@ -110,7 +92,6 @@
     // --- Window Dragging Logic ---
     let isDragging = false;
     let offsetX, offsetY;
-
     function onMouseDown(e) {
         if (e.button !== 0 || e.target.classList.contains("control-btn")) { return; }
         if (windowState === "maximized") return;
@@ -122,7 +103,6 @@
         document.addEventListener("mouseup", onMouseUp);
         document.addEventListener("mouseleave", onMouseUp);
     }
-
     function onMouseMove(e) {
         if (!isDragging) return;
         let newX = e.clientX - offsetX;
@@ -136,7 +116,6 @@
         cliWindow.style.left = `${newX}px`;
         cliWindow.style.top = `${newY}px`;
     }
-
     function onMouseUp() {
         if (!isDragging) return;
         isDragging = false;
@@ -145,23 +124,12 @@
         document.removeEventListener("mouseup", onMouseUp);
         document.removeEventListener("mouseleave", onMouseUp);
     }
-
     titleBar.addEventListener("mousedown", onMouseDown);
 
     // --- Terminal Logic ---
     const commandHistory = [];
     let historyIndex = -1;
     let isFetching = false;
-
-    const localCommands = {
-        'maximize': handleMaximize,
-        'minimize': handleMinimize,
-        'restore': handleRestore,
-        'close': handleClose,
-        'exit': handleClose,
-        'win-reset': handleReset,
-        'clear': clearScreen,
-    };
 
     function writeOutput(text, className = null) {
         const line = document.createElement("div");
@@ -178,24 +146,48 @@
         outputDiv.appendChild(line);
         scrollToBottom();
     }
-
     function clearScreen() { outputDiv.innerHTML = ""; }
     function scrollToBottom() { outputDiv.scrollTop = outputDiv.scrollHeight; }
 
     async function processCommand(commandLine) {
-        if (isFetching) return;
-
         writeOutput(promptSpan.textContent + commandLine, "echo-command");
         if (commandLine) { commandHistory.push(commandLine); }
         historyIndex = commandHistory.length;
 
-        const command = commandLine.toLowerCase().trim();
+        const parts = commandLine.trim().split(/\s+/);
+        const command = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        // --- Local Command Interceptor ---
+        const localCommands = {
+            'maximize': handleMaximize,
+            'minimize': handleMinimize,
+            'restore': handleRestore,
+            'close': handleClose,
+            'exit': handleClose,
+            'win-reset': handleReset,
+            'clear': clearScreen,
+        };
+
         if (localCommands[command]) {
             localCommands[command]();
             inputElem.focus();
             return;
         }
 
+        if (command === 'date') {
+            writeOutput(new Date().toString());
+            inputElem.focus();
+            return;
+        }
+
+        if (command === 'echo') {
+            writeOutput(args.join(' '));
+            inputElem.focus();
+            return;
+        }
+
+        if (isFetching) return;
         isFetching = true;
         inputElem.disabled = true;
 

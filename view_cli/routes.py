@@ -66,7 +66,7 @@ def handle_command_api(command_line):
             output.append("  ls projects    - List available projects")
             output.append("  show <project> - Show details for a specific project")
             output.append("")
-            output.append("[INFO] Window Management Commands:")
+            output.append("[INFO] Window & System Commands:")
             output.append("  maximize       - Maximize the terminal window")
             output.append("  minimize       - Minimize the terminal window")
             output.append("  restore        - Restore window from min/max state")
@@ -74,6 +74,10 @@ def handle_command_api(command_line):
                 "  win-reset      - Reset window to default size and position"
             )
             output.append("  clear          - Clear the terminal screen")
+            output.append("  date           - Display the current date and time")
+            output.append("  echo <text>    - Display a line of text")
+            output.append("  uname -a       - Print simulated system information")
+            output.append("  neofetch       - Show a visual summary of the portfolio")
             output.append("  exit / close   - Close the terminal window")
 
         elif command == "whoami":
@@ -170,7 +174,6 @@ def handle_command_api(command_line):
                         subsequent_indent="  ",
                     )
                     output.extend(wrapped_desc)
-
                     technologies = project.get("technologies")
                     if technologies:
                         output.append("[INFO] Technologies:")
@@ -184,7 +187,6 @@ def handle_command_api(command_line):
                         output.extend(wrapped_tech)
                     else:
                         output.append("[INFO] Technologies: (Not specified)")
-
                     output.append("[LINK] Links:")
                     link_found = False
                     if project.get("live_url"):
@@ -225,6 +227,40 @@ def handle_command_api(command_line):
                     link_found = True
             if not link_found:
                 output.append("  (No social links configured)")
+
+        elif command == "uname" and args and args[0] == "-a":
+            output.append("FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like")
+
+        elif command == "neofetch":
+            name = CV_DATA.get("name", "N/A")
+            title = CV_DATA.get("title", "N/A")
+            project_count = len(PROJECTS_DATA)
+            skill_count = len(CV_DATA.get("skills", []))
+
+            logo = [
+                "      _______      ",
+                "     /       \\     ",
+                "    /  o   o  \\    ",
+                "   |    ^      |   ",
+                "    \\  \\___/  /    ",
+                "     \\_______/     ",
+            ]
+
+            info = [
+                f"{name}@{CV_DATA.get('website', 'localhost')}",
+                "-----------------------",
+                f"OS: FlaskOS Portfolio",
+                f"Host: {name}'s Portfolio",
+                f"Title: {title}",
+                f"Projects: {project_count}",
+                f"Skills: {skill_count}",
+                f"Shell: Web-CLI",
+            ]
+
+            for i in range(max(len(logo), len(info))):
+                logo_line = logo[i] if i < len(logo) else " " * 19
+                info_line = info[i] if i < len(info) else ""
+                output.append(f"{logo_line}  {info_line}")
 
         elif command == "":
             pass
