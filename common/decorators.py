@@ -35,11 +35,8 @@ def token_required(f):
             return jsonify({"error": "Server configuration error."}), 500
 
         try:
-            # Decode the token using the app's secret key
-            # The audience and issuer are not checked in this simple setup
+            # Decode the token to validate it. The payload is not used in this case.
             jwt.decode(token, secret_key, algorithms=["HS256"])
-            # You could pass the decoded data to the route if needed, e.g.:
-            # return f(data, *args, **kwargs)
         except jwt.ExpiredSignatureError:
             logger.warning("Token has expired.")
             return jsonify({"error": "Token has expired."}), 401
