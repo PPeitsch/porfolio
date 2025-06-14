@@ -3,9 +3,15 @@ import logging
 import os
 import re
 
+import anthropic
 from flask import abort, current_app, jsonify, request, send_from_directory
 
-from common.utils import load_cv_data, load_projects_data, load_recruiter_story_data
+from common.utils import (
+    load_ai_context,
+    load_cv_data,
+    load_projects_data,
+    load_recruiter_story_data,
+)
 
 from . import recruiter_bp
 
@@ -387,7 +393,6 @@ def handle_chat():
     api_key = current_app.config.get("ANTHROPIC_API_KEY")
     if not api_key:
         logger.error("ANTHROPIC_API_KEY is not set in the configuration.")
-        # Service unavailable
         return (
             jsonify(
                 {"reply": "Error: The chatbot is not configured. Missing API key."}
@@ -395,9 +400,49 @@ def handle_chat():
             503,
         )
 
-    # Placeholder for AI logic
-    logger.info(f"Received chat message: {user_message}")
-    bot_reply = f"This is a placeholder response. You said: '{user_message}'"
+    ai_context = load_ai_context()
+    if "Error:" in ai_context:
+        logger.error(f"AI context could not be loaded: {ai_context}")
+        return jsonify({"reply": ai_context}), 503
+
+    SYSTEM_PROMPT = """
+You are a professional and friendly chatbot assistant representing Pablo Peitsch.
+Your goal is to answer questions about his skills, experience, and projects.
+Base your answers *only* on the professional context provided below.
+Do not invent information. If a question cannot be answered from the context,
+politely state that the information is not available in your knowledge base
+and suggest asking about his skills or projects.
+Keep your answers concise and to the point.
+Format your responses using basic Markdown (e.g., **bold** for emphasis, etc).
+
+Here is the context about Pablo Peitsch:
+---
+{context}
+---
+"""
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        logger.info(f"Sending message to Anthropic API: '{user_message}'")
+
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=1024,
+            system=SYSTEM_PROMPT.format(context=ai_context),
+            messages=[{"role": "user", "content": user_message}],
+        )
+
+        bot_reply = response.content[0].text
+        logger.info(f"Received reply from Anthropic API: '{bot_reply[:100]}...'")
+
+    except anthropic.APIError as e:
+        logger.error(f"Anthropic API error: {e}")
+        bot_reply = (
+            "I'm having trouble connecting to my brain. Please try again in a moment."
+        )
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during chat handling: {e}")
+        bot_reply = "An unexpected error occurred. Please try again."
 
     return jsonify({"reply": bot_reply})
 

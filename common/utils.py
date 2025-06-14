@@ -134,3 +134,24 @@ def load_recruiter_story_data():
                 },
             }
     return g.recruiter_story
+
+
+def load_ai_context():
+    """Loads the AI context from ai_context.md, caching it in g.
+
+    Returns:
+        str: The content of the AI context file, or a default error message.
+    """
+    if "ai_context" not in g:
+        logger.info("Loading ai_context.md into context g")
+        filepath = _get_data_filepath("ai_context.md")
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                g.ai_context = f.read()
+        except FileNotFoundError:
+            logger.error(f"AI context file not found: {filepath}")
+            g.ai_context = "Error: AI context file could not be found."
+        except Exception as e:
+            logger.error(f"An unexpected error occurred loading {filepath}: {e}")
+            g.ai_context = "Error: Could not load AI context."
+    return g.ai_context
