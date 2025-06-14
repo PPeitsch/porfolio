@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Helper Functions ---
     function loadCSS(href, id) { if (document.getElementById(id)) return; const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.id = id; document.head.appendChild(link); console.log(`CSS loaded: ${href}`); }
-    function loadJS(src, id, callback) { if (document.getElementById(id)) { if (callback && typeof window[callback] === 'function') { console.log(`JS already loaded (${src}), calling ${callback}()`); window[callback](); } else if (callback) { console.log(`JS already loaded (${src}), but no valid callback specified.`); } return; } const script = document.createElement('script'); script.src = src; script.id = id; script.async = false; script.onload = () => { console.log(`JS loaded: ${src}`); if (callback) { if (typeof callback === 'function') { callback(); } else if (typeof window[callback] === 'function') { console.log(`Calling window.${callback}()`); window[callback](); } else { console.warn(`JS ${src} loaded, but callback ${callback} not found or not a function.`); } } }; script.onerror = () => console.error(`Failed to load script: ${src}`); document.body.appendChild(script); }
+    function loadJS(src, id, callback) { if (document.getElementById(id)) { if (callback && typeof callback === 'function') { console.log(`JS already loaded (${src}), calling callback...`); callback(); } else if (callback) { console.log(`JS already loaded (${src}), but no valid callback specified.`); } return; } const script = document.createElement('script'); script.src = src; script.id = id; script.async = false; script.onload = () => { console.log(`JS loaded: ${src}`); if (callback && typeof callback === 'function') { callback(); } else { console.warn(`JS ${src} loaded, but callback is not a function.`); } }; script.onerror = () => console.error(`Failed to load script: ${src}`); document.body.appendChild(script); }
     function cleanupResources(ids = []) { ids.forEach(id => { const element = document.getElementById(id); if (element) { element.remove(); console.log(`Removed element: #${id}`); } }); }
 
     // --- View Loading Functions ---
@@ -29,11 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const sharedWindowCssId = 'shared-window-css';
             const sharedWindowJsId = 'shared-window-js';
 
-            // Load shared resources first, then specific ones
             loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
             loadCSS(_app_urls.cli_css, viewSpecificCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
-                loadJS(_app_urls.cli_js, viewSpecificJsId);
+                loadJS(_app_urls.cli_js, viewSpecificJsId, () => {
+                    // Pass the showSelector function as the onClose callback
+                    window.initializeCliView({ onClose: showSelector });
+                });
             });
 
             currentCleanup = () => {
@@ -58,11 +60,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const sharedWindowCssId = 'shared-window-css';
             const sharedWindowJsId = 'shared-window-js';
 
-            // Load shared resources first, then specific ones
             loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
             loadCSS(_app_urls.recruiter_css, viewSpecificCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
-                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, 'initializeRecruiterView');
+                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, () => {
+                    // Pass the showSelector function as the onClose callback
+                    window.initializeRecruiterView({ onClose: showSelector });
+                 });
             });
 
             currentCleanup = () => {
@@ -89,7 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const jsId = 'visual-js';
 
             loadCSS(_app_urls.visual_css, cssId);
-            loadJS(_app_urls.visual_js, jsId, 'initializeVisualView');
+            loadJS(_app_urls.visual_js, jsId, () => {
+                if(window.initializeVisualView) window.initializeVisualView();
+            });
 
             currentCleanup = () => {
                 console.log("Cleaning up Visual view resources...");

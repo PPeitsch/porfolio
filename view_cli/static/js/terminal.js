@@ -1,4 +1,5 @@
-(function () {
+// The function is now defined on the window object to be called from selector.js
+window.initializeCliView = function(callbacks) {
     const cliWindow = document.getElementById("cli-window");
     if (!cliWindow || cliWindow.dataset.viewInitialized) {
         return;
@@ -6,15 +7,14 @@
     cliWindow.dataset.viewInitialized = "true";
     console.log("Initializing CLI View Specifics...");
 
-    // Initialize the draggable window functionality
+    // Initialize the draggable window functionality, passing the onClose callback
     const windowControls = initializeDraggableWindow({
         windowId: "cli-window",
         titleBarId: "cli-title-bar",
-        contentId: "terminal-content",
         closeBtnId: "cli-close",
         minimizeBtnId: "cli-minimize",
         maximizeBtnId: "cli-maximize",
-        backButtonId: "back-button",
+        onClose: callbacks.onClose,
     });
 
     // --- DOM Element Selection for Terminal ---
@@ -64,7 +64,7 @@
         const localCommands = {
             'maximize': windowControls.maximize,
             'minimize': windowControls.minimize,
-            'restore': () => { if (cliWindow.classList.contains('minimized')) windowControls.minimize(); else windowControls.maximize(); }, // Simplified restore
+            'restore': () => { if (cliWindow.classList.contains('minimized')) windowControls.minimize(); else windowControls.maximize(); },
             'close': windowControls.close,
             'exit': windowControls.close,
             'win-reset': windowControls.reset,
@@ -156,4 +156,4 @@
     writeOutput("");
     inputElem.focus();
     console.log("CLI View Specifics Initialized.");
-})();
+}

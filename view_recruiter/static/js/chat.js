@@ -1,4 +1,5 @@
-function initializeRecruiterView() {
+// The function is now defined on the window object to be called from selector.js
+window.initializeRecruiterView = function(callbacks) {
     const chatWindow = document.getElementById("chat-window");
     if (!chatWindow || chatWindow.dataset.viewInitialized) {
         return;
@@ -6,15 +7,14 @@ function initializeRecruiterView() {
     chatWindow.dataset.viewInitialized = "true";
     console.log("Initializing Recruiter (Chat) View Specifics...");
 
-    // Initialize the draggable window functionality
+    // Initialize the draggable window functionality, passing the onClose callback
     const windowControls = initializeDraggableWindow({
         windowId: "chat-window",
         titleBarId: "chat-title-bar",
-        contentId: "chat-content",
         closeBtnId: "chat-close",
         minimizeBtnId: "chat-minimize",
         maximizeBtnId: "chat-maximize",
-        backButtonId: "back-button",
+        onClose: callbacks.onClose,
     });
 
     // --- DOM Element Selection for Chat ---
@@ -115,7 +115,7 @@ function initializeRecruiterView() {
         const initialGreeting = "Hello! I'm an AI assistant for Pablo Peitsch. How can I help you today?";
         addMessage(initialGreeting, 'bot');
         chatInput.focus();
-    }, 600); // Slightly longer delay to allow window animation
+    }, 600);
 
     console.log("Recruiter (Chat) View Specifics Initialized.");
 
@@ -124,7 +124,3 @@ function initializeRecruiterView() {
         chatForm.removeEventListener('submit', handleFormSubmit);
     };
 }
-
-// Make initializer and cleanup functions globally accessible
-window.initializeRecruiterView = initializeRecruiterView;
-window.cleanupRecruiterView = window.cleanupRecruiterView || (() => {});
