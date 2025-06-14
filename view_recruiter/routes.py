@@ -4,6 +4,7 @@ import os
 import anthropic
 from flask import abort, current_app, jsonify, request, send_from_directory
 
+from common.decorators import token_required
 from common.utils import load_ai_context
 
 from . import recruiter_bp
@@ -31,6 +32,7 @@ def static_files(filename):
 
 
 @recruiter_bp.route("/api/chat", methods=["POST"])
+@token_required
 def handle_chat():
     """API endpoint to handle chat messages."""
     if not request.json or "message" not in request.json:
