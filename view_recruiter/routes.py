@@ -3,7 +3,7 @@ import logging
 import os
 import re
 
-from flask import abort, jsonify, send_from_directory
+from flask import abort, current_app, jsonify, request, send_from_directory
 
 from common.utils import load_cv_data, load_projects_data, load_recruiter_story_data
 
@@ -371,6 +371,35 @@ def static_files(filename):
     except FileNotFoundError:
         logger.error(f"Static file not found: {os.path.join(static_dir, filename)}")
         abort(404)
+
+
+@recruiter_bp.route("/api/chat", methods=["POST"])
+def handle_chat():
+    """API endpoint to handle chat messages."""
+    if not request.json or "message" not in request.json:
+        logger.warning("Chat API called with invalid payload.")
+        return jsonify({"error": "Invalid request. 'message' key is required."}), 400
+
+    user_message = request.json["message"]
+    if not isinstance(user_message, str) or not user_message.strip():
+        return jsonify({"error": "Message must be a non-empty string."}), 400
+
+    api_key = current_app.config.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        logger.error("ANTHROPIC_API_KEY is not set in the configuration.")
+        # Service unavailable
+        return (
+            jsonify(
+                {"reply": "Error: The chatbot is not configured. Missing API key."}
+            ),
+            503,
+        )
+
+    # Placeholder for AI logic
+    logger.info(f"Received chat message: {user_message}")
+    bot_reply = f"This is a placeholder response. You said: '{user_message}'"
+
+    return jsonify({"reply": bot_reply})
 
 
 @recruiter_bp.route("/api/step/<step_id>")
