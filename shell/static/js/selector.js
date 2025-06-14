@@ -15,13 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Helper Functions ---
     function loadCSS(href, id) { if (document.getElementById(id)) return; const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.id = id; document.head.appendChild(link); console.log(`CSS loaded: ${href}`); }
-    function loadJS(src, id, callback) { if (document.getElementById(id)) { if (callback && typeof window[callback] === 'function') { console.log(`JS already loaded (${src}), calling ${callback}()`); window[callback](); } else { console.log(`JS already loaded (${src}), no valid callback specified.`); } return; } const script = document.createElement('script'); script.src = src; script.id = id; script.async = false; script.onload = () => { console.log(`JS loaded: ${src}`); if (callback) { if (typeof callback === 'function') { callback(); } else if (typeof window[callback] === 'function') { console.log(`Calling window.${callback}()`); window[callback](); } else { console.warn(`JS ${src} loaded, but callback ${callback} not found or not a function.`); } } }; script.onerror = () => console.error(`Failed to load script: ${src}`); document.body.appendChild(script); }
+    function loadJS(src, id, callback) { if (document.getElementById(id)) { if (callback && typeof window[callback] === 'function') { console.log(`JS already loaded (${src}), calling ${callback}()`); window[callback](); } else if (callback) { console.log(`JS already loaded (${src}), but no valid callback specified.`); } return; } const script = document.createElement('script'); script.src = src; script.id = id; script.async = false; script.onload = () => { console.log(`JS loaded: ${src}`); if (callback) { if (typeof callback === 'function') { callback(); } else if (typeof window[callback] === 'function') { console.log(`Calling window.${callback}()`); window[callback](); } else { console.warn(`JS ${src} loaded, but callback ${callback} not found or not a function.`); } } }; script.onerror = () => console.error(`Failed to load script: ${src}`); document.body.appendChild(script); }
     function cleanupResources(ids = []) { ids.forEach(id => { const element = document.getElementById(id); if (element) { element.remove(); console.log(`Removed element: #${id}`); } }); }
 
     // --- View Loading Functions ---
     async function loadCliView() {
         try {
-            const response = await fetch('/view/cli');
+            const response = await fetch(_app_urls.view_cli);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             viewContainer.innerHTML = await response.text();
 
@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const sharedWindowJsId = 'shared-window-js';
 
             // Load shared resources first, then specific ones
-            loadCSS( '/shell/static/css/window.css', sharedWindowCssId);
-            loadCSS( '/view_cli/static/css/terminal.css', viewSpecificCssId);
-            loadJS('/shell/static/js/window.js', sharedWindowJsId, () => {
-                loadJS('/view_cli/static/js/terminal.js', viewSpecificJsId);
+            loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
+            loadCSS(_app_urls.cli_css, viewSpecificCssId);
+            loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
+                loadJS(_app_urls.cli_js, viewSpecificJsId);
             });
 
             currentCleanup = () => {
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadRecruiterView() {
         try {
-            const response = await fetch('/view/recruiter');
+            const response = await fetch(_app_urls.view_recruiter);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             viewContainer.innerHTML = await response.text();
 
@@ -60,10 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const sharedWindowJsId = 'shared-window-js';
 
             // Load shared resources first, then specific ones
-            loadCSS('/shell/static/css/window.css', sharedWindowCssId);
-            loadCSS('/view_recruiter/static/css/chat.css', viewSpecificCssId);
-            loadJS('/shell/static/js/window.js', sharedWindowJsId, () => {
-                 loadJS('/view_recruiter/static/js/chat.js', viewSpecificJsId, 'initializeRecruiterView');
+            loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
+            loadCSS(_app_urls.recruiter_css, viewSpecificCssId);
+            loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
+                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, 'initializeRecruiterView');
             });
 
             currentCleanup = () => {
@@ -82,17 +82,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadVisualView() {
         try {
-            const response = await fetch('/view/visual');
+            const response = await fetch(_app_urls.view_visual);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             viewContainer.innerHTML = await response.text();
 
             const cssId = 'visual-css';
             const jsId = 'visual-js';
-            const cssPath = '/view_visual/static/css/visual.css';
-            const jsPath = '/view_visual/static/js/visual.js';
 
-            loadCSS(cssPath, cssId);
-            loadJS(jsPath, jsId, 'initializeVisualView');
+            loadCSS(_app_urls.visual_css, cssId);
+            loadJS(_app_urls.visual_js, jsId, 'initializeVisualView');
 
             currentCleanup = () => {
                 console.log("Cleaning up Visual view resources...");
@@ -109,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- Main Flow Control (Updated for Transitions & View Class) ---
+    // --- Main Flow Control ---
     function showView(viewName) {
         if (!viewName || isTransitioning) return;
         isTransitioning = true;
