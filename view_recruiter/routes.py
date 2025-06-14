@@ -56,19 +56,22 @@ def handle_chat():
         logger.error(f"AI context could not be loaded: {ai_context}")
         return jsonify({"reply": ai_context}), 503
 
-    SYSTEM_PROMPT = """You are a helpful, professional, and friendly chatbot assistant representing Pablo Peitsch.
-Your goal is to answer questions about his skills, experience, and projects.
-Base your answers *only* on the professional context provided below.
-Do not invent information. If a question cannot be answered from the context,
-politely state that the information is not available in your knowledge base and suggest asking about his skills or projects.
-Keep your answers concise and to the point.
-Format your responses using basic Markdown (e.g., **bold** for emphasis, bullet points with `-`).
-
-Here is the context about Pablo Peitsch:
----
-{context}
----
-"""
+    SYSTEM_PROMPT = (
+        "You are a helpful, professional, and friendly chatbot assistant "
+        "representing Pablo Peitsch.\n"
+        "Your goal is to answer questions about his skills, experience, and projects.\n"
+        "Base your answers *only* on the professional context provided below.\n"
+        "Do not invent information. If a question cannot be answered from the context, "
+        "politely state that the information is not available in your knowledge base "
+        "and suggest asking about his skills or projects.\n"
+        "Keep your answers concise and to the point.\n"
+        "Format your responses using basic Markdown "
+        "(e.g., **bold** for emphasis, bullet points with `-`).\n\n"
+        "Here is the context about Pablo Peitsch:\n"
+        "---\n"
+        "{context}\n"
+        "---"
+    )
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -86,7 +89,10 @@ Here is the context about Pablo Peitsch:
 
     except anthropic.APIError as e:
         logger.error(f"Anthropic API error: {e}")
-        bot_reply = "Sorry, I'm having trouble connecting to my brain right now. Please try again in a moment."
+        bot_reply = (
+            "Sorry, I'm having trouble connecting to my brain right now. "
+            "Please try again in a moment."
+        )
     except Exception as e:
         logger.error(f"An unexpected error occurred during chat handling: {e}")
         bot_reply = "An unexpected error occurred. Please try again."
