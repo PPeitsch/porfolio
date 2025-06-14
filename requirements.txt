@@ -25,7 +25,10 @@ jinja2==3.1.6
 markupsafe==3.0.2
     # via
     #   jinja2
+    #   pyjwt
     #   werkzeug
+pyjwt==2.8.0
+    # via -r requirements.in
 python-dotenv==1.1.0
     # via -r requirements.in
 pyyaml==6.0.2
