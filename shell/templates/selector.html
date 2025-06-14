@@ -32,7 +32,7 @@
                 <p class="text-gray-500 text-sm">Interactive CLI experience.</p>
             </div>
 
-            <!-- Recruiter / CYOA Option -->
+            <!-- Recruiter / Chat Option -->
             <div id="select-recruiter" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
                 <i class="fas fa-comments fa-3x text-sky-500 mb-5"></i>
                 <h2 class="text-xl font-semibold text-gray-700 mb-1">Recruiter</h2>
@@ -51,15 +51,25 @@
 
 
     <!-- ===== Dynamic View Container ===== -->
-    <!-- This div holds the content for the selected view (CLI, Recruiter, or Visual) -->
     <div id="view-container" class="hidden-view">
     </div>
 
-
-    <!-- ===== Global UI Elements ===== -->
-    <button id="back-button" class="hidden-view fixed top-3 left-3 z-20 bg-white text-gray-600 hover:bg-gray-100 shadow border border-gray-300 rounded-full w-9 h-9 flex items-center justify-center text-sm" aria-label="Go Back">
-        <i class="fas fa-arrow-left"></i>
-    </button>
+    <!-- ===== View Navigation Dock ===== -->
+    <div id="view-dock" class="view-dock">
+        <button id="dock-home" class="dock-item" data-view="Home" aria-label="Go to Home Selector">
+            <i class="fas fa-th-large"></i>
+        </button>
+        <div class="dock-separator"></div>
+        <button id="dock-cli" class="dock-item" data-view="Developer" aria-label="Open Developer View">
+            <i class="fas fa-terminal"></i>
+        </button>
+        <button id="dock-recruiter" class="dock-item" data-view="Recruiter" aria-label="Open Recruiter View">
+            <i class="fas fa-comments"></i>
+        </button>
+        <button id="dock-visual" class="dock-item" data-view="Visual" aria-label="Open Visual View">
+            <i class="fas fa-eye"></i>
+        </button>
+    </div>
 
 
     <!-- ===== Scripts ===== -->

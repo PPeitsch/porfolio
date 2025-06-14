@@ -2,11 +2,10 @@ function initializeDraggableWindow(config) {
     const {
         windowId,
         titleBarId,
-        contentId,
         closeBtnId,
         minimizeBtnId,
         maximizeBtnId,
-        backButtonId,
+        onClose, // New callback function
     } = config;
 
     const windowEl = document.getElementById(windowId);
@@ -21,9 +20,9 @@ function initializeDraggableWindow(config) {
     const closeBtn = document.getElementById(closeBtnId);
     const minimizeBtn = document.getElementById(minimizeBtnId);
     const maximizeBtn = document.getElementById(maximizeBtnId);
-    const backButton = document.getElementById(backButtonId);
 
-    if (!titleBar || !closeBtn || !minimizeBtn || !maximizeBtn || !backButton) {
+    // The check for backButton is removed, as it's no longer a dependency.
+    if (!titleBar || !closeBtn || !minimizeBtn || !maximizeBtn) {
         console.error(`One or more essential window elements for #${windowId} are missing!`);
         return { reset: () => {}, close: () => {}, minimize: () => {}, maximize: () => {} };
     }
@@ -72,19 +71,24 @@ function initializeDraggableWindow(config) {
         saveLastPosition();
     }
 
+    // handleClose now calls the provided callback function.
     function handleClose() {
-        backButton.click();
+        if (typeof onClose === 'function') {
+            onClose();
+        } else {
+            console.error('onClose callback is not a function!');
+        }
     }
 
     function handleMinimize() {
         if (windowState !== 'minimized') {
-            saveLastPosition(); // Save state before minimizing
+            saveLastPosition();
             windowState = 'minimized';
             windowEl.classList.add('minimized');
             windowEl.classList.remove('maximized');
-        } else { // Is currently minimized, so restore
+        } else {
             windowEl.classList.remove('minimized');
-            windowState = 'normal'; // Always restore to normal, not maximized
+            windowState = 'normal';
             restoreLastPosition();
             focusFirstInput();
         }
@@ -96,7 +100,7 @@ function initializeDraggableWindow(config) {
             windowState = 'maximized';
             windowEl.classList.add('maximized');
             windowEl.classList.remove('minimized');
-        } else { // Is currently maximized, so restore to normal
+        } else {
             windowState = 'normal';
             windowEl.classList.remove('maximized');
             restoreLastPosition();
@@ -135,7 +139,7 @@ function initializeDraggableWindow(config) {
     function onMouseUp() {
         if (!isDragging) return;
         isDragging = false;
-        saveLastPosition(); // Save position after dropping
+        saveLastPosition();
         windowEl.classList.remove('is-dragging');
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);

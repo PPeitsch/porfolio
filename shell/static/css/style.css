@@ -70,7 +70,7 @@ body {
     background-color: var(--color-cli-bg);
 }
 #view-container.view-active-recruiter {
-     background-color: #f8f9fa;
+     background-color: #1e1e2e;
 }
 #view-container.view-active-visual {
      background-color: #fcfdff;
@@ -95,35 +95,62 @@ body {
     border: 2px solid transparent;
 }
 
-#back-button {
+
+/* --- View Dock Styles --- */
+.view-dock {
     position: fixed;
-    top: 0.75rem;
-    left: 0.75rem;
-    z-index: 20;
-    opacity: 0;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(150%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     visibility: hidden;
-    transition: opacity 0.3s ease-in-out 0.2s, visibility 0s linear 0.5s, transform 0.2s ease-out;
-    transform: scale(0.9);
 }
 
-#back-button.visible-view {
-    opacity: 1;
+.view-dock.visible {
+    transform: translateX(-50%) translateY(0);
     visibility: visible;
-    transition: opacity 0.3s ease-in-out, visibility 0s linear, transform 0.2s ease-out;
-    transform: scale(1.0);
-}
-#back-button:hover {
-    transform: scale(1.05);
-}
-#back-button:active {
-    transform: scale(0.95);
 }
 
-#view-container.view-active-cli #back-button {
-     background-color: #313244;
-     color: #cdd6f4;
-     border-color: #45475a;
+.dock-item {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #374151;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
-#view-container.view-active-cli #back-button:hover {
-    background-color: #45475a;
+
+.dock-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(1.1);
+}
+
+.dock-item.active {
+    background-color: rgba(79, 70, 229, 0.1);
+    color: #4f46e5;
+    transform: scale(1.1);
+}
+
+.dock-separator {
+    width: 1px;
+    height: 24px;
+    background-color: rgba(0, 0, 0, 0.1);
+    margin: 0 4px;
 }
