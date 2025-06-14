@@ -1,10 +1,8 @@
 <!-- This HTML fragment is loaded into #view-container -->
-<link rel="stylesheet" href="{{ url_for('cli.static', filename='css/terminal.css') }}">
-
-<div class="view-content-wrapper p-4 md:p-6 lg:p-8 flex items-center justify-center">
+<div class="p-4 md:p-6 lg:p-8 flex items-center justify-center h-full">
 
     <!-- OS-style Draggable Window -->
-    <div id="cli-window" class="cli-window">
+    <div id="cli-window" class="os-window">
         <!-- Title Bar (Windows Style: Title Left, Controls Right) -->
         <div id="cli-title-bar" class="title-bar">
             <div class="title-text">
@@ -19,17 +17,14 @@
         </div>
 
         <!-- Terminal Content -->
-        <div id="terminal" class="w-full h-full flex flex-col font-mono text-sm text-[#cdd6f4] overflow-hidden">
-            <div id="output" class="flex-grow overflow-y-auto p-3 whitespace-pre-wrap break-words">
+        <div id="terminal-content" class="window-content">
+            <div id="output" class="flex-grow">
             </div>
-            <div id="input-line" class="input-line flex p-2 border-t border-[#313244] flex-shrink-0">
-                <span id="prompt" class="prompt text-[#89b4fa] mr-2 whitespace-nowrap">portfolio:~ $</span>
-                <input type="text" id="input" class="input bg-transparent border-none text-[#cdd6f4] flex-grow outline-none caret-[#f5e0dc]" autofocus autocomplete="off" spellcheck="false" aria-label="Command Input">
+            <div id="input-line" class="input-line">
+                <span id="prompt" class="prompt">portfolio:~ $</span>
+                <input type="text" id="input" class="input" autofocus autocomplete="off" spellcheck="false" aria-label="Command Input">
             </div>
         </div>
     </div>
 
 </div>
-
-<!-- The terminal JS is now loaded here directly -->
-<script src="{{ url_for('cli.static', filename='js/terminal.js') }}"></script>

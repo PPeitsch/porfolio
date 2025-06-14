@@ -1,13 +1,30 @@
 function initializeRecruiterView() {
-    console.log("Attempting to initialize Recruiter (Chat) View...");
+    const chatWindow = document.getElementById("chat-window");
+    if (!chatWindow || chatWindow.dataset.viewInitialized) {
+        return;
+    }
+    chatWindow.dataset.viewInitialized = "true";
+    console.log("Initializing Recruiter (Chat) View Specifics...");
 
+    // Initialize the draggable window functionality
+    const windowControls = initializeDraggableWindow({
+        windowId: "chat-window",
+        titleBarId: "chat-title-bar",
+        contentId: "chat-content",
+        closeBtnId: "chat-close",
+        minimizeBtnId: "chat-minimize",
+        maximizeBtnId: "chat-maximize",
+        backButtonId: "back-button",
+    });
+
+    // --- DOM Element Selection for Chat ---
     const chatMessages = document.getElementById('chat-messages');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('chat-send-button');
 
     if (!chatMessages || !chatForm || !chatInput || !sendButton) {
-        console.error("One or more Chat UI elements are missing!");
+        console.error("One or more Chat UI content elements are missing!");
         return;
     }
 
@@ -15,10 +32,10 @@ function initializeRecruiterView() {
 
     // Simple Markdown to HTML parser
     function parseMarkdown(text) {
-        let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        let html = text.replace(/\n/g, '<br>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
         html = html.replace(/(\<li\>.*\<\/li\>)/gs, '<ul>$1</ul>');
-        html = html.replace(/\n/g, '<br>');
         return html;
     }
 
@@ -95,11 +112,12 @@ function initializeRecruiterView() {
 
     // Initial greeting from the bot
     setTimeout(() => {
-        const initialGreeting = "Hello! I'm a chatbot assistant for Pablo Peitsch. You can ask me about his skills, projects, or professional experience. How can I help you today?";
+        const initialGreeting = "Hello! I'm an AI assistant for Pablo Peitsch. How can I help you today?";
         addMessage(initialGreeting, 'bot');
-    }, 500);
+        chatInput.focus();
+    }, 600); // Slightly longer delay to allow window animation
 
-    console.log("Recruiter (Chat) View Initialized.");
+    console.log("Recruiter (Chat) View Specifics Initialized.");
 
     window.cleanupRecruiterView = () => {
         console.log("Running cleanup for Recruiter Chat view...");
