@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Get DOM Elements ---
     const selectorContainer = document.getElementById('selector-container');
     const viewContainer = document.getElementById('view-container');
-    const backButton = document.getElementById('back-button');
 
     const cliOption = document.getElementById('select-cli');
     const recruiterOption = document.getElementById('select-recruiter');
@@ -115,8 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         selectorContainer.classList.remove('visible-view');
         selectorContainer.classList.add('hidden-view');
-        backButton.classList.remove('visible-view');
-        backButton.classList.add('hidden-view');
 
         setTimeout(async () => {
             viewContainer.innerHTML = '';
@@ -151,8 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             viewContainer.classList.remove('hidden-view');
             viewContainer.classList.add('visible-view');
-            backButton.classList.remove('hidden-view');
-            backButton.classList.add('visible-view');
 
             isTransitioning = false;
         }, 400);
@@ -165,8 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         viewContainer.classList.remove('visible-view');
         viewContainer.classList.add('hidden-view');
-        backButton.classList.remove('visible-view');
-        backButton.classList.add('hidden-view');
 
         if (currentCleanup && typeof currentCleanup === 'function') {
             currentCleanup();
@@ -197,15 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cliOption) cliOption.addEventListener('click', () => showView('Developer')); else console.error("#select-cli not found");
     if (recruiterOption) recruiterOption.addEventListener('click', () => showView('Recruiter')); else console.error("#select-recruiter not found");
     if (visualOption) visualOption.addEventListener('click', () => showView('Visual')); else console.error("#select-visual not found");
-    if (backButton) backButton.addEventListener('click', showSelector); else console.error("#back-button not found");
 
     // --- Initial State ---
     selectorContainer.classList.add('visible-view');
     selectorContainer.classList.remove('hidden-view');
     viewContainer.classList.add('hidden-view');
     viewContainer.classList.remove('visible-view');
-    backButton.classList.add('hidden-view');
-    backButton.classList.remove('visible-view');
 
     console.log("Selector view initialized with transitions and ready.");
 });
