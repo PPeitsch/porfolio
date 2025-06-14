@@ -1,9 +1,133 @@
-#terminal {
+/* --- OS-style Window Styles --- */
+.cli-window {
+    position: absolute;
+    width: 90%;
+    max-width: 720px;
+    height: 500px;
     background-color: #1e1e2e;
-    color: #cdd6f4;
+    border: 1px solid #494d64;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    /* On small screens, let's not have a border-radius if it's edge-to-edge */
+    transition: width 0.3s ease-in-out, height 0.3s ease-in-out, top 0.3s ease-in-out, left 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    opacity: 0;
+    transform: scale(0.95);
+    animation: fadeInWindow 0.3s 0.1s ease-out forwards;
+}
+
+/* Disable transitions during drag for instant feedback */
+.cli-window.is-dragging {
+    transition: none;
+}
+
+@keyframes fadeInWindow {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.cli-window.maximized {
+    width: 100%;
+    height: 100%;
+    top: 0 !important;
+    left: 0 !important;
+    max-width: none;
     border-radius: 0;
+    border: none;
+}
+
+.cli-window.minimized {
+    height: 32px;
+    overflow: hidden;
+}
+
+.cli-window.minimized #terminal {
+    display: none;
+}
+
+
+.title-bar {
+    flex-shrink: 0;
+    height: 32px;
+    background-color: #363a4f;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Pushes title and controls apart */
+    padding: 0 4px 0 12px; /* Add padding for spacing */
+    cursor: grab;
+    user-select: none;
+    border-bottom: 1px solid #494d64;
+}
+
+.title-bar:active {
+    cursor: grabbing;
+}
+
+.window-controls {
+    display: flex;
+    height: 100%;
+}
+
+.control-btn {
+    width: 40px; /* Increased width for easier clicking */
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    background-color: transparent;
+    -webkit-mask-size: auto 35%; /* Control icon size */
+    mask-size: auto 35%;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    background-color: #cad3f5; /* Icon color */
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.control-btn:hover {
+    background-color: #5b6078; /* Generic hover for min/max */
+}
+
+.control-btn.minimize {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M0 5 L10 5' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M0 5 L10 5' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+.control-btn.maximize {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect x='1.5' y='1.5' width='7' height='7' fill='none' stroke='%23000' stroke-width='1.2'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect x='1.5' y='1.5' width='7' height='7' fill='none' stroke='%23000' stroke-width='1.2'/%3E%3C/svg%3E");
+}
+
+.control-btn.close {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 1 L9 9 M9 1 L1 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 1 L9 9 M9 1 L1 9' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+.control-btn.close:hover {
+    background-color: #ed8796; /* Red hover for close button */
+}
+
+.title-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #cad3f5;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- Terminal Content Styles --- */
+#terminal {
+    flex-grow: 1;
+    background-color: transparent;
+    border-radius: 0 0 8px 8px;
+    transition: display 0.2s;
 }
 
 #output {
@@ -75,16 +199,20 @@ a.terminal-link:hover {
 }
 
 /* --- Responsive Adjustments --- */
-@media (min-width: 768px) {
-    /* On larger screens, add back the border radius */
-    #terminal {
-        border-radius: 0.5rem; /* rounded-lg */
+@media (max-width: 640px) {
+    .cli-window, .cli-window.maximized {
+        width: 100%;
+        height: 100%;
+        top: 0 !important;
+        left: 0 !important;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        transform: none;
+        animation: none;
+        opacity: 1;
     }
-}
-
-/* Reduce font size on very small screens to prevent overflow */
-@media (max-width: 400px) {
-    #terminal {
-        font-size: 0.8rem; /* Smaller font */
+    .title-bar {
+        border-radius: 0;
     }
 }
