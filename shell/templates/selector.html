@@ -51,8 +51,24 @@
 
 
     <!-- ===== Dynamic View Container ===== -->
-    <!-- This div holds the content for the selected view (CLI, Recruiter, or Visual) -->
     <div id="view-container" class="hidden-view">
+    </div>
+
+    <!-- ===== View Navigation Dock ===== -->
+    <div id="view-dock" class="view-dock">
+        <button id="dock-home" class="dock-item" data-view="Home" aria-label="Go to Home Selector">
+            <i class="fas fa-th-large"></i>
+        </button>
+        <div class="dock-separator"></div>
+        <button id="dock-cli" class="dock-item" data-view="Developer" aria-label="Open Developer View">
+            <i class="fas fa-terminal"></i>
+        </button>
+        <button id="dock-recruiter" class="dock-item" data-view="Recruiter" aria-label="Open Recruiter View">
+            <i class="fas fa-comments"></i>
+        </button>
+        <button id="dock-visual" class="dock-item" data-view="Visual" aria-label="Open Visual View">
+            <i class="fas fa-eye"></i>
+        </button>
     </div>
 
 
