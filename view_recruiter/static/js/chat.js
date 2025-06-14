@@ -1,4 +1,3 @@
-// The function is now defined on the window object to be called from selector.js
 window.initializeRecruiterView = function(callbacks) {
     const chatWindow = document.getElementById("chat-window");
     if (!chatWindow || chatWindow.dataset.viewInitialized) {
@@ -7,7 +6,6 @@ window.initializeRecruiterView = function(callbacks) {
     chatWindow.dataset.viewInitialized = "true";
     console.log("Initializing Recruiter (Chat) View Specifics...");
 
-    // Initialize the draggable window functionality, passing the onClose callback
     const windowControls = initializeDraggableWindow({
         windowId: "chat-window",
         titleBarId: "chat-title-bar",
@@ -17,7 +15,6 @@ window.initializeRecruiterView = function(callbacks) {
         onClose: callbacks.onClose,
     });
 
-    // --- DOM Element Selection for Chat ---
     const chatMessages = document.getElementById('chat-messages');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
@@ -29,12 +26,14 @@ window.initializeRecruiterView = function(callbacks) {
     }
 
     let isLoading = false;
+    let chatState = 'awaiting_code'; // 'awaiting_code' or 'chatting'
+    const TOKEN_KEY = 'recruiter_token';
 
-    // Simple Markdown to HTML parser
     function parseMarkdown(text) {
         let html = text.replace(/\n/g, '<br>');
         html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
+        html = html.replace(/(\<ul>\s*<\/ul>)/gs, ''); // Clean up empty lists
         html = html.replace(/(\<li\>.*\<\/li\>)/gs, '<ul>$1</ul>');
         return html;
     }
@@ -55,67 +54,126 @@ window.initializeRecruiterView = function(callbacks) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    async function handleFormSubmit(event) {
-        event.preventDefault();
-        const userMessage = chatInput.value.trim();
+    function setInputState(enabled, placeholder) {
+        chatInput.disabled = !enabled;
+        sendButton.disabled = !enabled;
+        chatInput.placeholder = placeholder;
+        if(enabled) chatInput.focus();
+    }
 
-        if (!userMessage || isLoading) return;
-
+    async function handleCodeSubmission(code) {
         isLoading = true;
-        chatInput.value = '';
-        chatInput.disabled = true;
-        sendButton.disabled = true;
+        setInputState(false, 'Verifying code...');
+        addMessage(code, 'user'); // Show the code the user entered
+        addMessage('', 'bot', true); // Typing indicator
 
-        addMessage(userMessage, 'user');
-        addMessage('', 'bot', true); // Show typing indicator
+        try {
+            const response = await fetch('/auth/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code }),
+            });
+
+            document.getElementById('typing-indicator')?.remove();
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Invalid code.');
+            }
+
+            const data = await response.json();
+            sessionStorage.setItem(TOKEN_KEY, data.token);
+            chatState = 'chatting';
+            addMessage("Access granted! Thank you. How can I help you?", 'bot');
+            setInputState(true, 'Ask about my skills or projects...');
+
+        } catch (error) {
+            addMessage(`Sorry, that's not the correct code. Please try again.`, 'bot');
+            setInputState(true, 'Enter access code...');
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    async function handleChatMessage(message) {
+        isLoading = true;
+        setInputState(false, 'Thinking...');
+        addMessage(message, 'user');
+        addMessage('', 'bot', true);
+
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        if (!token) {
+            document.getElementById('typing-indicator')?.remove();
+            addMessage("Your session has expired. Please re-enter the access code.", 'bot');
+            chatState = 'awaiting_code';
+            setInputState(true, 'Enter access code...');
+            isLoading = false;
+            return;
+        }
 
         try {
             const response = await fetch('/recruiter/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ message: userMessage }),
+                body: JSON.stringify({ message: message }),
             });
 
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) typingIndicator.remove();
+            document.getElementById('typing-indicator')?.remove();
 
-            if (!response.ok) {
-                let errorMsg = `HTTP error! Status: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorMsg = errorData.reply || errorData.error || `Server error: ${response.statusText}`;
-                } catch(e) {
-                    // Response was not JSON
-                }
-                throw new Error(errorMsg);
+            if (response.status === 401) {
+                sessionStorage.removeItem(TOKEN_KEY);
+                addMessage("Your session has expired. Please enter the access code again to continue.", 'bot');
+                chatState = 'awaiting_code';
+                setInputState(true, 'Enter access code...');
+                return;
             }
+            if (!response.ok) throw new Error('The AI assistant is currently unavailable.');
 
             const data = await response.json();
             addMessage(data.reply, 'bot');
 
         } catch (error) {
-            console.error('Chat API Error:', error);
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) typingIndicator.remove();
+            document.getElementById('typing-indicator')?.remove();
             addMessage(`Sorry, an error occurred: ${error.message}`, 'bot');
         } finally {
             isLoading = false;
-            chatInput.disabled = false;
-            sendButton.disabled = false;
-            chatInput.focus();
+            setInputState(true, 'Ask another question...');
+        }
+    }
+
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+        const userInput = chatInput.value.trim();
+        if (!userInput || isLoading) return;
+        chatInput.value = '';
+
+        if (chatState === 'awaiting_code') {
+            handleCodeSubmission(userInput);
+        } else {
+            handleChatMessage(userInput);
+        }
+    }
+
+    function initializeChat() {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        // A more robust check could be to decode the token and check expiration
+        if (token) {
+            chatState = 'chatting';
+            addMessage("Welcome back! How can I assist you?", 'bot');
+            setInputState(true, 'Ask about my skills or projects...');
+        } else {
+            chatState = 'awaiting_code';
+            const welcomeMessage = "Hello! I'm Pablo's AI assistant. To ensure privacy and prevent API abuse, this chat requires an access code.\n\nPlease enter the code provided in the resume to continue.";
+            addMessage(welcomeMessage, 'bot');
+            setInputState(true, 'Enter access code...');
         }
     }
 
     chatForm.addEventListener('submit', handleFormSubmit);
-
-    // Initial greeting from the bot
-    setTimeout(() => {
-        const initialGreeting = "Hello! I'm an AI assistant for Pablo Peitsch. How can I help you today?";
-        addMessage(initialGreeting, 'bot');
-        chatInput.focus();
-    }, 600);
+    initializeChat();
 
     console.log("Recruiter (Chat) View Specifics Initialized.");
 

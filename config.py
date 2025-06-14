@@ -10,3 +10,4 @@ class Config:
 
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-should-be-changed"
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+    RECRUITER_ACCESS_CODE = os.environ.get("RECRUITER_ACCESS_CODE") or "default-code"

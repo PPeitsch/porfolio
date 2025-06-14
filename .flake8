@@ -13,7 +13,8 @@ exclude =
     dist,
     build
 per-file-ignores =
-    shell/__init__.py:F541
+    shell/__init__.py:F541,F401,E402
+    auth/__init__.py:F401,E402
     view_cli/__init__.py:E402,F401
     view_recruiter/__init__.py:E402,F401
     view_visual/__init__.py:E402,F401

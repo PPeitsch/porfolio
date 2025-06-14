@@ -42,6 +42,11 @@ def create_app(config_name="default"):
         app.register_blueprint(shell_bp)
         logging.info("Registered shell blueprint.")
 
+        from auth import auth_bp
+
+        app.register_blueprint(auth_bp, url_prefix="/auth")
+        logging.info("Registered auth blueprint with prefix /auth.")
+
         from view_cli import cli_bp
 
         app.register_blueprint(cli_bp, url_prefix="/cli")
