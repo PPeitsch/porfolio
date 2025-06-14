@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Get DOM Elements ---
     const selectorContainer = document.getElementById('selector-container');
     const viewContainer = document.getElementById('view-container');
+    const viewDock = document.getElementById('view-dock');
 
     const cliOption = document.getElementById('select-cli');
     const recruiterOption = document.getElementById('select-recruiter');
@@ -16,6 +17,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadCSS(href, id) { if (document.getElementById(id)) return; const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.id = id; document.head.appendChild(link); console.log(`CSS loaded: ${href}`); }
     function loadJS(src, id, callback) { if (document.getElementById(id)) { if (callback && typeof callback === 'function') { console.log(`JS already loaded (${src}), calling callback...`); callback(); } else if (callback) { console.log(`JS already loaded (${src}), but no valid callback specified.`); } return; } const script = document.createElement('script'); script.src = src; script.id = id; script.async = false; script.onload = () => { console.log(`JS loaded: ${src}`); if (callback && typeof callback === 'function') { callback(); } else { console.warn(`JS ${src} loaded, but callback is not a function.`); } }; script.onerror = () => console.error(`Failed to load script: ${src}`); document.body.appendChild(script); }
     function cleanupResources(ids = []) { ids.forEach(id => { const element = document.getElementById(id); if (element) { element.remove(); console.log(`Removed element: #${id}`); } }); }
+
+    // --- Dock Management ---
+    function updateDock(activeView) {
+        if (!viewDock) return;
+        const dockItems = viewDock.querySelectorAll('.dock-item');
+        dockItems.forEach(item => {
+            if (item.dataset.view === activeView) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
 
     // --- View Loading Functions ---
     async function loadCliView() {
@@ -33,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loadCSS(_app_urls.cli_css, viewSpecificCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.cli_js, viewSpecificJsId, () => {
-                    // Pass the showSelector function as the onClose callback
                     window.initializeCliView({ onClose: showSelector });
                 });
             });
@@ -64,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loadCSS(_app_urls.recruiter_css, viewSpecificCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                  loadJS(_app_urls.recruiter_js, viewSpecificJsId, () => {
-                    // Pass the showSelector function as the onClose callback
                     window.initializeRecruiterView({ onClose: showSelector });
                  });
             });
@@ -113,50 +125,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Main Flow Control ---
-    function showView(viewName) {
-        if (!viewName || isTransitioning) return;
+    async function showView(viewName) {
+        if (!viewName || (isTransitioning && currentView !== null) || viewName === currentView) return;
         isTransitioning = true;
-        console.log(`Attempting to show view: ${viewName}`);
+        console.log(`Transitioning to view: ${viewName}`);
 
-        selectorContainer.classList.remove('visible-view');
-        selectorContainer.classList.add('hidden-view');
-
-        setTimeout(async () => {
-            viewContainer.innerHTML = '';
-            viewContainer.className = 'hidden-view';
-            currentView = viewName;
-
-            let viewSpecificClass = '';
-            switch (viewName) {
-                case 'Developer':
-                    viewSpecificClass = 'view-active-cli';
-                    await loadCliView();
-                    break;
-                case 'Recruiter':
-                    viewSpecificClass = 'view-active-recruiter';
-                    await loadRecruiterView();
-                    break;
-                case 'Visual':
-                     viewSpecificClass = 'view-active-visual';
-                    await loadVisualView();
-                    break;
-                default:
-                    console.error(`Unknown view name requested: ${viewName}`);
-                    viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error: Unknown view requested.</p></div>`;
-                    viewContainer.classList.add('items-center', 'justify-center', 'flex');
+        // --- Run cleanup for the old view if it exists ---
+        if (currentView !== null) {
+            viewContainer.classList.remove('visible-view');
+            viewContainer.classList.add('hidden-view');
+            if (currentCleanup) {
+                currentCleanup();
+                currentCleanup = null;
             }
+        } else {
+            selectorContainer.classList.remove('visible-view');
+            selectorContainer.classList.add('hidden-view');
+        }
 
-             if (viewSpecificClass) {
-                 viewContainer.classList.add(viewSpecificClass);
-             }
+        // --- Show dock and update its active state ---
+        viewDock.classList.add('visible');
+        updateDock(viewName);
 
-            await new Promise(resolve => setTimeout(resolve, 50));
+        // --- Wait for fade-out, then load new content ---
+        await new Promise(resolve => setTimeout(resolve, 400));
 
-            viewContainer.classList.remove('hidden-view');
-            viewContainer.classList.add('visible-view');
+        viewContainer.innerHTML = '';
+        viewContainer.className = 'hidden-view';
+        currentView = viewName;
 
-            isTransitioning = false;
-        }, 400);
+        let viewSpecificClass = '';
+        switch (viewName) {
+            case 'Developer':
+                viewSpecificClass = 'view-active-cli';
+                await loadCliView();
+                break;
+            case 'Recruiter':
+                viewSpecificClass = 'view-active-recruiter';
+                await loadRecruiterView();
+                break;
+            case 'Visual':
+                viewSpecificClass = 'view-active-visual';
+                await loadVisualView();
+                break;
+            default:
+                console.error(`Unknown view name requested: ${viewName}`);
+                viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error: Unknown view requested.</p></div>`;
+                viewContainer.classList.add('items-center', 'justify-center', 'flex');
+        }
+
+        if (viewSpecificClass) {
+            viewContainer.classList.add(viewSpecificClass);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+        viewContainer.classList.remove('hidden-view');
+        viewContainer.classList.add('visible-view');
+
+        isTransitioning = false;
     }
 
     function showSelector() {
@@ -166,12 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         viewContainer.classList.remove('visible-view');
         viewContainer.classList.add('hidden-view');
+        viewDock.classList.remove('visible'); // Hide the dock
 
-        if (currentCleanup && typeof currentCleanup === 'function') {
+        if (currentCleanup) {
             currentCleanup();
-        } else {
-             console.warn("No specific cleanup function found. Running generic cleanup.");
-             cleanupResources(['cli-css', 'cli-js', 'recruiter-css', 'recruiter-js', 'visual-css', 'visual-js', 'shared-window-css', 'shared-window-js']);
+            currentCleanup = null;
         }
 
          if (currentView) {
@@ -182,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
              if (viewSpecificClass) viewContainer.classList.remove(viewSpecificClass);
          }
          currentView = null;
-         currentCleanup = null;
 
          setTimeout(() => {
             viewContainer.innerHTML = '';
@@ -193,9 +217,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    if (cliOption) cliOption.addEventListener('click', () => showView('Developer')); else console.error("#select-cli not found");
-    if (recruiterOption) recruiterOption.addEventListener('click', () => showView('Recruiter')); else console.error("#select-recruiter not found");
-    if (visualOption) visualOption.addEventListener('click', () => showView('Visual')); else console.error("#select-visual not found");
+    if (cliOption) cliOption.addEventListener('click', () => showView('Developer'));
+    if (recruiterOption) recruiterOption.addEventListener('click', () => showView('Recruiter'));
+    if (visualOption) visualOption.addEventListener('click', () => showView('Visual'));
+
+    // --- Dock Event Listeners ---
+    if (viewDock) {
+        viewDock.addEventListener('click', (event) => {
+            const dockItem = event.target.closest('.dock-item');
+            if (dockItem) {
+                const viewName = dockItem.dataset.view;
+                if (viewName === 'Home') {
+                    showSelector();
+                } else {
+                    showView(viewName);
+                }
+            }
+        });
+    }
 
     // --- Initial State ---
     selectorContainer.classList.add('visible-view');
