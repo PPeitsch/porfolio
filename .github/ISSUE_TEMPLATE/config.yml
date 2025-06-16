@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Project Documentation
+    url: https://github.com/PPeitsch/porfolio/blob/main/README.md
+    about: Please check the documentation for answers first.
+  - name: 🛡️ Report a Security Vulnerability
+    url: https://github.com/PPeitsch/porfolio/blob/main/.github/SECURITY.md
+    about: Please review our security policy before reporting.

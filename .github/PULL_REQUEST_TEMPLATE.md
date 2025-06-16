@@ -1,44 +1,51 @@
 <!--
-Thanks for contributing! Please fill out the following sections to help us review your pull request.
+Thank you for your contribution! Please provide the details below to help us review your pull request.
+If this PR addresses an open issue, please link to it: Fixes #<issue_number>
 -->
 
-**Description**
+### **Description**
 
-<!-- Clearly describe the changes introduced by this PR. -->
-<!-- Why is this change needed? What problem does it solve? -->
-<!-- If it fixes an open issue, link it here: Fixes #issue_number -->
-
-
-**Changes Made**
-
-<!-- List the specific changes made in this PR. -->
-- Added feature X to module Y.
-- Refactored function Z for clarity.
-- Fixed bug related to state management in component A.
-- Updated documentation for section B.
+<!--
+Clearly and concisely describe the changes introduced by this PR.
+- What problem does this PR solve?
+- Why is this change necessary?
+-->
 
 
-**How to Test**
+### **Changes Made**
 
-<!-- Provide clear steps on how the reviewer can test your changes. -->
-1. Select the '...' view.
-2. Perform action '...'.
-3. Verify that '...' occurs as expected.
-4. Check for any regressions in '...'.
+<!--
+Provide a list of the specific changes you made.
+- Added feature X to the `cli` module.
+- Refactored function `Y` in `common/utils.py` for clarity and performance.
+- Fixed a rendering bug in the Visual view.
+- Updated documentation for the `auth` process.
+-->
+-
+
+### **How to Test**
+
+<!--
+Provide clear, step-by-step instructions for the reviewer to test your changes.
+1. Check out this branch.
+2. Run `pip install -r requirements.txt`.
+3. Select the '...' view from the main selector.
+4. Perform action '...'.
+5. Verify that '...' occurs as expected.
+6. Check for any regressions in '...' functionality.
+-->
+1.
 
 
-**Screenshots (if applicable)**
+### **Checklist**
 
-<!-- If your change affects the UI, include screenshots or GIFs. -->
-
-
-**Checklist**
-
-<!-- Go through this checklist before submitting your PR -->
-- [ ] My code follows the project's style guidelines.
+<!--
+Please go through this checklist before submitting your PR.
+-->
+- [ ] My code follows the project's style guidelines and `pre-commit` checks pass.
 - [ ] I have performed a self-review of my own code.
-- [ ] I have commented my code, particularly in hard-to-understand areas.
+- [ ] I have commented my code where necessary, particularly in hard-to-understand areas.
 - [ ] I have made corresponding changes to the documentation (if applicable).
-- [ ] My changes generate no new warnings.
-- [ ] I have added tests that prove my fix is effective or that my feature works (if applicable).
-- [ ] New and existing unit tests pass locally with my changes (if applicable).
+- [ ] My changes generate no new warnings or errors.
+- [ ] I have added tests that prove my fix is effective or that my feature works (if tests are in use).
+- [ ] All new and existing unit tests pass locally with my changes (if tests are in use).

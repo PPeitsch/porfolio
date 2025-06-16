@@ -1,0 +1,35 @@
+name: 📖 Documentation Issue
+description: Report an issue or suggest an improvement for the documentation.
+title: "[DOCS] <A brief, descriptive title>"
+labels: ["documentation", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve our documentation!
+
+  - type: input
+    id: affected-doc
+    attributes:
+      label: Affected Document(s)
+      description: Which document(s) does this issue relate to?
+      placeholder: "e.g., README.md, CONTRIBUTING.md, or a specific docstring."
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: Description of the Issue
+      description: |
+        Please describe the problem. Is something unclear, incorrect, or missing?
+        Provide a link to the specific section if possible.
+      placeholder: "In the 'Quick Start' section of the README.md, step 5 is unclear because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-change
+    attributes:
+      label: Suggested Change
+      description: How can we improve it? Please provide the suggested text or change.
