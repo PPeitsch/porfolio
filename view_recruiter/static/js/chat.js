@@ -27,7 +27,7 @@ window.initializeRecruiterView = function(callbacks) {
 
     let isLoading = false;
     let chatState = 'awaiting_code'; // 'awaiting_code' or 'chatting'
-    const TOKEN_KEY = 'recruiter_token';
+    const TOKEN_KEY = 'app_access_token';
 
     function parseMarkdown(text) {
         let html = text.replace(/\n/g, '<br>');

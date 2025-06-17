@@ -31,7 +31,7 @@ window.initializeCliView = function(callbacks) {
    const commandHistory = [];
    let historyIndex = -1;
    let isFetching = false;
-   const TOKEN_KEY = 'cli_token'; // Use a different key than the recruiter view
+   const TOKEN_KEY = 'app_access_token'; // Use a different key than the recruiter view
 
    function writeOutput(text, className = null) {
        const line = document.createElement("div");
@@ -237,9 +237,15 @@ window.initializeCliView = function(callbacks) {
    // --- Initial Setup ---
    function initializeTerminal() {
        const token = sessionStorage.getItem(TOKEN_KEY);
-       // For now, we always start with the login prompt.
-       // In later steps, we could check if the token is valid.
-       showLoginPrompt();
+       if (token) {
+           // A more robust check could be to decode the token and check expiration.
+           // For now, if a token exists, we assume the user is authenticated.
+           authState = 'authenticated';
+           showAuthenticatedPrompt();
+       } else {
+           authState = 'awaiting_password';
+           showLoginPrompt();
+       }
        inputElem.focus();
    }
 
