@@ -111,31 +111,6 @@ def load_projects_data():
     return g.get("projects_data", []), g.get("projects_dict", {})
 
 
-def load_recruiter_story_data():
-    """Loads the recruiter story structure from recruiter_story.yaml.
-
-    Returns:
-        dict: A dictionary representing the CYOA story structure.
-    """
-    if "recruiter_story" not in g:
-        logger.info("Loading recruiter_story.yaml into context g")
-        loaded_data = load_yaml_data("recruiter_story.yaml")
-        if isinstance(loaded_data, dict) and loaded_data:
-            g.recruiter_story = loaded_data
-        else:
-            logger.warning(
-                "recruiter_story.yaml is missing, empty, or malformed. Using fallback."
-            )
-            g.recruiter_story = {
-                "start": {"text": "Error: Story could not be loaded.", "choices": []},
-                "step_not_found": {
-                    "text": "Error: Story could not be loaded.",
-                    "choices": [],
-                },
-            }
-    return g.recruiter_story
-
-
 def load_ai_context():
     """Loads the AI context from ai_context.md, caching it in g.
 
