@@ -1,10 +1,10 @@
 import logging
 import os
 
-import anthropic
-from flask import abort, current_app, jsonify, request, send_from_directory
+from flask import abort, jsonify, request, send_from_directory
 
 from common.decorators import token_required
+from common.llm_services import get_llm_service
 from common.utils import load_ai_context
 
 from . import recruiter_bp
@@ -34,7 +34,7 @@ def static_files(filename):
 @recruiter_bp.route("/api/chat", methods=["POST"])
 @token_required
 def handle_chat():
-    """API endpoint to handle chat messages."""
+    """API endpoint to handle chat messages using a configurable LLM provider."""
     if not request.json or "message" not in request.json:
         logger.warning("Chat API called with invalid payload.")
         return jsonify({"error": "Invalid request. 'message' key is required."}), 400
@@ -43,12 +43,16 @@ def handle_chat():
     if not isinstance(user_message, str) or not user_message.strip():
         return jsonify({"error": "Message must be a non-empty string."}), 400
 
-    api_key = current_app.config.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        logger.error("ANTHROPIC_API_KEY is not set in the configuration.")
+    # Get the configured LLM service from the factory
+    llm_service = get_llm_service()
+    if not llm_service:
+        logger.error("LLM service could not be initialized. Check configuration.")
         return (
             jsonify(
-                {"reply": "Error: The chatbot is not configured. Missing API key."}
+                {
+                    "reply": "Error: The chatbot is not configured correctly. "
+                    "Please check the server logs."
+                }
             ),
             503,
         )
@@ -73,30 +77,11 @@ def handle_chat():
         "---\n"
         "{context}\n"
         "---"
-    )
+    ).format(context=ai_context)
 
-    try:
-        client = anthropic.Anthropic(api_key=api_key)
-        logger.info(f"Sending message to Anthropic API: '{user_message}'")
+    messages = [{"role": "user", "content": user_message}]
 
-        response = client.messages.create(
-            model="claude-3-haiku-20240307",
-            max_tokens=1024,
-            system=SYSTEM_PROMPT.format(context=ai_context),
-            messages=[{"role": "user", "content": user_message}],
-        )
-
-        bot_reply = response.content[0].text
-        logger.info(f"Received reply from Anthropic API: '{bot_reply[:100]}...'")
-
-    except anthropic.APIError as e:
-        logger.error(f"Anthropic API error: {e}")
-        bot_reply = (
-            "Sorry, I'm having trouble connecting to my brain right now. "
-            "Please try again in a moment."
-        )
-    except Exception as e:
-        logger.error(f"An unexpected error occurred during chat handling: {e}")
-        bot_reply = "An unexpected error occurred. Please try again."
+    # Use the service to get the response
+    bot_reply = llm_service.get_chat_response(SYSTEM_PROMPT, messages)
 
     return jsonify({"reply": bot_reply})

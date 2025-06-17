@@ -17,6 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.2.0] - 2025-06-17
+
+### Added
+- **Multi-Provider LLM Support**: The AI Chat Assistant now supports multiple LLM providers (Anthropic, OpenAI, and Google Gemini).
+- **LLM Provider Configuration**: The active LLM provider can now be selected via an `LLM_PROVIDER` environment variable.
+- **New Dependencies**: Added `openai` and `google-generativeai` libraries to support the new providers.
+
+### Changed
+- **LLM Service Abstraction**: Refactored the chat backend to use a Strategy design pattern.
+  - A new `LLMService` abstract base class defines a common interface for all providers.
+  - Provider-specific logic is now encapsulated in concrete service classes (`AnthropicService`, `OpenAIService`, `GeminiService`).
+  - A factory function (`get_llm_service`) dynamically selects and instantiates the configured service, completely decoupling the chat endpoint from the specific LLM implementation.
+- **Configuration**: Updated `config.py` and `.env.example` to include the new LLM provider settings and API keys.
+
+### Fixed
+- **Static Typing**: Resolved all `mypy` errors related to the new service classes and factory, ensuring the new architecture is type-safe.
+
+
 ## [1.1.0] - 2025-06-17
 
 ### Added
