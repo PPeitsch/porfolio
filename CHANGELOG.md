@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.2.1] - 2025-06-17
+
+### Changed
+- Refactored `visual.css` to use global CSS variables, ensuring style consistency across views.
+
+### Fixed
+- **Code Clutter**: Removed the redundant `recruiter_story.yaml` data file and its corresponding unused loader function `load_recruiter_story_data` from `common/utils.py`.
+- **Frontend**: Corrected a misleading comment in `terminal.js` regarding the session token key to accurately reflect that the authentication state is shared between views.
+
+
 ## [1.2.0] - 2025-06-17
 
 ### Added

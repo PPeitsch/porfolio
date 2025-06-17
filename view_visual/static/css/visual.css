@@ -13,87 +13,80 @@
     position: relative; /* Needed for absolute positioning of overlay */
 }
 
-/* Keep existing hover effect */
 .project-card-visual:hover {
     transform: translateY(-5px);
      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
 }
 
-/* Image Container */
 .project-card-visual .image-container {
     width: 100%;
     height: 180px;
-    display: flex; /* Use flex for centering placeholder if needed */
+    display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f3f4f6; /* Slightly darker gray background */
-    border-bottom: 1px solid #e5e7eb; /* gray-200 */
+    background-color: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
     padding: 0;
     overflow: hidden;
-    position: relative; /* Needed for overlay */
+    position: relative;
 }
 
-/* General image style */
 .project-card-visual img.project-image {
-    display: block; /* Remove extra space below image */
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease-out; /* Add transition for zoom effect */
+    transition: transform 0.3s ease-out;
 }
 .project-card-visual:hover img.project-image {
-     transform: scale(1.05); /* Slight zoom on card hover */
+     transform: scale(1.05);
 }
 
-
-/* SVG placeholder specific styles */
 .project-card-visual img.project-image.svg-image {
-    /* Use contain maybe, or add padding if fill looks bad */
-    object-fit: contain; /* Show the whole SVG */
-    padding: 1rem; /* Add some padding around the SVG */
-    width: auto; /* Let SVG determine aspect ratio within padding */
-    max-width: 80%; /* Prevent SVG from getting too huge */
+    object-fit: contain;
+    padding: 1rem;
+    width: auto;
+    max-width: 80%;
     max-height: 80%;
 }
-/* Override hover effect for SVG if needed */
+
 .project-card-visual:hover img.project-image.svg-image {
-     transform: scale(1.0); /* No zoom for SVG placeholder */
+     transform: scale(1.0);
 }
 
-/* --- Image Overlay (Optional) --- */
 .project-card-visual .image-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(29, 78, 216, 0.7); /* Example: Semi-transparent blue */
+    background-color: rgba(29, 78, 216, 0.7);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    opacity: 0; /* Hidden by default */
+    opacity: 0;
     transition: opacity 0.3s ease-in-out;
-    pointer-events: none; /* Allow clicks to go through to links below */
+    pointer-events: none;
 }
 .project-card-visual:hover .image-overlay {
-    opacity: 1; /* Show on card hover */
-    pointer-events: auto; /* Enable interaction with overlay content */
+    opacity: 1;
+    pointer-events: auto;
 }
 .project-card-visual .overlay-text {
     color: white;
-    font-size: 0.875rem; /* text-sm */
-    font-weight: 600; /* semibold */
+    font-size: 0.875rem;
+    font-weight: 600;
     text-align: center;
-    margin-bottom: 0.75rem; /* mb-3 */
+    margin-bottom: 0.75rem;
 }
 .project-card-visual .overlay-link {
     display: inline-block;
     padding: 0.4rem 0.9rem;
     background-color: rgba(255, 255, 255, 0.9);
-    color: #1d4ed8; /* Blue text */
-    border-radius: 9999px; /* rounded-full */
-    font-size: 0.75rem; /* text-xs */
+    color: #1d4ed8;
+    border-radius: 9999px;
+    font-size: 0.75rem;
     font-weight: 600;
     text-decoration: none;
     transition: background-color 0.2s ease;
@@ -101,10 +94,7 @@
 .project-card-visual .overlay-link:hover {
     background-color: white;
 }
-/* --- End Image Overlay --- */
 
-
-/* Content Area */
 .project-card-visual .project-content {
     padding: 1.25rem;
     flex-grow: 1;
@@ -112,7 +102,6 @@
     flex-direction: column;
 }
 
-/* Title */
 .project-card-visual .project-title {
     font-size: 1.125rem;
     font-weight: 600;
@@ -120,33 +109,30 @@
     margin-bottom: 0.5rem;
 }
 
-/* Description */
 .project-card-visual .project-description {
     font-size: 0.875rem;
     color: #4b5563;
-    line-height: 1.5; /* Slightly more line spacing */
+    line-height: 1.5;
     margin-bottom: 1rem;
     flex-grow: 1;
 }
 
-/* Tags */
 .project-card-visual .project-tags {
     margin-bottom: 1.25rem;
-    margin-top: auto; /* Keep pushing down */
+    margin-top: auto;
 }
 .project-card-visual .project-tags .tech-tag-visual {
     display: inline-block;
-    background-color: #e0e7ff; /* Lighter Indigo */
-    color: #3730a3; /* Darker Indigo */
+    background-color: #e0e7ff;
+    color: #3730a3;
     font-size: 0.75rem;
     font-weight: 500;
-    padding: 0.2rem 0.7rem; /* Slightly more padding */
+    padding: 0.2rem 0.7rem;
     border-radius: 9999px;
     margin-right: 0.3rem;
     margin-bottom: 0.3rem;
 }
 
-/* Links Area */
 .project-card-visual .project-links {
     border-top: 1px solid #f3f4f6;
     padding-top: 1rem;
@@ -156,7 +142,6 @@
     gap: 0.75rem;
 }
 
-/* Link Buttons */
 .project-card-visual .project-link-button {
     display: inline-flex;
     align-items: center;
@@ -167,36 +152,32 @@
     border-radius: 0.375rem;
     transition: background-color 0.2s ease, transform 0.1s ease;
     text-decoration: none;
-    border: 1px solid transparent; /* Add border for consistency */
+    border: 1px solid transparent;
 }
 .project-card-visual .project-link-button:active {
-     transform: scale(0.95); /* Click feedback */
+     transform: scale(0.95);
 }
 
-/* Primary Link Button Style */
 .project-card-visual .project-link-button.primary {
-     background-color: #4f46e5; /* indigo-600 */
+     background-color: #4f46e5;
      color: white;
      border-color: #4f46e5;
 }
 .project-card-visual .project-link-button.primary:hover {
-     background-color: #4338ca; /* indigo-700 */
+     background-color: #4338ca;
      border-color: #4338ca;
 }
 
-/* Secondary Link Button Style */
 .project-card-visual .project-link-button.secondary {
-     background-color: #f3f4f6; /* gray-100 */
-     color: #374151; /* gray-700 */
-     border-color: #d1d5db; /* gray-300 */
+     background-color: #f3f4f6;
+     color: #374151;
+     border-color: #d1d5db;
 }
 .project-card-visual .project-link-button.secondary:hover {
-     background-color: #e5e7eb; /* gray-200 */
-     border-color: #9ca3af; /* gray-400 */
+     background-color: #e5e7eb;
+     border-color: #9ca3af;
 }
 
-
-/* Card Animation (Keep as is) */
 .project-card-visual {
     opacity: 0;
     transform: translateY(20px);

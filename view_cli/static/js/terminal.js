@@ -31,7 +31,7 @@ window.initializeCliView = function(callbacks) {
    const commandHistory = [];
    let historyIndex = -1;
    let isFetching = false;
-   const TOKEN_KEY = 'app_access_token'; // Use a different key than the recruiter view
+   const TOKEN_KEY = 'app_access_token';
 
    function writeOutput(text, className = null) {
        const line = document.createElement("div");
