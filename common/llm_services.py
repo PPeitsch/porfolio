@@ -1,10 +1,11 @@
 import abc
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import anthropic
 import google.generativeai as genai
 import openai
+from flask import current_app
 
 logger = logging.getLogger(__name__)
 
@@ -115,18 +116,65 @@ class GeminiService(LLMService):
     ) -> str:
         # Gemini expects the system prompt and history differently.
         # It's managed via the chat session.
-        chat_session = self.client.start_chat(
-            history=[{"role": "user", "parts": [system_prompt]}]
-        )
-        # The last message is the current user prompt.
-        user_prompt = messages[-1]["content"] if messages else ""
+        # We need to format the messages for Gemini API
+        gemini_messages = []
+        for msg in messages:
+            role = "model" if msg["role"] == "assistant" else "user"
+            gemini_messages.append({"role": role, "parts": [msg["content"]]})
 
-        if not user_prompt:
+        # The last message is the current user prompt.
+        if not gemini_messages:
             return "Error: No user message provided."
 
         try:
-            response = chat_session.send_message(user_prompt)
+            # The system prompt is passed as part of the model's generation_config
+            model = genai.GenerativeModel(
+                "gemini-pro", system_instruction=system_prompt
+            )
+            response = model.generate_content(gemini_messages)
             return response.text
         except Exception as e:
             logger.error(f"Google Gemini API error: {e}")
             return "Sorry, I'm having trouble connecting to the AI service (Gemini)."
+
+
+def get_llm_service() -> Optional[LLMService]:
+    """
+    Factory function to get the configured LLM service instance.
+
+    Reads the LLM_PROVIDER from the Flask app config and returns the
+    corresponding service instance, initialized with the correct API key.
+
+    Returns:
+        An instance of a class that inherits from LLMService, or None
+        if the provider is not configured or the key is missing.
+    """
+    provider = current_app.config.get("LLM_PROVIDER")
+    api_key = None
+    service_class = None
+
+    if provider == "anthropic":
+        api_key = current_app.config.get("ANTHROPIC_API_KEY")
+        service_class = AnthropicService
+    elif provider == "openai":
+        api_key = current_app.config.get("OPENAI_API_KEY")
+        service_class = OpenAIService
+    elif provider == "gemini":
+        api_key = current_app.config.get("GEMINI_API_KEY")
+        service_class = GeminiService
+    else:
+        logger.error(f"Unsupported LLM_PROVIDER configured: '{provider}'")
+        return None
+
+    if not api_key:
+        logger.error(
+            f"LLM_PROVIDER is set to '{provider}', but the corresponding API key "
+            f"({provider.upper()}_API_KEY) is missing."
+        )
+        return None
+
+    try:
+        return service_class(api_key=api_key)
+    except Exception as e:
+        logger.error(f"Failed to instantiate LLM service for '{provider}': {e}")
+        return None
