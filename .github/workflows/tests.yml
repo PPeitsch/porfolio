@@ -33,11 +33,8 @@ jobs:
         run: |
           pytest --cov=shell --cov=auth --cov=common --cov=view_cli --cov=view_recruiter --cov=view_visual --cov-report=xml
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
+          slug: ${{ github.repository }}
