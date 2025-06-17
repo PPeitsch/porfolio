@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Any, Dict, List, Optional, cast
 
 import yaml
 from flask import current_app, g
@@ -130,3 +131,53 @@ def load_ai_context():
             logger.error(f"An unexpected error occurred loading {filepath}: {e}")
             g.ai_context = "Error: Could not load AI context."
     return g.ai_context
+
+
+# --- Data Access Functions (Tools for LLM) ---
+
+
+def get_professional_summary() -> str:
+    """Retrieves the professional summary from the CV data."""
+    cv_data = load_cv_data()
+    # Using cast to assure mypy of the return type from .get()
+    summary = cv_data.get("summary", "No professional summary is available.")
+    return cast(str, summary)
+
+
+def get_skills(category: Optional[str] = None) -> List[str]:
+    """Retrieves the list of technical skills."""
+    cv_data = load_cv_data()
+    skills = cv_data.get("skills", [])
+    # Using cast for type safety, as .get can return Any
+    return cast(List[str], skills)
+
+
+def get_project_list() -> List[Dict[str, str]]:
+    """Retrieves a summary list of all available projects."""
+    projects, _ = load_projects_data()
+    if not projects:
+        return []
+
+    # The line causing the E501 error is broken down for readability.
+    project_summaries = []
+    for p in projects:
+        summary = {
+            "id": p.get("id", "N/A"),
+            "title": p.get("title", "Untitled Project"),
+            "short_description": p.get(
+                "short_description", p.get("description", "No description available.")
+            ),
+        }
+        project_summaries.append(summary)
+    return project_summaries
+
+
+def get_project_details(project_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieves detailed information for a specific project by its ID.
+    Returns None if the project is not found.
+    """
+    _, projects_dict = load_projects_data()
+    project = projects_dict.get(project_id)
+    # Cast the result to the expected return type for mypy
+    return cast(Optional[Dict[str, Any]], project)
