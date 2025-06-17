@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
 import anthropic
 import google.generativeai as genai
@@ -27,24 +27,31 @@ class LLMService(abc.ABC):
         self.client = self._initialize_client()
 
     @abc.abstractmethod
-    def _initialize_client(self):
+    def _initialize_client(self) -> Any:
         """Initializes and returns the specific client for the LLM provider."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def get_chat_response(
-        self, system_prompt: str, messages: List[Dict[str, str]]
-    ) -> str:
+        self,
+        messages: List[Dict[str, Any]],
+        system_prompt: str,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Union[str, List[Dict[str, Any]]]:
         """
         Sends a request to the LLM and returns the chat response.
 
+        The response can be a simple string or a list of tool use requests.
+
         Args:
+            messages: A list of message dictionaries, including user, assistant,
+                      and tool messages.
             system_prompt: The system-level instructions for the model.
-            messages: A list of message dictionaries, e.g.,
-                      [{'role': 'user', 'content': 'Hello!'}]
+            tools: An optional list of tool definitions available to the model.
 
         Returns:
-            A string containing the model's text response.
+            - A string containing the model's text response.
+            - A list of dictionaries, where each dict is a tool call request.
         """
         raise NotImplementedError
 
@@ -52,22 +59,47 @@ class LLMService(abc.ABC):
 class AnthropicService(LLMService):
     """LLM Service implementation for Anthropic's Claude models."""
 
-    def _initialize_client(self):
+    def _initialize_client(self) -> anthropic.Anthropic:
         logger.info("Initializing Anthropic client.")
         return anthropic.Anthropic(api_key=self.api_key)
 
     def get_chat_response(
-        self, system_prompt: str, messages: List[Dict[str, str]]
-    ) -> str:
+        self,
+        messages: List[Dict[str, Any]],
+        system_prompt: str,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Union[str, List[Dict[str, Any]]]:
         try:
             response = self.client.messages.create(
                 model="claude-3-haiku-20240307",
                 max_tokens=1024,
                 system=system_prompt,
                 messages=messages,
+                tools=tools or [],
+                tool_choice={"type": "auto"},
             )
-            # Ensure the return type is explicitly a string for mypy
-            return str(response.content[0].text)
+
+            # Check if the model wants to use a tool
+            if response.stop_reason == "tool_use":
+                tool_calls = []
+                for content_block in response.content:
+                    if content_block.type == "tool_use":
+                        tool_calls.append(
+                            {
+                                "id": content_block.id,
+                                "name": content_block.name,
+                                "input": content_block.input,
+                            }
+                        )
+                return tool_calls
+
+            # Otherwise, return the text content
+            text_content = ""
+            for content_block in response.content:
+                if content_block.type == "text":
+                    text_content += content_block.text
+            return text_content.strip()
+
         except anthropic.APIError as e:
             logger.error(f"Anthropic API error: {e}")
             return "Sorry, I'm having trouble connecting to the AI service (Anthropic)."
@@ -79,23 +111,39 @@ class AnthropicService(LLMService):
 class OpenAIService(LLMService):
     """LLM Service implementation for OpenAI's GPT models."""
 
-    def _initialize_client(self):
+    def _initialize_client(self) -> openai.OpenAI:
         logger.info("Initializing OpenAI client.")
         return openai.OpenAI(api_key=self.api_key)
 
     def get_chat_response(
-        self, system_prompt: str, messages: List[Dict[str, str]]
-    ) -> str:
-        # OpenAI expects the system prompt as the first message in the list
+        self,
+        messages: List[Dict[str, Any]],
+        system_prompt: str,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Union[str, List[Dict[str, Any]]]:
         all_messages = [{"role": "system", "content": system_prompt}] + messages
         try:
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=all_messages,
+                tools=tools,
+                tool_choice="auto" if tools else None,
                 max_tokens=1024,
             )
-            # response.choices[0].message.content can be None, ensure we return a string
-            return str(response.choices[0].message.content or "")
+            response_message = response.choices[0].message
+
+            # Check if the model wants to call a tool
+            if response_message.tool_calls:
+                return [
+                    {
+                        "id": tool_call.id,
+                        "name": tool_call.function.name,
+                        "input": tool_call.function.arguments,
+                    }
+                    for tool_call in response_message.tool_calls
+                ]
+
+            return str(response_message.content or "")
         except openai.APIError as e:
             logger.error(f"OpenAI API error: {e}")
             return "Sorry, I'm having trouble connecting to the AI service (OpenAI)."
@@ -107,30 +155,51 @@ class OpenAIService(LLMService):
 class GeminiService(LLMService):
     """LLM Service implementation for Google's Gemini models."""
 
-    def _initialize_client(self):
+    def _initialize_client(self) -> genai.GenerativeModel:
         logger.info("Initializing Google Gemini client.")
         genai.configure(api_key=self.api_key)
-        # We create the model object here, which acts as the 'client'
-        return genai.GenerativeModel("gemini-pro")
+        return genai.GenerativeModel("gemini-1.5-flash")
 
     def get_chat_response(
-        self, system_prompt: str, messages: List[Dict[str, str]]
-    ) -> str:
-        gemini_messages = []
-        for msg in messages:
-            role = "model" if msg["role"] == "assistant" else "user"
-            gemini_messages.append({"role": role, "parts": [msg["content"]]})
-
-        if not gemini_messages:
-            return "Error: No user message provided."
+        self,
+        messages: List[Dict[str, Any]],
+        system_prompt: str,
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> Union[str, List[Dict[str, Any]]]:
+        # Gemini requires a specific format for tool definitions
+        gemini_tools = [{"function_declarations": tools}] if tools else None
 
         try:
             model = genai.GenerativeModel(
-                "gemini-pro", system_instruction=system_prompt
+                "gemini-1.5-flash",
+                system_instruction=system_prompt,
+                tools=gemini_tools,
             )
-            response = model.generate_content(gemini_messages)
-            # Ensure the return type is explicitly a string for mypy
-            return str(response.text)
+            # Convert messages to Gemini's format
+            gemini_messages = []
+            for msg in messages:
+                role = "model" if msg["role"] == "assistant" else "user"
+                gemini_messages.append(
+                    {"role": role, "parts": [{"text": msg["content"]}]}
+                )
+
+            response = model.generate_content(
+                gemini_messages, tool_config={"function_calling_config": "AUTO"}
+            )
+            response_part = response.candidates[0].content.parts[0]
+
+            # Check if the model wants to call a function
+            if hasattr(response_part, "function_call"):
+                fc = response_part.function_call
+                return [
+                    {
+                        "id": str(fc.name),
+                        "name": fc.name,
+                        "input": {k: v for k, v in fc.args.items()},
+                    }
+                ]
+
+            return str(response_part.text)
         except Exception as e:
             logger.error(f"Google Gemini API error: {e}")
             return "Sorry, I'm having trouble connecting to the AI service (Gemini)."
@@ -141,7 +210,6 @@ def get_llm_service() -> Optional[LLMService]:
     Factory function to get the configured LLM service instance.
     """
     provider = current_app.config.get("LLM_PROVIDER")
-    # Explicitly type service_class to hold a type that is a subclass of LLMService
     service_class: Optional[Type[LLMService]] = None
     api_key: Optional[str] = None
 
@@ -159,7 +227,6 @@ def get_llm_service() -> Optional[LLMService]:
         return None
 
     if not service_class:
-        # This case is redundant due to the 'else' above but makes logic clearer
         return None
 
     if not api_key:
@@ -170,7 +237,6 @@ def get_llm_service() -> Optional[LLMService]:
         return None
 
     try:
-        # mypy now knows service_class is not None here
         return service_class(api_key=api_key)
     except Exception as e:
         logger.error(f"Failed to instantiate LLM service for '{provider}': {e}")
