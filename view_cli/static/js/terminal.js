@@ -71,12 +71,39 @@ window.initializeCliView = function(callbacks) {
 
    async function processCommand(commandLine) {
        if (authState === 'awaiting_password') {
-            // In the next step, we will handle the password submission here.
-            // For now, let's just log it and do nothing.
-            writeOutput("password: ••••••••", "echo-command");
-            writeOutput("Permission denied, please try again.", "error-message");
-            inputElem.value = ''; // Clear input after attempt
-            return;
+           const code = commandLine.trim();
+           if (!code) return; // Ignore empty submissions
+
+           isFetching = true;
+           inputElem.disabled = true;
+           writeOutput("password: " + "•".repeat(code.length), "echo-command");
+
+           try {
+               const response = await fetch('/auth/verify', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ code: code }),
+               });
+
+               if (!response.ok) {
+                   const errorData = await response.json();
+                   throw new Error(errorData.error || 'Invalid code.');
+               }
+
+               const data = await response.json();
+               sessionStorage.setItem(TOKEN_KEY, data.token);
+               authState = 'authenticated';
+               showAuthenticatedPrompt();
+
+           } catch (error) {
+               writeOutput(`Permission denied, please try again.`, "error-message");
+           } finally {
+               isFetching = false;
+               inputElem.value = '';
+               inputElem.disabled = false;
+               setTimeout(() => inputElem.focus(), 0);
+           }
+           return;
        }
 
        // --- Authenticated command processing ---
