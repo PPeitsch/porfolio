@@ -1,0 +1,38 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on tags like v1.0.0, v0.2.1-alpha
+
+jobs:
+  build-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to create a release
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Extract release notes from CHANGELOG.md
+        id: extract_release_notes
+        uses: anmol098/waction-changelog-generator@v3
+        with:
+          # This action assumes the release notes for the new tag
+          # are present in CHANGELOG.md.
+          # It extracts the content between the tag's heading and the previous one.
+          changelog_filename: CHANGELOG.md
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: ${{ steps.extract_release_notes.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') }}
