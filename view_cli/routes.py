@@ -3,6 +3,7 @@ import textwrap
 
 from flask import g, jsonify
 
+from common.decorators import token_required
 from common.utils import load_cv_data, load_projects_data
 
 from . import cli_bp
@@ -35,6 +36,7 @@ def get_cached_data(data_type="cv"):
 
 
 @cli_bp.route("/api/command/<path:command_line>")
+@token_required
 def handle_command_api(command_line):
     """API endpoint to process a command string from the CLI view."""
     logger.debug(f"CLI API received command: {command_line}")

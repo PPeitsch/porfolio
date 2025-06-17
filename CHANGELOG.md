@@ -17,7 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
-## [1.0.0] - 2025-06-16
+## [1.1.0] - 2025-06-17
+
+### Added
+- **CLI Access Control**: Implemented a full authentication flow for the CLI view, mirroring the security of the Recruiter view.
+  - The CLI now prompts for a password on initialization.
+  - User authentication is handled via the existing `/auth/verify` endpoint.
+  - All subsequent API requests from the CLI are now sent with a valid JWT.
+
+### Changed
+- **Shared Authentication State**: The JWT is now stored under a unified key (`app_access_token`) in `sessionStorage`, allowing the login session to be shared between the CLI and Recruiter views. Users no longer need to re-authenticate when switching between protected views.
+
+### Fixed
+- **CLI User Experience**:
+  - Prevented the browser's native password manager from interfering with the terminal input by using a CSS-based masking technique instead of `type="password"`.
+  - The password prompt now correctly hides user input for better privacy.
+
+
+## [1.0.0] - 2025-06-15
 
 ### Added
 - **AI-Powered Recruiter View**: Replaced the static "Choose Your Own Adventure" interface with a dynamic AI chat assistant, leveraging external LLM providers.
@@ -53,4 +70,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - **API Protection**: The `/recruiter/api/chat` endpoint is now protected by a `@token_required` decorator, preventing unauthorized access and data scraping.
-- **Safe String Comparison**: The authentication backend now uses `hmac.compare_digest` to mitigate timing attacks.
+- **Safe String Comparison**: The authentication backend now uses `hmac.digest` to mitigate timing attacks.
