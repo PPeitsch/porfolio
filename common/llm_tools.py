@@ -19,7 +19,10 @@ TOOL_MAP: Dict[str, Callable[..., Any]] = {
 TOOL_DEFINITIONS: List[Dict[str, Any]] = [
     {
         "name": "get_professional_summary",
-        "description": "Retrieves the professional summary or overview of Pablo Peitsch. Use this to answer general questions about his background and focus.",
+        "description": (
+            "Retrieves the professional summary or overview of Pablo Peitsch. "
+            "Use this to answer general questions about his background and focus."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {},
@@ -27,20 +30,32 @@ TOOL_DEFINITIONS: List[Dict[str, Any]] = [
     },
     {
         "name": "get_skills",
-        "description": "Retrieves a list of Pablo Peitsch's technical skills. Use this to answer questions about his expertise in specific technologies, languages, or frameworks.",
+        "description": (
+            "Retrieves a list of Pablo Peitsch's technical skills. Use this to "
+            "answer questions about his expertise in specific technologies, "
+            "languages, or frameworks."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "category": {
                     "type": "string",
-                    "description": "Optional category to filter skills (e.g., 'backend', 'frontend'). Currently not implemented, but reserved for future use.",
+                    "description": (
+                        "Optional category to filter skills (e.g., 'backend', "
+                        "'frontend'). Currently not implemented, but reserved "
+                        "for future use."
+                    ),
                 }
             },
         },
     },
     {
         "name": "get_project_list",
-        "description": "Retrieves a summary list of all available projects. Use this when the user asks for an overview of projects or wants to know what projects exist.",
+        "description": (
+            "Retrieves a summary list of all available projects. Use this when "
+            "the user asks for an overview of projects or wants to know what "
+            "projects exist."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {},
@@ -48,13 +63,20 @@ TOOL_DEFINITIONS: List[Dict[str, Any]] = [
     },
     {
         "name": "get_project_details",
-        "description": "Retrieves detailed information for a specific project based on its unique identifier (ID). Use this when the user asks for details about a specific project by name or ID.",
+        "description": (
+            "Retrieve detailed information for a specific project based on its "
+            "unique identifier (ID). Use this when the user asks for details "
+            "about a specific project by name or ID."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "project_id": {
                     "type": "string",
-                    "description": "The unique identifier for the project, e.g., 'portfolio', 'automateiq'.",
+                    "description": (
+                        "The unique identifier for the project, e.g., "
+                        "'portfolio', 'automateiq'."
+                    ),
                 }
             },
             "required": ["project_id"],
