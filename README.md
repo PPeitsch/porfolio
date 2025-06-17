@@ -84,6 +84,21 @@ A modern, multi-view portfolio website built with Flask, showcasing projects and
 
 For detailed contribution guidelines, see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
+## 📦 Dependency Management
+
+This project uses `pip-tools` for managing Python dependencies to ensure reproducible builds. The workflow is designed to prevent version conflicts between production and development environments.
+
+-   **Production** dependencies are listed in `requirements.in`.
+-   **Development** dependencies are listed in `requirements-dev.in`.
+
+After modifying either of the `.in` files, you must regenerate the locked `requirements.txt` and `requirements-dev.txt` files by running the provided script:
+
+```bash
+./scripts/compile-reqs.sh
+```
+
+This script will update the `constraints.txt` file and then re-compile both requirement files to ensure they are consistent.
+
 ## 🚢 Deployment
 
 This Flask application is ready to be deployed using any production-ready WSGI server like Gunicorn or Waitress behind a reverse proxy like Nginx.
