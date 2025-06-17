@@ -30,7 +30,7 @@ def create_app(config_name="default"):
         logging.error(
             "Could not import config.Config. Ensure config.py is in the project root."
         )
-        app.config.from_mapping(SECRET_KEY="default-fallback-key-error")
+        app.config.from_mapping(SECRET_KEY="default-fallback-key-error")  # nosec B106
 
     logging.info(f"App created with config: {config_name}")
     logging.info(f"App Root Path: {app.root_path}")

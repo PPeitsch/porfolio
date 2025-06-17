@@ -1,53 +1,63 @@
 [tool.mypy]
 # Basic MyPy configuration
-python_version = "3.10"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 explicit_package_bases = true
+
 
 [tool.isort]
 profile = "black"
 line_length = 88
 skip_glob = ["*/venv/*", "*/.venv/*", "*/env/*", "*/ENV/*"]
 
+
 [tool.black]
 line-length = 88
 exclude = '''
 /(
-    \.git | \.hg | \.mypy_cache | \.tox | \.venv | venv | env | ENV
-  | _build | buck-out | build | dist
+   \.git | \.hg | \.mypy_cache | \.tox | \.venv | venv | env | ENV
+ | _build | buck-out | build | dist
 )/
 '''
+
+# New section for Bandit configuration
+[tool.bandit]
+exclude_dirs = ["./venv", "./.venv"]
+skips = ["B101"]
 
 # --- Project Schema Definition ---
 [tool.portfolio]
 # Project schema definition to ensure consistency across the application
 project_schema = [
-    "id",                # Unique identifier for the project
-    "title",             # Display name of the project
-    "image",             # Filename only, e.g., minidoro.png
-    "short_description", # Brief overview for cards
-    "description",       # Full project description
-    "type",              # webapp, library, repo, etc.
-    "technologies",      # List of technologies used
-    "live_url",          # URL to live deployment (if applicable)
-    "github_url",        # URL to GitHub repository
+   "id",                # Unique identifier for the project
+   "title",             # Display name of the project
+   "image",             # Filename only, e.g., minidoro.png
+   "short_description", # Brief overview for cards
+   "description",       # Full project description
+   "type",              # webapp, library, repo, etc.
+   "technologies",      # List of technologies used
+   "live_url",          # URL to live deployment (if applicable)
+   "github_url",        # URL to GitHub repository
 ]
+
 
 # Default values for optional fields
 [tool.portfolio.default_values]
 live_url = ""
 image = "placeholder.svg"
 
+
 # Project types and their display attributes
 project_types = [
-    "webapp",            # Web applications
-    "library",           # Software libraries/packages
-    "repo",              # General repositories
-    "tool",              # Command-line or utility tools
-    "api",               # API services
-    "mobile",            # Mobile applications
+   "webapp",            # Web applications
+   "library",           # Software libraries/packages
+   "repo",              # General repositories
+   "tool",              # Command-line or utility tools
+   "api",               # API services
+   "mobile",            # Mobile applications
 ]
+
 
 # Example projects (for schema reference)
 [[tool.portfolio.projects]]
@@ -64,6 +74,7 @@ technologies = ["Python", "Flask", "JavaScript", "Tailwind CSS", "YAML", "Jinja2
 github_url = "https://github.com/PPeitsch/porfolio"
 live_url = "https://ppeitsch.com.ar"
 
+
 [[tool.portfolio.projects]]
 id = "cli-view"
 title = "Terminal Portfolio Experience"
@@ -77,6 +88,7 @@ type = "webapp"
 technologies = ["Python", "Flask", "JavaScript", "xterm.js", "YAML"]
 github_url = "https://github.com/PPeitsch/porfolio"
 live_url = "https://ppeitsch.com.ar/cli"
+
 
 [[tool.portfolio.projects]]
 id = "recruiter-view"
@@ -92,6 +104,7 @@ type = "webapp"
 technologies = ["Python", "Flask", "JavaScript", "Tailwind CSS", "YAML", "Jinja2"]
 github_url = "https://github.com/PPeitsch/porfolio"
 live_url = "https://ppeitsch.com.ar/recruiter"
+
 
 [[tool.portfolio.projects]]
 id = "visual-view"

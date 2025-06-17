@@ -2,13 +2,14 @@
 
 <!-- Badges -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python Version](https://img.shields.io/badge/python-3.10+-blueviolet)](https://www.python.org)
+[![Python Version](https://img.shields.io/badge/python-3.12+-blueviolet)](https://www.python.org)
 [![Flask Version](https://img.shields.io/badge/Flask-3.0+-teal.svg)](https://flask.palletsprojects.com/)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort/)
-[![Static Types: MyPy](https://img.shields.io/badge/static%20types-mypy-blue.svg)](https://mypy-lang.org/)
 [![Linting: Flake8](https://img.shields.io/badge/linting-flake8-yellowgreen)](https://flake8.pycqa.org/)
-[![CI Status](https://github.com/PPeitsch/porfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/PPeitsch/porfolio/actions/workflows/ci.yml)
+[![Code Quality](https://github.com/PPeitsch/porfolio/actions/workflows/code-quality.yml/badge.svg)](https://github.com/PPeitsch/porfolio/actions/workflows/code-quality.yml)
+[![Tests](https://github.com/PPeitsch/porfolio/actions/workflows/tests.yml/badge.svg)](https://github.com/PPeitsch/porfolio/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/PPeitsch/porfolio/graph/badge.svg)](https://codecov.io/gh/PPeitsch/porfolio)
 [![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-brightgreen.svg?style=flat)](.github/CONTRIBUTING.md)
 
 
@@ -53,21 +54,8 @@ A modern, multi-view portfolio website built with Flask, showcasing projects and
     *   JWT-based authentication protects the AI Chat API from abuse and data scraping.
     *   Dynamic content (CV, projects) is loaded from simple `.yaml` files, making updates easy and code-free.
 *   **🖥️ Reusable UI Components:** Features a shared, draggable window component with standard OS controls (minimize, maximize, close) to ensure a consistent UX across interactive views.
-*   **🚀 Modern Stack:** Python 3.10+, Flask, and vanilla JavaScript for a lightweight and fast frontend.
-*   **✅ Quality Assured:** Enforces a high standard of code quality using `pre-commit` hooks for automated formatting (Black, isort), linting (Flake8), and static type checking (MyPy) on every commit.
-
-## 📊 Project Status
-
-*   **Phase 1 (Foundation & Shell):** ✅ Complete
-*   **Phase 2 (CLI View):** ✅ Complete
-*   **Phase 3 (Recruiter View Refactor to AI Chat):** ✅ Complete
-*   **Phase 4 (Visual View):** ✅ Complete
-*   **Phase 5 (Access Control & Security):** ✅ Complete
-*   **Phase 6 (UI Polish & Shared Components):** ✅ Complete
-*   **Phase 7 (CI/CD & Documentation):** ✅ Complete
-*   **Phase 8 (Advanced Features):** ⏳ Not Started
-
-*(✅ Complete, 🔄 In Progress, ⏳ Not Started)*
+*   **🚀 Modern Stack:** Python 3.12+, Flask, and vanilla JavaScript for a lightweight and fast frontend.
+*   **✅ Quality Assured:** Enforces a high standard of code quality through a robust CI/CD pipeline and pre-commit hooks. Includes automated formatting (Black, isort), linting (Flake8), static type checking (MyPy), security scanning (Bandit), and test coverage reporting (Codecov).
 
 ## 🚀 Quick Start & Development
 
@@ -82,7 +70,22 @@ A modern, multi-view portfolio website built with Flask, showcasing projects and
 7.  **Run:** `python run.py`
 8.  Access at `http://127.0.0.1:5000`.
 
-For detailed contribution guidelines, see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+### 📦 Dependency Management
+
+This project uses `pip-tools` for managing Python dependencies to ensure reproducible builds.
+
+-   **Production** dependencies are listed in `requirements.in`.
+-   **Development** dependencies are listed in `requirements-dev.in`.
+
+After modifying either of the `.in` files, you must regenerate the locked `requirements.txt` and `requirements-dev.txt` files by running the provided script:
+```bash
+# For Linux/macOS
+./scripts/compile-reqs.sh
+
+# For Windows (PowerShell)
+./scripts/compile-reqs.ps1
+```
+This script will update the `constraints.txt` file and then re-compile both requirement files to ensure they are consistent.
 
 ## 🚢 Deployment
 
