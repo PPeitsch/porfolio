@@ -21,6 +21,10 @@ exclude = '''
 )/
 '''
 
+# New section for Bandit configuration
+[tool.bandit]
+exclude_dirs = ["./venv", "./.venv"]
+skips = ["B101"]
 
 # --- Project Schema Definition ---
 [tool.portfolio]
