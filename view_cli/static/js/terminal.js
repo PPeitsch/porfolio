@@ -55,13 +55,13 @@ window.initializeCliView = function(callbacks) {
    function showLoginPrompt() {
        clearScreen();
        promptSpan.textContent = "password:";
-       inputElem.type = 'password';
+       // The line changing input type is removed.
        writeOutput("Authentication required for CLI access.");
    }
 
    function showAuthenticatedPrompt() {
        promptSpan.textContent = "portfolio:~ $";
-       inputElem.type = 'text';
+       // The line changing input type is removed.
        clearScreen();
        writeOutput("Welcome to the PPeitsch CLI Portfolio!");
        writeOutput("Type 'help' for a list of available commands.");
@@ -76,7 +76,8 @@ window.initializeCliView = function(callbacks) {
 
            isFetching = true;
            inputElem.disabled = true;
-           writeOutput("password: " + "•".repeat(code.length), "echo-command");
+           // We no longer write the fake password to the output to avoid clutter and potential security issues.
+           // The user sees what they type in the input line itself.
 
            try {
                const response = await fetch('/auth/verify', {
@@ -107,7 +108,7 @@ window.initializeCliView = function(callbacks) {
        }
 
        // --- Authenticated command processing ---
-       writeOutput(promptSpan.textContent + commandLine, "echo-command");
+       writeOutput(promptSpan.textContent + " " + commandLine, "echo-command");
        if (commandLine) { commandHistory.push(commandLine); }
        historyIndex = commandHistory.length;
 
@@ -147,7 +148,6 @@ window.initializeCliView = function(callbacks) {
        isFetching = true;
        inputElem.disabled = true;
 
-       // Retrieve the token for the API call
        const token = sessionStorage.getItem(TOKEN_KEY);
        if (!token) {
            writeOutput("Authentication error: Session token not found. Please refresh.", "error-message");
