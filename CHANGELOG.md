@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
-## [1.0.0] - 2025-06-15
+## [1.0.0] - 2025-06-16
 
 ### Added
 - **AI-Powered Recruiter View**: Replaced the static "Choose Your Own Adventure" interface with a dynamic AI chat assistant, leveraging external LLM providers.
@@ -34,11 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added a modern navigation dock for seamless switching between views.
 - **Project Setup**:
   - Added `.env.example` to document environment variables.
-  - Established `requirements.in` files for dependency management via `pip-tools`.
+  - Established `requirements.in` files and a constraints-based workflow for dependency management via `pip-tools`.
 
 ### Changed
 - **UI/UX Overhaul**: The CLI and Recruiter views now use the shared window component, unifying their look and feel. The old "Back" button is replaced by the new navigation dock.
 - **Frontend Asset Loading**: Refactored `selector.js` to use `url_for`-generated paths, resolving all 404 errors for static assets.
+
+### CI
+- **Workflow Stability**: Resolved `bandit` and `pytest` errors by adding necessary configurations and placeholder tests, ensuring the CI pipeline passes successfully.
+- **Dependency Conflicts**: Fixed version conflicts between production and development packages by pinning key dependencies and using a unified constraints file.
+- **Codecov Integration**: Updated the Codecov action to the latest recommended configuration for robust coverage reporting.
 
 ### Fixed
 - **Window Management**: Corrected bugs related to window minimizing, maximizing, and restoring for predictable behavior.
