@@ -55,13 +55,13 @@ window.initializeCliView = function(callbacks) {
    function showLoginPrompt() {
        clearScreen();
        promptSpan.textContent = "password:";
-       // The line changing input type is removed.
+       inputElem.classList.add('password-mask'); // Add the CSS class
        writeOutput("Authentication required for CLI access.");
    }
 
    function showAuthenticatedPrompt() {
        promptSpan.textContent = "portfolio:~ $";
-       // The line changing input type is removed.
+       inputElem.classList.remove('password-mask'); // Remove the CSS class
        clearScreen();
        writeOutput("Welcome to the PPeitsch CLI Portfolio!");
        writeOutput("Type 'help' for a list of available commands.");
