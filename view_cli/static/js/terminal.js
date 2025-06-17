@@ -147,8 +147,32 @@ window.initializeCliView = function(callbacks) {
        isFetching = true;
        inputElem.disabled = true;
 
+       // Retrieve the token for the API call
+       const token = sessionStorage.getItem(TOKEN_KEY);
+       if (!token) {
+           writeOutput("Authentication error: Session token not found. Please refresh.", "error-message");
+           authState = 'awaiting_password';
+           showLoginPrompt();
+           isFetching = false;
+           inputElem.disabled = false;
+           return;
+       }
+
        try {
-           const response = await fetch(`/cli/api/command/${encodeURIComponent(commandLine)}`);
+           const response = await fetch(`/cli/api/command/${encodeURIComponent(commandLine)}`, {
+               headers: {
+                   'Authorization': `Bearer ${token}`
+               }
+           });
+
+           if (response.status === 401) {
+                sessionStorage.removeItem(TOKEN_KEY);
+                authState = 'awaiting_password';
+                writeOutput("Session expired. Please re-authenticate.", "error-message");
+                showLoginPrompt();
+                return;
+           }
+
            if (!response.ok) {
                let errorMsg = `Server error: ${response.status}`;
                try {
@@ -164,9 +188,11 @@ window.initializeCliView = function(callbacks) {
            console.error("Error processing command:", error);
            writeOutput(`Error: ${error.message}`, "error-message");
        } finally {
-           isFetching = false;
-           inputElem.disabled = false;
-           setTimeout(() => inputElem.focus(), 0);
+           if (authState === 'authenticated') {
+               isFetching = false;
+               inputElem.disabled = false;
+               setTimeout(() => inputElem.focus(), 0);
+           }
            scrollToBottom();
        }
    }
