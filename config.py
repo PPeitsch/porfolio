@@ -8,6 +8,15 @@ load_dotenv()
 class Config:
     """Base configuration variables."""
 
+    # Core Flask settings
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-should-be-changed"
-    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
     RECRUITER_ACCESS_CODE = os.environ.get("RECRUITER_ACCESS_CODE") or "default-code"
+
+    # LLM Provider Configuration
+    # Determines which LLM service to use ('anthropic', 'openai', 'gemini')
+    LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic").lower()
+
+    # API Keys for different LLM providers
+    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
