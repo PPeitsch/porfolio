@@ -6,7 +6,7 @@
 #
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.54.0
+anthropic==0.29.0
     # via -r C:\Users\pablo\projects\porfolio\requirements.in
 anyio==4.9.0
     # via
@@ -58,12 +58,15 @@ dparse==0.6.4
     #   safety-schemas
 filelock==3.16.1
     # via
+    #   huggingface-hub
     #   safety
     #   virtualenv
 flake8==7.2.0
     # via -r C:\Users\pablo\projects\porfolio\requirements-dev.in
 flask==3.1.1
     # via -r C:\Users\pablo\projects\porfolio\requirements.in
+fsspec==2025.5.1
+    # via huggingface-hub
 h11==0.16.0
     # via httpcore
 httpcore==1.0.9
@@ -72,6 +75,8 @@ httpx==0.28.1
     # via
     #   anthropic
     #   safety
+huggingface-hub==0.33.0
+    # via tokenizers
 identify==2.6.12
     # via pre-commit
 idna==3.10
@@ -120,6 +125,7 @@ packaging==25.0
     # via
     #   black
     #   dparse
+    #   huggingface-hub
     #   pytest
     #   safety
     #   safety-schemas
@@ -170,11 +176,14 @@ pyyaml==6.0.2
     # via
     #   -r C:\Users\pablo\projects\porfolio\requirements.in
     #   bandit
+    #   huggingface-hub
     #   pre-commit
 regex==2024.11.6
     # via nltk
 requests==2.32.4
-    # via safety
+    # via
+    #   huggingface-hub
+    #   safety
 rich==14.0.0
     # via
     #   bandit
@@ -199,10 +208,14 @@ stevedore==5.4.1
     # via bandit
 tenacity==9.1.2
     # via safety
+tokenizers==0.21.1
+    # via anthropic
 tomlkit==0.13.3
     # via safety
 tqdm==4.67.1
-    # via nltk
+    # via
+    #   huggingface-hub
+    #   nltk
 typer==0.16.0
     # via safety
 types-pyyaml==6.0.12.20250516
@@ -211,6 +224,7 @@ typing-extensions==4.14.0
     # via
     #   anthropic
     #   anyio
+    #   huggingface-hub
     #   mypy
     #   pydantic
     #   pydantic-core
