@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Type
 
 import anthropic
 import google.generativeai as genai
@@ -66,7 +66,8 @@ class AnthropicService(LLMService):
                 system=system_prompt,
                 messages=messages,
             )
-            return response.content[0].text
+            # Ensure the return type is explicitly a string for mypy
+            return str(response.content[0].text)
         except anthropic.APIError as e:
             logger.error(f"Anthropic API error: {e}")
             return "Sorry, I'm having trouble connecting to the AI service (Anthropic)."
@@ -93,7 +94,8 @@ class OpenAIService(LLMService):
                 messages=all_messages,
                 max_tokens=1024,
             )
-            return response.choices[0].message.content or ""
+            # response.choices[0].message.content can be None, ensure we return a string
+            return str(response.choices[0].message.content or "")
         except openai.APIError as e:
             logger.error(f"OpenAI API error: {e}")
             return "Sorry, I'm having trouble connecting to the AI service (OpenAI)."
@@ -114,25 +116,21 @@ class GeminiService(LLMService):
     def get_chat_response(
         self, system_prompt: str, messages: List[Dict[str, str]]
     ) -> str:
-        # Gemini expects the system prompt and history differently.
-        # It's managed via the chat session.
-        # We need to format the messages for Gemini API
         gemini_messages = []
         for msg in messages:
             role = "model" if msg["role"] == "assistant" else "user"
             gemini_messages.append({"role": role, "parts": [msg["content"]]})
 
-        # The last message is the current user prompt.
         if not gemini_messages:
             return "Error: No user message provided."
 
         try:
-            # The system prompt is passed as part of the model's generation_config
             model = genai.GenerativeModel(
                 "gemini-pro", system_instruction=system_prompt
             )
             response = model.generate_content(gemini_messages)
-            return response.text
+            # Ensure the return type is explicitly a string for mypy
+            return str(response.text)
         except Exception as e:
             logger.error(f"Google Gemini API error: {e}")
             return "Sorry, I'm having trouble connecting to the AI service (Gemini)."
@@ -141,17 +139,11 @@ class GeminiService(LLMService):
 def get_llm_service() -> Optional[LLMService]:
     """
     Factory function to get the configured LLM service instance.
-
-    Reads the LLM_PROVIDER from the Flask app config and returns the
-    corresponding service instance, initialized with the correct API key.
-
-    Returns:
-        An instance of a class that inherits from LLMService, or None
-        if the provider is not configured or the key is missing.
     """
     provider = current_app.config.get("LLM_PROVIDER")
-    api_key = None
-    service_class = None
+    # Explicitly type service_class to hold a type that is a subclass of LLMService
+    service_class: Optional[Type[LLMService]] = None
+    api_key: Optional[str] = None
 
     if provider == "anthropic":
         api_key = current_app.config.get("ANTHROPIC_API_KEY")
@@ -166,6 +158,10 @@ def get_llm_service() -> Optional[LLMService]:
         logger.error(f"Unsupported LLM_PROVIDER configured: '{provider}'")
         return None
 
+    if not service_class:
+        # This case is redundant due to the 'else' above but makes logic clearer
+        return None
+
     if not api_key:
         logger.error(
             f"LLM_PROVIDER is set to '{provider}', but the corresponding API key "
@@ -174,6 +170,7 @@ def get_llm_service() -> Optional[LLMService]:
         return None
 
     try:
+        # mypy now knows service_class is not None here
         return service_class(api_key=api_key)
     except Exception as e:
         logger.error(f"Failed to instantiate LLM service for '{provider}': {e}")
