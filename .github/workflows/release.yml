@@ -18,12 +18,9 @@ jobs:
 
       - name: Extract release notes from CHANGELOG.md
         id: extract_release_notes
-        uses: anmol098/waction-changelog-generator@v3
+        uses: metcalfc/changelog-generator@v4.3.1
         with:
-          # This action assumes the release notes for the new tag
-          # are present in CHANGELOG.md.
-          # It extracts the content between the tag's heading and the previous one.
-          changelog_filename: CHANGELOG.md
+          myToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         id: create_release
