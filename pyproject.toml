@@ -120,3 +120,8 @@ type = "webapp"
 technologies = ["Python", "Flask", "JavaScript", "Tailwind CSS", "YAML", "Jinja2"]
 github_url = "https://github.com/PPeitsch/porfolio"
 live_url = "https://ppeitsch.com.ar/visual"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
