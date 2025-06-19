@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.4.0] - 2025-06-19
+
+### Added
+- **Comprehensive Test Suite**: Implemented a full suite of unit and integration tests using `pytest`, achieving over 85% code coverage.
+  - Added tests for `common` modules, including data loaders, caching logic, and the token decorator.
+  - Implemented tests for the `auth` blueprint, covering success and failure cases for access code verification.
+  - Added tests for all `view` API endpoints (`cli`, `recruiter`, `visual`), using mocks to isolate application logic from external services.
+  - The test suite is now integrated into the CI pipeline, ensuring all future changes are validated.
+
+### Changed
+- **Test Infrastructure**: Refactored the test setup to use a central `conftest.py` for shared fixtures and a `helpers.py` module for utility functions, improving test maintainability and resolving import issues.
+
+
 ## [1.3.0] - 2025-06-18
 
 ### Changed
