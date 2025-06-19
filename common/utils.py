@@ -160,3 +160,22 @@ def get_project_details(project_id: str) -> Optional[Dict[str, Any]]:
     project = projects_dict.get(project_id)
     # Cast the result to the expected return type for mypy
     return cast(Optional[Dict[str, Any]], project)
+
+
+def load_system_prompt() -> str:
+    """Loads the system prompt from data/system_prompt.txt.
+
+    Returns:
+        str: The content of the system prompt file.
+    """
+    filepath = _get_data_filepath("system_prompt.txt")
+    logger.debug(f"Attempting to load system prompt from: {filepath}")
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        logger.error(f"System prompt file not found: {filepath}")
+        return "You are a helpful assistant."  # Fallback prompt
+    except Exception as e:
+        logger.error(f"An unexpected error occurred loading {filepath}: {e}")
+        return "You are a helpful assistant."

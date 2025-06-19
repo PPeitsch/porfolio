@@ -45,13 +45,15 @@ def handle_chat():
         logger.error("LLM service could not be initialized. Check configuration.")
         return jsonify({"reply": "Error: Chatbot not configured correctly."}), 503
 
-    SYSTEM_PROMPT = (
-        "You are a helpful, professional, and friendly chatbot assistant for "
-        "Pablo Peitsch. Your goal is to answer questions about his skills, "
-        "experience, and projects by using the available tools. Do not invent "
-        "information. If a question cannot be answered with the tools, politely "
-        "state that. Format responses using basic Markdown."
-    )
+    # Load data needed for the prompt
+    from common.utils import load_cv_data, load_system_prompt
+
+    cv_data = load_cv_data()
+    owner_name = cv_data.get("name", "the portfolio owner")
+
+    # Load and format the system prompt
+    raw_prompt = load_system_prompt()
+    system_prompt = raw_prompt.format(name=owner_name)
 
     # Start with the current user message
     messages: List[Dict[str, Any]] = chat_history + [
@@ -61,7 +63,7 @@ def handle_chat():
     # --- Tool-use loop ---
     while True:
         response = llm_service.get_chat_response(
-            messages=messages, system_prompt=SYSTEM_PROMPT, tools=TOOL_DEFINITIONS
+            messages=messages, system_prompt=system_prompt, tools=TOOL_DEFINITIONS
         )
 
         if isinstance(response, str):
@@ -76,7 +78,6 @@ def handle_chat():
         if isinstance(response, list) and len(response) > 0:
             # It's a tool call request
             tool_calls = response
-            # Add the assistant's tool request to the message history
             messages.append({"role": "assistant", "content": tool_calls})
 
             tool_outputs = []
@@ -87,7 +88,6 @@ def handle_chat():
 
                 if tool_name in TOOL_MAP:
                     try:
-                        # Some LLMs return arguments as a JSON string, others as a dict
                         tool_args = (
                             json.loads(tool_input_str)
                             if isinstance(tool_input_str, str)
@@ -118,12 +118,9 @@ def handle_chat():
                             "is_error": True,
                         }
                     )
-            # Add tool results to the message history for the next turn
             messages.append(
                 {"role": "user", "content": tool_outputs, "type": "tool_result"}
             )
-            # Continue the loop to get the final text response from the LLM
         else:
-            # Unexpected response from LLM service
             logger.error(f"Unexpected LLM response type: {type(response)}")
             return jsonify({"reply": "An unexpected error occurred."}), 500

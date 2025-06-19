@@ -179,7 +179,6 @@ class GeminiService(LLMService):
             ]
             gemini_tools = [types.Tool(function_declarations=function_declarations)]
 
-        # The system prompt is prepended to the user messages.
         gemini_history = [
             types.Content(role="user", parts=[types.Part(text=system_prompt)])
         ]
@@ -189,28 +188,29 @@ class GeminiService(LLMService):
             content = msg.get("content")
 
             if msg.get("type") == "tool_result":
+                tool_results = msg.get("content", [])
                 tool_response_parts = [
                     types.Part.from_function_response(
                         name=tool_result["tool_use_id"],
                         response={"result": json.loads(tool_result["content"])},
                     )
-                    for tool_result in content
+                    for tool_result in tool_results
                 ]
                 gemini_history.append(
                     types.Content(role="user", parts=tool_response_parts)
                 )
-            elif isinstance(content, list):  # Assistant's tool call
-                # Reconstruct the model's tool call response to append to history
+            elif isinstance(content, list):
+                # This constructs the correct FunctionCall object for each tool call
+                function_calls = [
+                    types.FunctionCall(name=c["name"], args=c["input"]) for c in content
+                ]
                 tool_call_parts = [
-                    types.Part.from_function_call(
-                        types.FunctionCall(name=c["name"], args=c["input"])
-                    )
-                    for c in content
+                    types.Part.from_function_call(fc) for fc in function_calls
                 ]
                 gemini_history.append(
                     types.Content(role="model", parts=tool_call_parts)
                 )
-            else:  # Regular text message
+            else:
                 gemini_history.append(
                     types.Content(role=role, parts=[types.Part(text=str(content))])
                 )
@@ -227,25 +227,31 @@ class GeminiService(LLMService):
             )
 
             if not response.candidates:
-                return "No response candidates received from Gemini."
+                logger.error("No response candidates received from Gemini.")
+                return "An error occurred while communicating with the AI service."
 
-            # Check for a function call in the response
-            if response.candidates[0].content.parts[0].function_call:
-                tool_calls = []
-                for part in response.candidates[0].content.parts:
-                    if fc := part.function_call:
-                        # This library doesn't provide a unique ID, so we use the name.
-                        # The recruiter route logic can handle this.
-                        tool_calls.append(
-                            {
-                                "id": fc.name,
-                                "name": fc.name,
-                                "input": dict(fc.args),
-                            }
-                        )
-                if tool_calls:
-                    return tool_calls
+            candidate_parts = response.candidates[0].content.parts
+            tool_calls = []
+            has_function_call = False
+            for part in candidate_parts:
+                if part.function_call:
+                    has_function_call = True
+                    fc = part.function_call
+                    tool_calls.append(
+                        {
+                            "id": fc.name,
+                            "name": fc.name,
+                            "input": dict(fc.args),
+                        }
+                    )
 
+            if has_function_call:
+                logger.info(
+                    f"Gemini requested tool calls: {[tc['name'] for tc in tool_calls]}"
+                )
+                return tool_calls
+
+            logger.info("Gemini returned a text response.")
             return response.text.strip()
 
         except Exception as e:
