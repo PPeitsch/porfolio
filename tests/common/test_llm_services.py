@@ -119,28 +119,38 @@ def test_gemini_service_success(mock_configure, MockGenerativeModel):
 
 
 # --- Test get_llm_service Factory ---
-def test_get_llm_service_factory(app):
+@patch("common.llm_services.AnthropicService")
+@patch("common.llm_services.OpenAIService")
+@patch("common.llm_services.GeminiService")
+def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
     """Test the factory function for creating LLM services."""
     # Test Anthropic
     with app.app_context():
         app.config["LLM_PROVIDER"] = "anthropic"
         app.config["ANTHROPIC_API_KEY"] = "key1"
-        service = get_llm_service()
-        assert isinstance(service, AnthropicService)
+        get_llm_service()
+        MockAnthropic.assert_called_once_with(api_key="key1")
+
+    # Reset mocks for the next case
+    MockAnthropic.reset_mock()
 
     # Test OpenAI
     with app.app_context():
         app.config["LLM_PROVIDER"] = "openai"
         app.config["OPENAI_API_KEY"] = "key2"
-        service = get_llm_service()
-        assert isinstance(service, OpenAIService)
+        get_llm_service()
+        MockOpenAI.assert_called_once_with(api_key="key2")
+
+    MockOpenAI.reset_mock()
 
     # Test Gemini
     with app.app_context():
         app.config["LLM_PROVIDER"] = "gemini"
         app.config["GEMINI_API_KEY"] = "key3"
-        service = get_llm_service()
-        assert isinstance(service, GeminiService)
+        get_llm_service()
+        MockGemini.assert_called_once_with(api_key="key3")
+
+    MockGemini.reset_mock()
 
     # Test unsupported provider
     with app.app_context():
@@ -154,3 +164,4 @@ def test_get_llm_service_factory(app):
         app.config["OPENAI_API_KEY"] = None
         service = get_llm_service()
         assert service is None
+        MockOpenAI.assert_not_called()  # Ensure constructor was not called
