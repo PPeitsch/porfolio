@@ -54,8 +54,10 @@ def test_load_yaml_data_yaml_error(mock_safe_load, mock_open):
 # Sample data to be returned by mocked loaders
 MOCK_CV_DATA = {
     "name": "Test User",
+    "title": "Test Title",
     "summary": "A test summary.",
     "skills": ["Python", "Flask"],
+    "social_links": {"github": "test-url"},
 }
 
 MOCK_PROJECTS_DATA = [
@@ -119,30 +121,32 @@ def test_get_project_details_not_found(mock_load_projects):
 @patch("common.utils.load_yaml_data")
 def test_load_cv_data_caching(mock_load_yaml, app):
     """Test that CV data is loaded once and then cached in 'g'."""
+    # Arrange: Mock the return value of the YAML loader
     mock_load_yaml.return_value = MOCK_CV_DATA
+
     with app.app_context():
-        # First call: should load data from YAML
+        # Act: Call the function twice
         data1 = load_cv_data()
-        # Second call: should use cached data from 'g'
         data2 = load_cv_data()
 
+    # Assert: Check the final merged data and call count
     assert data1 == MOCK_CV_DATA
     assert data2 == MOCK_CV_DATA
-    # Assert that the underlying YAML loader was only called once.
     mock_load_yaml.assert_called_once()
 
 
 @patch("common.utils.load_yaml_data")
 def test_load_projects_data_caching(mock_load_yaml, app):
     """Test that projects data is loaded once and cached in 'g'."""
+    # Arrange
     mock_load_yaml.return_value = MOCK_PROJECTS_DATA
     with app.app_context():
-        # First call
+        # Act
         list1, dict1 = load_projects_data()
-        # Second call
         list2, dict2 = load_projects_data()
 
-    assert len(list1) == 2
-    assert len(list2) == 2
-    # Assert that the underlying YAML loader was only called once.
+    # Assert
+    assert list1 == MOCK_PROJECTS_DATA
+    assert len(dict1) == 2
+    assert dict1["proj1"]["title"] == "Project One"
     mock_load_yaml.assert_called_once()
