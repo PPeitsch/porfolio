@@ -1,11 +1,13 @@
 import abc
+import json
 import logging
 from typing import Any, Dict, List, Optional, Type, Union
 
 import anthropic
-import google.generativeai as genai
 import openai
 from flask import current_app
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -153,13 +155,11 @@ class OpenAIService(LLMService):
 
 
 class GeminiService(LLMService):
-    """LLM Service implementation for Google's Gemini models."""
+    """LLM Service implementation for Google's Gemini models, based on the `genai` library."""
 
-    def _initialize_client(self) -> genai.GenerativeModel:
-        logger.info("Initializing Google Gemini client.")
-        genai.configure(api_key=self.api_key)
-        # We create the model object here, which acts as the 'client'
-        return genai.GenerativeModel("gemini-1.5-flash")
+    def _initialize_client(self) -> genai.Client:
+        logger.info("Initializing Google Gemini client (genai library).")
+        return genai.Client(api_key=self.api_key)
 
     def get_chat_response(
         self,
@@ -169,48 +169,87 @@ class GeminiService(LLMService):
     ) -> Union[str, List[Dict[str, Any]]]:
         gemini_tools = None
         if tools:
-            # Translate our generic tool schema to Gemini's expected format
-            translated_tools = []
-            for tool in tools:
-                translated_tool = tool.copy()
-                if "input_schema" in translated_tool:
-                    translated_tool["parameters"] = translated_tool.pop("input_schema")
-                translated_tools.append(translated_tool)
-            gemini_tools = [{"function_declarations": translated_tools}]
+            function_declarations = [
+                types.FunctionDeclaration(
+                    name=tool_def["name"],
+                    description=tool_def["description"],
+                    parameters=tool_def.get("input_schema"),
+                )
+                for tool_def in tools
+            ]
+            gemini_tools = [types.Tool(function_declarations=function_declarations)]
 
-        try:
-            model = genai.GenerativeModel(
-                "gemini-1.5-flash",
-                system_instruction=system_prompt,
-                tools=gemini_tools,
-            )
-            # Convert messages to Gemini's format
-            gemini_messages = []
-            for msg in messages:
-                role = "model" if msg["role"] == "assistant" else "user"
-                gemini_messages.append(
-                    {"role": role, "parts": [{"text": msg["content"]}]}
+        # The system prompt is prepended to the user messages.
+        gemini_history = [
+            types.Content(role="user", parts=[types.Part(text=system_prompt)])
+        ]
+
+        for msg in messages:
+            role = "user" if msg["role"] == "user" else "model"
+            content = msg.get("content")
+
+            if msg.get("type") == "tool_result":
+                tool_response_parts = [
+                    types.Part.from_function_response(
+                        name=tool_result["tool_use_id"],
+                        response={"result": json.loads(tool_result["content"])},
+                    )
+                    for tool_result in content
+                ]
+                gemini_history.append(
+                    types.Content(role="user", parts=tool_response_parts)
+                )
+            elif isinstance(content, list):  # Assistant's tool call
+                # Reconstruct the model's tool call response to append to history
+                tool_call_parts = [
+                    types.Part.from_function_call(
+                        types.FunctionCall(name=c["name"], args=c["input"])
+                    )
+                    for c in content
+                ]
+                gemini_history.append(
+                    types.Content(role="model", parts=tool_call_parts)
+                )
+            else:  # Regular text message
+                gemini_history.append(
+                    types.Content(role=role, parts=[types.Part(text=str(content))])
                 )
 
-            response = model.generate_content(
-                gemini_messages, tool_config={"function_calling_config": "AUTO"}
+        config = (
+            types.GenerateContentConfig(tools=gemini_tools) if gemini_tools else None
+        )
+
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=gemini_history,
+                config=config,
             )
-            response_part = response.candidates[0].content.parts[0]
 
-            # Check if the model wants to call a function
-            if hasattr(response_part, "function_call"):
-                fc = response_part.function_call
-                return [
-                    {
-                        "id": str(fc.name),
-                        "name": fc.name,
-                        "input": {k: v for k, v in fc.args.items()},
-                    }
-                ]
+            if not response.candidates:
+                return "No response candidates received from Gemini."
 
-            return str(response_part.text)
+            # Check for a function call in the response
+            if response.candidates[0].content.parts[0].function_call:
+                tool_calls = []
+                for part in response.candidates[0].content.parts:
+                    if fc := part.function_call:
+                        # This library doesn't provide a unique ID, so we use the name.
+                        # The recruiter route logic can handle this.
+                        tool_calls.append(
+                            {
+                                "id": fc.name,
+                                "name": fc.name,
+                                "input": dict(fc.args),
+                            }
+                        )
+                if tool_calls:
+                    return tool_calls
+
+            return response.text.strip()
+
         except Exception as e:
-            logger.error(f"Google Gemini API error: {e}")
+            logger.error(f"Google Gemini API error (genai lib): {e}", exc_info=True)
             return "Sorry, I'm having trouble connecting to the AI service (Gemini)."
 
 
