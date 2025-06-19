@@ -158,6 +158,7 @@ class GeminiService(LLMService):
     def _initialize_client(self) -> genai.GenerativeModel:
         logger.info("Initializing Google Gemini client.")
         genai.configure(api_key=self.api_key)
+        # We create the model object here, which acts as the 'client'
         return genai.GenerativeModel("gemini-1.5-flash")
 
     def get_chat_response(
@@ -166,8 +167,16 @@ class GeminiService(LLMService):
         system_prompt: str,
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Union[str, List[Dict[str, Any]]]:
-        # Gemini requires a specific format for tool definitions
-        gemini_tools = [{"function_declarations": tools}] if tools else None
+        gemini_tools = None
+        if tools:
+            # Translate our generic tool schema to Gemini's expected format
+            translated_tools = []
+            for tool in tools:
+                translated_tool = tool.copy()
+                if "input_schema" in translated_tool:
+                    translated_tool["parameters"] = translated_tool.pop("input_schema")
+                translated_tools.append(translated_tool)
+            gemini_tools = [{"function_declarations": translated_tools}]
 
         try:
             model = genai.GenerativeModel(
