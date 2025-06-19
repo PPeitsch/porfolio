@@ -5,7 +5,11 @@ MOCK_PROJECTS = [
         "id": "proj1",
         "title": "Project One",
         "image": "proj1.png",
-        "description": "This is a full description that is definitely longer than one hundred characters to properly test the truncation logic we have in place.",
+        "description": (
+            "This is a full description that is definitely longer than one "
+            "hundred characters to properly test the truncation logic we have "
+            "in place."
+        ),
         "type": "webapp",
         "technologies": ["Python", "Flask", "Docker", "Pytest", "React"],
         "live_url": "http://example.com/live",

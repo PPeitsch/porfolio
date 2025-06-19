@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 
 import jwt
 
@@ -30,9 +31,7 @@ def test_cli_command_whoami(client, app):
     headers = {"Authorization": f"Bearer {token}"}
 
     # Patch the data loaders for this specific test
-    with patch(
-        "view_cli.routes.get_cached_data", return_value=MOCK_CV_DATA_CLI
-    ) as mock_data:
+    with patch("view_cli.routes.get_cached_data", return_value=MOCK_CV_DATA_CLI):
         response = client.get("/cli/api/command/whoami", headers=headers)
         response_data = response.get_json()
 
@@ -49,7 +48,7 @@ def test_cli_command_ls_projects(client, app):
     with patch(
         "view_cli.routes.get_cached_data",
         return_value=(MOCK_PROJECTS_DATA_CLI, {"p1": MOCK_PROJECTS_DATA_CLI[0]}),
-    ) as mock_data:
+    ):
         response = client.get("/cli/api/command/ls projects", headers=headers)
         response_data = response.get_json()
 
@@ -62,7 +61,7 @@ def test_cli_command_unknown(client, app):
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("view_cli.routes.get_cached_data", return_value=({}, {})) as mock_data:
+    with patch("view_cli.routes.get_cached_data", return_value=({}, {})):
         response = client.get("/cli/api/command/foo bar", headers=headers)
         response_data = response.get_json()
 
