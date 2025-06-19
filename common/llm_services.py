@@ -200,12 +200,15 @@ class GeminiService(LLMService):
                     types.Content(role="user", parts=tool_response_parts)
                 )
             elif isinstance(content, list):
-                # This constructs the correct FunctionCall object for each tool call
-                function_calls = [
-                    types.FunctionCall(name=c["name"], args=c["input"]) for c in content
-                ]
+                # Correctly construct Part objects with FunctionCall instances.
+                # This was the source of the TypeError.
                 tool_call_parts = [
-                    types.Part.from_function_call(fc) for fc in function_calls
+                    types.Part(
+                        function_call=types.FunctionCall(
+                            name=c["name"], args=c["input"]
+                        )
+                    )
+                    for c in content
                 ]
                 gemini_history.append(
                     types.Content(role="model", parts=tool_call_parts)
@@ -252,7 +255,8 @@ class GeminiService(LLMService):
                 return tool_calls
 
             logger.info("Gemini returned a text response.")
-            return response.text.strip()
+            # Explicitly cast to str to satisfy mypy.
+            return str(response.text).strip()
 
         except Exception as e:
             logger.error(f"Google Gemini API error (genai lib): {e}", exc_info=True)
