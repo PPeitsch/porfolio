@@ -37,4 +37,4 @@ def test_get_view_partial_route_not_found(client):
     """Test that an invalid view partial returns a 404."""
     response = client.get("/view/nonexistentview")
     assert response.status_code == 404
-    assert b"Error: View 'nonexistentview' not found." in response.data
+    assert b'Error: View "nonexistentview" not found.' in response.data
