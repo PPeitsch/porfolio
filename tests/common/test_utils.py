@@ -1,6 +1,5 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 import yaml
 
 from common.utils import (
@@ -50,16 +49,6 @@ def test_load_yaml_data_yaml_error(mock_safe_load, mock_open):
 
 
 # --- Tests for Data Access Functions (get_*) ---
-
-
-@pytest.fixture
-def mock_app_context():
-    """Fixture to mock the Flask application context (g)."""
-    app = MagicMock()
-    app.app_context.return_value.__enter__.return_value = True
-    app.app_context.return_value.__exit__.return_value = None
-    with patch("common.utils.g", new_callable=MagicMock) as mock_g:
-        yield mock_g
 
 
 # Sample data to be returned by mocked loaders
@@ -127,29 +116,33 @@ def test_get_project_details_not_found(mock_load_projects):
 # --- Tests for Context-Caching Functions (load_*) ---
 
 
-def test_load_cv_data_caching(mock_app_context):
+@patch("common.utils.load_yaml_data")
+def test_load_cv_data_caching(mock_load_yaml, app):
     """Test that CV data is loaded once and then cached in 'g'."""
-    # Arrange
-    mock_app_context.cv_data = None
-    with patch("common.utils.load_yaml_data", return_value=MOCK_CV_DATA) as mock_load:
-        # First call: should load data
-        load_cv_data()
-        # Second call: should use cache
-        load_cv_data()
-    # Assert
-    assert mock_load.call_count == 1
+    mock_load_yaml.return_value = MOCK_CV_DATA
+    with app.app_context():
+        # First call: should load data from YAML
+        data1 = load_cv_data()
+        # Second call: should use cached data from 'g'
+        data2 = load_cv_data()
+
+    assert data1 == MOCK_CV_DATA
+    assert data2 == MOCK_CV_DATA
+    # Assert that the underlying YAML loader was only called once.
+    mock_load_yaml.assert_called_once()
 
 
-def test_load_projects_data_caching(mock_app_context):
-    """Test that projects data is loaded once and then cached in 'g'."""
-    # Arrange
-    mock_app_context.projects_data = None
-    with patch(
-        "common.utils.load_yaml_data", return_value=MOCK_PROJECTS_DATA
-    ) as mock_load:
+@patch("common.utils.load_yaml_data")
+def test_load_projects_data_caching(mock_load_yaml, app):
+    """Test that projects data is loaded once and cached in 'g'."""
+    mock_load_yaml.return_value = MOCK_PROJECTS_DATA
+    with app.app_context():
         # First call
-        load_projects_data()
+        list1, dict1 = load_projects_data()
         # Second call
-        load_projects_data()
-    # Assert
-    assert mock_load.call_count == 1
+        list2, dict2 = load_projects_data()
+
+    assert len(list1) == 2
+    assert len(list2) == 2
+    # Assert that the underlying YAML loader was only called once.
+    mock_load_yaml.assert_called_once()
