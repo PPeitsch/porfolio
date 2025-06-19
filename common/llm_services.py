@@ -155,7 +155,10 @@ class OpenAIService(LLMService):
 
 
 class GeminiService(LLMService):
-    """LLM Service implementation for Google's Gemini models, based on the `genai` library."""
+    """
+    LLM Service implementation for Google's Gemini models, based on the `genai`
+    library.
+    """
 
     def _initialize_client(self) -> genai.Client:
         logger.info("Initializing Google Gemini client (genai library).")
@@ -179,10 +182,8 @@ class GeminiService(LLMService):
             ]
             gemini_tools = [types.Tool(function_declarations=function_declarations)]
 
-        gemini_history = [
-            types.Content(role="user", parts=[types.Part(text=system_prompt)])
-        ]
-
+        # The chat history should ONLY contain user/model turn messages.
+        gemini_history = []
         for msg in messages:
             role = "user" if msg["role"] == "user" else "model"
             content = msg.get("content")
@@ -200,8 +201,6 @@ class GeminiService(LLMService):
                     types.Content(role="user", parts=tool_response_parts)
                 )
             elif isinstance(content, list):
-                # Correctly construct Part objects with FunctionCall instances.
-                # This was the source of the TypeError.
                 tool_call_parts = [
                     types.Part(
                         function_call=types.FunctionCall(
@@ -223,10 +222,15 @@ class GeminiService(LLMService):
         )
 
         try:
+            # Correctly use the `system_instruction` parameter instead of
+            # prepending the prompt to the user message history.
             response = self.client.models.generate_content(
                 model="gemini-1.5-flash",
                 contents=gemini_history,
                 config=config,
+                system_instruction=types.Content(
+                    role="system", parts=[types.Part(text=system_prompt)]
+                ),
             )
 
             if not response.candidates:
@@ -255,7 +259,6 @@ class GeminiService(LLMService):
                 return tool_calls
 
             logger.info("Gemini returned a text response.")
-            # Explicitly cast to str to satisfy mypy.
             return str(response.text).strip()
 
         except Exception as e:
