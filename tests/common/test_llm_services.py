@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from httpx import Request
+from openai import APIError
 
 from common.llm_services import (
     AnthropicService,
@@ -82,11 +84,10 @@ def test_openai_service_success(MockOpenAI):
 @patch("openai.OpenAI")
 def test_openai_service_api_error(MockOpenAI):
     """Test OpenAIService API error handling."""
-    from openai import APIError
-
     mock_client = MagicMock()
+    # The APIError requires a request object.
     mock_client.chat.completions.create.side_effect = APIError(
-        "Test error", response=MagicMock(), body=None
+        "Test error", request=Request(method="POST", url="http://test.url"), body=None
     )
     MockOpenAI.return_value = mock_client
 
@@ -118,33 +119,38 @@ def test_gemini_service_success(mock_configure, MockGenerativeModel):
 
 
 # --- Test get_llm_service Factory ---
-@patch("common.llm_services.current_app")
-def test_get_llm_service_factory(mock_current_app):
+def test_get_llm_service_factory(app):
     """Test the factory function for creating LLM services."""
     # Test Anthropic
-    mock_current_app.config = {
-        "LLM_PROVIDER": "anthropic",
-        "ANTHROPIC_API_KEY": "key1",
-    }
-    service = get_llm_service()
-    assert isinstance(service, AnthropicService)
+    with app.app_context():
+        app.config["LLM_PROVIDER"] = "anthropic"
+        app.config["ANTHROPIC_API_KEY"] = "key1"
+        service = get_llm_service()
+        assert isinstance(service, AnthropicService)
 
     # Test OpenAI
-    mock_current_app.config = {"LLM_PROVIDER": "openai", "OPENAI_API_KEY": "key2"}
-    service = get_llm_service()
-    assert isinstance(service, OpenAIService)
+    with app.app_context():
+        app.config["LLM_PROVIDER"] = "openai"
+        app.config["OPENAI_API_KEY"] = "key2"
+        service = get_llm_service()
+        assert isinstance(service, OpenAIService)
 
     # Test Gemini
-    mock_current_app.config = {"LLM_PROVIDER": "gemini", "GEMINI_API_KEY": "key3"}
-    service = get_llm_service()
-    assert isinstance(service, GeminiService)
+    with app.app_context():
+        app.config["LLM_PROVIDER"] = "gemini"
+        app.config["GEMINI_API_KEY"] = "key3"
+        service = get_llm_service()
+        assert isinstance(service, GeminiService)
 
     # Test unsupported provider
-    mock_current_app.config = {"LLM_PROVIDER": "unsupported"}
-    service = get_llm_service()
-    assert service is None
+    with app.app_context():
+        app.config["LLM_PROVIDER"] = "unsupported"
+        service = get_llm_service()
+        assert service is None
 
     # Test missing API key
-    mock_current_app.config = {"LLM_PROVIDER": "openai", "OPENAI_API_KEY": None}
-    service = get_llm_service()
-    assert service is None
+    with app.app_context():
+        app.config["LLM_PROVIDER"] = "openai"
+        app.config["OPENAI_API_KEY"] = None
+        service = get_llm_service()
+        assert service is None
