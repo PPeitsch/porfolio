@@ -182,8 +182,10 @@ class GeminiService(LLMService):
             ]
             gemini_tools = [types.Tool(function_declarations=function_declarations)]
 
-        # The chat history should ONLY contain user/model turn messages.
-        gemini_history = []
+        # For this library version, the system prompt must be the first user message.
+        gemini_history = [
+            types.Content(role="user", parts=[types.Part(text=system_prompt)])
+        ]
         for msg in messages:
             role = "user" if msg["role"] == "user" else "model"
             content = msg.get("content")
@@ -222,15 +224,10 @@ class GeminiService(LLMService):
         )
 
         try:
-            # Correctly use the `system_instruction` parameter instead of
-            # prepending the prompt to the user message history.
             response = self.client.models.generate_content(
                 model="gemini-1.5-flash",
                 contents=gemini_history,
                 config=config,
-                system_instruction=types.Content(
-                    role="system", parts=[types.Part(text=system_prompt)]
-                ),
             )
 
             if not response.candidates:
