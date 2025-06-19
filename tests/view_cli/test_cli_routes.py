@@ -1,21 +1,9 @@
-import datetime
 from unittest.mock import patch
 
-import jwt
+from tests.helpers import generate_test_token
 
 MOCK_CV_DATA_CLI = {"name": "Test User", "title": "Test Pro"}
 MOCK_PROJECTS_DATA_CLI = [{"id": "p1", "title": "Project 1"}]
-
-
-def generate_test_token(app):
-    """Helper function to generate a valid JWT for tests."""
-    payload = {
-        "sub": "test_access",
-        "iat": datetime.datetime.now(datetime.timezone.utc),
-        "exp": datetime.datetime.now(datetime.timezone.utc)
-        + datetime.timedelta(minutes=5),
-    }
-    return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
 
 # The 'client' and 'app' fixtures are provided by conftest.py

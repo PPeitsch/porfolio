@@ -1,7 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from .test_cli_routes import generate_test_token
+from tests.helpers import generate_test_token
 
 
 # The 'client' and 'app' fixtures are provided by conftest.py
