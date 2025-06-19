@@ -1,5 +1,7 @@
 import pytest
+from flask import jsonify
 
+from common.decorators import token_required
 from shell import create_app
 
 
@@ -16,6 +18,13 @@ def app():
             "SECRET_KEY": "test-secret-key",
         }
     )
+
+    # Add a dummy protected route for testing the decorator
+    @app.route("/protected")
+    @token_required
+    def protected_route():
+        return jsonify(message="access granted")
+
     yield app
 
 
