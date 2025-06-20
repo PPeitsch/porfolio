@@ -1,138 +1,196 @@
 #!/usr/bin/env python
+"""Generate a changelog based on git history.
+
+This script examines the git history since the last tag and
+generates a formatted changelog based on commit messages, categorizing
+them by conventional commit types.
+"""
+
 import re
-import subprocess
-import sys
-from collections import OrderedDict
-
-# Map conventional commit types to changelog section headers.
-# The order here defines the order in the final changelog.
-TYPE_TO_CATEGORY_MAP = OrderedDict(
-    [
-        ("feat", "Features"),
-        ("fix", "Bug Fixes"),
-        ("perf", "Performance Improvements"),
-        ("refactor", "Code Refactoring"),
-        ("docs", "Documentation"),
-        ("style", "Style"),
-        ("test", "Tests"),
-        ("build", "Build System"),
-        ("ci", "Continuous Integration"),
-        ("chore", "Chores & Others"),
-        ("revert", "Reverts"),
-    ]
-)
+import subprocess  # nosec B404
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 
-def run_command(command: list[str]) -> str:
-    """Runs a shell command and returns its stdout."""
+def get_latest_tag() -> Optional[str]:
+    """Retrieve the most recent tag from the git repository."""
     try:
         result = subprocess.run(
-            command,
+            ["git", "describe", "--tags", "--abbrev=0"],  # nosec B603, B607
             capture_output=True,
             text=True,
             check=True,
-            encoding="utf-8",
         )
         return result.stdout.strip()
-    except FileNotFoundError:
-        print(
-            f"Error: Command '{command[0]}' not found. "
-            "Is Git installed and in your PATH?",
-            file=sys.stderr,
+    except subprocess.CalledProcessError:
+        try:
+            result = subprocess.run(
+                ["git", "rev-list", "--max-parents=0", "HEAD"],  # nosec B603, B607
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()  # Fallback to initial commit if no tags
+        except subprocess.CalledProcessError:
+            return None  # Should not happen in a valid git repo
+
+
+def get_current_tag() -> Optional[str]:
+    """Retrieve the tag associated with the current commit, if any."""
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--exact-match"],  # nosec B603, B607
+            capture_output=True,
+            text=True,
+            check=True,
         )
-        sys.exit(1)
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing command: {' '.join(command)}", file=sys.stderr)
-        print(f"Stderr: {e.stderr.strip()}", file=sys.stderr)
-        sys.exit(1)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
 
 
-def get_latest_tag() -> str:
-    """Fetches the most recent Git tag from the repository."""
-    return run_command(["git", "describe", "--tags", "--abbrev=0"])
+def get_commit_history(since_tag: str) -> List[str]:
+    """Retrieve the commit history since a specified tag."""
+    command = ["git", "log", "--pretty=format:%s|%h|%an|%ad", "--date=short"]
+    if since_tag:  # Only add range if since_tag is not an initial commit hash
+        # if since_tag is a full commit hash it might be the initial commit
+        if not (len(since_tag) == 40 and re.match(r"^[0-9a-f]{40}$", since_tag)):
+            command.insert(2, f"{since_tag}..HEAD")
 
-
-def get_commits_since_tag(tag: str) -> list[str]:
-    """Fetches commit messages since the given tag."""
-    log_format = "--pretty=format:%h--%s"
-    commits_str = run_command(["git", "log", f"{tag}..HEAD", log_format])
-    if not commits_str:
-        return []
-    return commits_str.split("\n")
-
-
-def parse_and_categorize_commits(
-    commits: list[str],
-) -> dict[str, list[str]]:
-    """Parses commits and groups them by category."""
-    commit_regex = re.compile(r"^(?P<type>\w+)(?:\(.*\))?!?: (?P<subject>.*)$")
-    categorized_commits: "OrderedDict[str, list[str]]" = OrderedDict(
-        (category, []) for category in TYPE_TO_CATEGORY_MAP.values()
+    result = subprocess.run(
+        command,  # nosec B603
+        capture_output=True,
+        text=True,
+        check=True,
     )
-
-    for commit in commits:
-        hash_part, subject_part = commit.split("--", 1)
-        match = commit_regex.match(subject_part)
-
-        if match:
-            commit_type = match.group("type")
-            subject = match.group("subject").strip()
-            # Capitalize the first letter of the subject for better formatting
-            subject = subject[0].upper() + subject[1:]
-            category = TYPE_TO_CATEGORY_MAP.get(commit_type, "Chores & Others")
-            categorized_commits[category].append(f"- {subject} ({hash_part})")
-        else:
-            # For non-conventional commits, keep them in a general category
-            subject = subject_part.strip()
-            subject = subject[0].upper() + subject[1:]
-            category = "Chores & Others"
-            categorized_commits[category].append(f"- {subject} ({hash_part})")
-
-    return categorized_commits
+    return result.stdout.splitlines()
 
 
-def generate_markdown_output(categorized_commits: dict[str, list[str]]) -> str:
-    """Generates a Markdown formatted string from categorized commits."""
-    output_lines = []
-    for category, commit_list in categorized_commits.items():
-        if commit_list:
-            output_lines.append(f"\n### {category}\n")
-            output_lines.extend(commit_list)
-    return "\n".join(output_lines)
+def categorize_commits(
+    commits: List[str],
+) -> Dict[str, List[Tuple[str, str, str, str]]]:
+    """Categorize commits by their conventional commit type."""
+    categories: Dict[str, List[Tuple[str, str, str, str]]] = {
+        "Features": [],
+        "Bug Fixes": [],
+        "Documentation": [],
+        "Performance": [],
+        "Refactoring": [],
+        "Style": [],
+        "Testing": [],
+        "Build": [],
+        "CI": [],
+        "Chore": [],  # Added Chore
+        "Other": [],
+    }
+
+    type_mapping = {
+        "feat": "Features",
+        "fix": "Bug Fixes",
+        "docs": "Documentation",
+        "style": "Style",  # Kept separate from Other for more granularity
+        "refactor": "Refactoring",
+        "perf": "Performance",
+        "test": "Testing",
+        "build": "Build",
+        "ci": "CI",
+        "chore": "Chore",  # Added Chore
+    }
+
+    pattern = r"^([a-z]+)(\([a-zA-Z0-9_ -]+\))?:\s*(.*)"
+    # Example: feat(parser): add ability to parse arrays
+    # Group 1: type (feat)
+    # Group 2: scope ((parser)) - optional
+    # Group 3: description (add ability to parse arrays)
+
+    for commit_line in commits:
+        try:
+            message, commit_hash, author, date_str = commit_line.split("|", 3)
+            message = message.strip()
+
+            match = re.match(pattern, message)
+            commit_type = "other"  # Default if no conventional prefix
+            description = message  # Default if no conventional prefix
+
+            if match:
+                commit_type = match.group(1).lower()
+                # scope = match.group(2) # Scope can be captured if needed
+                description = match.group(3).strip()
+
+            category_key = type_mapping.get(commit_type, "Other")
+            categories[category_key].append(
+                (description, commit_hash, author, date_str)
+            )
+        except ValueError:
+            # Fallback for commits not matching the split pattern
+            categories["Other"].append(
+                (commit_line, "", "", "")
+            )  # Store raw line if split fails
+            continue
+    return categories
+
+
+def format_changelog(
+    categories: Dict[str, List[Tuple[str, str, str, str]]], current_tag: Optional[str]
+) -> str:
+    """Format the categorized commits into a changelog string."""
+    now_date = datetime.now().strftime("%Y-%m-%d")
+
+    if current_tag:
+        header = f"## [{current_tag.lstrip('v')}] - {now_date}\n\n"
+    else:
+        header = f"## [Unreleased] - {now_date}\n\n"
+
+    content_parts: List[str] = [header]
+    ordered_categories = [
+        "Features",
+        "Bug Fixes",
+        "Performance",
+        "Refactoring",
+        "Testing",
+        "Documentation",
+        "Style",
+        "Build",
+        "CI",
+        "Chore",
+        "Other",
+    ]
+
+    found_commits = False
+    for category_key in ordered_categories:
+        commits_in_category = categories.get(category_key, [])
+        if commits_in_category:
+            found_commits = True
+            content_parts.append(f"### {category_key}\n")
+            for description, commit_hash, author, date_str in commits_in_category:
+                # Limit hash to 7 characters for brevity
+                short_hash = commit_hash[:7] if commit_hash else ""
+                content_parts.append(f"- {description} ({short_hash})")
+            content_parts.append("\n")
+
+    if not found_commits:
+        content_parts.append("No significant changes since the last release.\n")
+
+    return "\n".join(content_parts)
 
 
 def main():
-    """Main function to generate the changelog draft."""
-    print("🤖 Starting changelog generator...")
-    try:
-        latest_tag = get_latest_tag()
-        print(f"✅ Found latest tag: {latest_tag}")
-    except SystemExit:
-        print(
-            "Could not determine the latest tag. Is this a git repository with tags?",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    """Generate and print the changelog based on git history."""
+    latest_tagged_commit = get_latest_tag()
+    current_release_tag = get_current_tag()  # This will be the new tag being released
 
-    commits = get_commits_since_tag(latest_tag)
-    if not commits:
-        print("✅ No new commits found since the last tag. Nothing to generate.")
-        sys.exit(0)
+    if latest_tagged_commit:
+        commits_list = get_commit_history(latest_tagged_commit)
+        if not commits_list and current_release_tag:
+            print(format_changelog({}, current_release_tag))
+            return
 
-    print(f"✅ Found {len(commits)} commits since {latest_tag}.")
-
-    categorized_commits = parse_and_categorize_commits(commits)
-    markdown_output = generate_markdown_output(categorized_commits)
-
-    if not markdown_output.strip():
-        print("✅ All commits were filtered out. Nothing to generate.")
-        sys.exit(0)
-
-    print("\n" + "=" * 80)
-    print("📋 CHANGELOG DRAFT (copy from here)".center(80))
-    print("=" * 80)
-    print(markdown_output.strip())
-    print("\n" + "=" * 80)
+        categorized = categorize_commits(commits_list)
+        changelog_output = format_changelog(categorized, current_release_tag)
+        print(changelog_output)
+    else:
+        # This case might occur if there are no tags and get_latest_tag returned None
+        print("## [Initial Release]\n\n- First version of the project.\n")
 
 
 if __name__ == "__main__":
