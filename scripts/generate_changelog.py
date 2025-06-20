@@ -1,6 +1,26 @@
 #!/usr/bin/env python
+import re
 import subprocess
 import sys
+from collections import OrderedDict
+
+# Map conventional commit types to changelog section headers.
+# The order here defines the order in the final changelog.
+TYPE_TO_CATEGORY_MAP = OrderedDict(
+    [
+        ("feat", "Features"),
+        ("fix", "Bug Fixes"),
+        ("perf", "Performance Improvements"),
+        ("refactor", "Code Refactoring"),
+        ("docs", "Documentation"),
+        ("style", "Style"),
+        ("test", "Tests"),
+        ("build", "Build System"),
+        ("ci", "Continuous Integration"),
+        ("chore", "Chores & Others"),
+        ("revert", "Reverts"),
+    ]
+)
 
 
 def run_command(command: list[str]) -> str:
@@ -29,18 +49,46 @@ def run_command(command: list[str]) -> str:
 
 def get_latest_tag() -> str:
     """Fetches the most recent Git tag from the repository."""
-    # git describe --tags --abbrev=0 finds the latest tag pointing to a commit
     return run_command(["git", "describe", "--tags", "--abbrev=0"])
 
 
 def get_commits_since_tag(tag: str) -> list[str]:
     """Fetches commit messages since the given tag."""
-    # git log <tag>..HEAD formats each commit as: <short_hash>--<subject>
     log_format = "--pretty=format:%h--%s"
     commits_str = run_command(["git", "log", f"{tag}..HEAD", log_format])
     if not commits_str:
         return []
     return commits_str.split("\n")
+
+
+def parse_and_categorize_commits(
+    commits: list[str],
+) -> dict[str, list[str]]:
+    """Parses commits and groups them by category."""
+    # Regex to parse conventional commit messages.
+    # Example: feat(scope): message -> type='feat', subject='message'
+    commit_regex = re.compile(r"^(?P<type>\w+)(?:\(.*\))?!?: (?P<subject>.*)$")
+    categorized_commits: "OrderedDict[str, list[str]]" = OrderedDict(
+        (category, []) for category in TYPE_TO_CATEGORY_MAP.values()
+    )
+
+    for commit in commits:
+        hash_part, subject_part = commit.split("--", 1)
+        match = commit_regex.match(subject_part)
+
+        if match:
+            commit_type = match.group("type")
+            subject = match.group("subject").strip()
+            category = TYPE_TO_CATEGORY_MAP.get(commit_type, "Chores & Others")
+            categorized_commits[category].append(f"- {subject} ({hash_part})")
+        else:
+            # For non-conventional commits
+            category = "Chores & Others"
+            categorized_commits[category].append(
+                f"- {subject_part.strip()} ({hash_part})"
+            )
+
+    return categorized_commits
 
 
 def main():
@@ -57,16 +105,21 @@ def main():
         sys.exit(1)
 
     commits = get_commits_since_tag(latest_tag)
-
     if not commits:
         print("✅ No new commits found since the last tag. Nothing to generate.")
         sys.exit(0)
 
-    print(f"✅ Found {len(commits)} commits since {latest_tag}:")
-    for commit in commits:
-        print(f"  - {commit}")
+    print(f"✅ Found {len(commits)} commits since {latest_tag}.")
 
-    # The logic for parsing and formatting will be added in the next steps.
+    categorized_commits = parse_and_categorize_commits(commits)
+
+    print("\n--- Categorized Commits ---")
+    for category, commit_list in categorized_commits.items():
+        if commit_list:
+            print(f"\n[{category}]")
+            for commit_item in commit_list:
+                print(commit_item)
+    # The final markdown formatting will be done in the next step.
 
 
 if __name__ == "__main__":
