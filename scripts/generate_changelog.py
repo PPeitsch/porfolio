@@ -51,7 +51,9 @@ def get_current_tag() -> Optional[str]:
 
 def get_commit_history(since_tag: str) -> List[str]:
     """Retrieve the commit history since a specified tag, separated by null chars."""
-    commit_format = "--pretty=format:%s%x09%b%x09%h%x09%an%x09%ad"
+    # Format: subject, body, hash, author, date, separated by tabs.
+    # Commits are separated by a null character (%x00) for robust parsing.
+    commit_format = "--pretty=format:%s%x09%b%x09%h%x09%an%x09%ad%x00"
     command = ["git", "log", commit_format, "--date=short"]
     if since_tag:
         if not (len(since_tag) == 40 and re.match(r"^[0-9a-f]{40}$", since_tag)):
@@ -63,6 +65,7 @@ def get_commit_history(since_tag: str) -> List[str]:
         text=True,
         check=True,
     )
+    # Split by the null character to get a list of commits
     return result.stdout.strip().split("\x00")
 
 
