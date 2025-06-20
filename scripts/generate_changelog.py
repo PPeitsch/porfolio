@@ -65,8 +65,6 @@ def parse_and_categorize_commits(
     commits: list[str],
 ) -> dict[str, list[str]]:
     """Parses commits and groups them by category."""
-    # Regex to parse conventional commit messages.
-    # Example: feat(scope): message -> type='feat', subject='message'
     commit_regex = re.compile(r"^(?P<type>\w+)(?:\(.*\))?!?: (?P<subject>.*)$")
     categorized_commits: "OrderedDict[str, list[str]]" = OrderedDict(
         (category, []) for category in TYPE_TO_CATEGORY_MAP.values()
@@ -79,16 +77,28 @@ def parse_and_categorize_commits(
         if match:
             commit_type = match.group("type")
             subject = match.group("subject").strip()
+            # Capitalize the first letter of the subject for better formatting
+            subject = subject[0].upper() + subject[1:]
             category = TYPE_TO_CATEGORY_MAP.get(commit_type, "Chores & Others")
             categorized_commits[category].append(f"- {subject} ({hash_part})")
         else:
-            # For non-conventional commits
+            # For non-conventional commits, keep them in a general category
+            subject = subject_part.strip()
+            subject = subject[0].upper() + subject[1:]
             category = "Chores & Others"
-            categorized_commits[category].append(
-                f"- {subject_part.strip()} ({hash_part})"
-            )
+            categorized_commits[category].append(f"- {subject} ({hash_part})")
 
     return categorized_commits
+
+
+def generate_markdown_output(categorized_commits: dict[str, list[str]]) -> str:
+    """Generates a Markdown formatted string from categorized commits."""
+    output_lines = []
+    for category, commit_list in categorized_commits.items():
+        if commit_list:
+            output_lines.append(f"\n### {category}\n")
+            output_lines.extend(commit_list)
+    return "\n".join(output_lines)
 
 
 def main():
@@ -112,14 +122,17 @@ def main():
     print(f"✅ Found {len(commits)} commits since {latest_tag}.")
 
     categorized_commits = parse_and_categorize_commits(commits)
+    markdown_output = generate_markdown_output(categorized_commits)
 
-    print("\n--- Categorized Commits ---")
-    for category, commit_list in categorized_commits.items():
-        if commit_list:
-            print(f"\n[{category}]")
-            for commit_item in commit_list:
-                print(commit_item)
-    # The final markdown formatting will be done in the next step.
+    if not markdown_output.strip():
+        print("✅ All commits were filtered out. Nothing to generate.")
+        sys.exit(0)
+
+    print("\n" + "=" * 80)
+    print("📋 CHANGELOG DRAFT (copy from here)".center(80))
+    print("=" * 80)
+    print(markdown_output.strip())
+    print("\n" + "=" * 80)
 
 
 if __name__ == "__main__":
