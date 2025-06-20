@@ -154,3 +154,10 @@ body {
     background-color: rgba(0, 0, 0, 0.1);
     margin: 0 4px;
 }
+
+/* --- Shared Utility Styles --- */
+/* A class for simulating password input using CSS text-security */
+.input.password-mask {
+    -webkit-text-security: disc;
+    text-security: disc;
+}
