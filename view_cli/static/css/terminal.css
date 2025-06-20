@@ -57,13 +57,6 @@
     outline: none;
 }
 
-/* New class for simulating password input */
-.input.password-mask {
-    -webkit-text-security: disc;
-    text-security: disc;
-}
-
-
 a.terminal-link {
     color: #89dceb;
     text-decoration: underline;

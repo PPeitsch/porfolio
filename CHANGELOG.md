@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.4.1] - 2025-06-19
+
+### Fixed
+- **Recruiter View Security**: Masked the access code input in the Recruiter chat view to prevent it from being displayed in plain text. This aligns its behavior with the CLI view for improved privacy. (Fixes #42)
+
+### Refactored
+- **CSS Utility**: Centralized the `.password-mask` style into the global stylesheet (`style.css`) to make it a reusable utility class and remove code duplication.
+
+
 ## [1.4.0] - 2025-06-19
 
 ### Added

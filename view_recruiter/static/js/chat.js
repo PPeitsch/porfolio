@@ -99,9 +99,10 @@ window.initializeRecruiterView = function(callbacks) {
            const data = await response.json();
            sessionStorage.setItem(TOKEN_KEY, data.token);
            chatState = 'chatting';
+           chatInput.classList.remove('password-mask'); // Reveal input for normal chat
            const welcomeMsg = "Access granted! Thank you. How can I help you?";
            addMessage(welcomeMsg, 'bot');
-           conversationHistory.push({ role: 'assistant', content: welcomeMsg });
+           conversationHistory.push({role: 'assistant', content: welcomeMsg});
            setInputState(true, 'Ask about my skills or projects...');
 
 
@@ -127,6 +128,7 @@ window.initializeRecruiterView = function(callbacks) {
            document.getElementById('typing-indicator')?.remove();
            addMessage("Your session has expired. Please re-enter the access code.", 'bot');
            chatState = 'awaiting_code';
+           chatInput.classList.add('password-mask'); // Re-apply mask for code input
            conversationHistory = [];
            setInputState(true, 'Enter access code...');
            isLoading = false;
@@ -155,6 +157,7 @@ window.initializeRecruiterView = function(callbacks) {
                sessionStorage.removeItem(TOKEN_KEY);
                addMessage("Your session has expired. Please enter the access code again.", 'bot');
                chatState = 'awaiting_code';
+               chatInput.classList.add('password-mask'); // Re-apply mask for code input
                conversationHistory = [];
                setInputState(true, 'Enter access code...');
                return;
@@ -202,12 +205,14 @@ window.initializeRecruiterView = function(callbacks) {
 
        if (token) {
            chatState = 'chatting';
+           chatInput.classList.remove('password-mask');
            const welcomeMsg = "Welcome back! How can I assist you?";
            addMessage(welcomeMsg, 'bot');
-           conversationHistory.push({ role: 'assistant', content: welcomeMsg });
+           conversationHistory.push({role: 'assistant', content: welcomeMsg});
            setInputState(true, 'Ask about my skills or projects...');
        } else {
            chatState = 'awaiting_code';
+           chatInput.classList.add('password-mask'); // Apply mask for access code input
            const welcomeMessage = "Hello! I'm Pablo's AI assistant. To ensure privacy and prevent API abuse, this chat requires an access code.\n\nPlease enter the code provided in the resume to continue.";
            addMessage(welcomeMessage, 'bot');
            setInputState(true, 'Enter access code...');
