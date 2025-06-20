@@ -50,10 +50,9 @@ def get_current_tag() -> Optional[str]:
 
 
 def get_commit_history(since_tag: str) -> List[str]:
-    """Retrieve the commit history since a specified tag."""
-    # Use a unique separator to parse subject, body, and metadata
-    commit_format = "%s_BODY_START_%b_BODY_END_%h|%an|%ad"
-    command = ["git", "log", f"--pretty=format:{commit_format}", "--date=short"]
+    """Retrieve the commit history since a specified tag, separated by null chars."""
+    commit_format = "--pretty=format:%s%x09%b%x09%h%x09%an%x09%ad"
+    command = ["git", "log", commit_format, "--date=short"]
     if since_tag:
         if not (len(since_tag) == 40 and re.match(r"^[0-9a-f]{40}$", since_tag)):
             command.insert(2, f"{since_tag}..HEAD")
@@ -64,8 +63,7 @@ def get_commit_history(since_tag: str) -> List[str]:
         text=True,
         check=True,
     )
-    # Use a unique record separator that's unlikely to be in commit messages
-    return result.stdout.split("\n")
+    return result.stdout.strip().split("\x00")
 
 
 def categorize_commits(
@@ -100,36 +98,31 @@ def categorize_commits(
     pattern = r"^([a-z]+)(\([a-zA-Z0-9_ -]+\))?(!?):\s*(.*)"
 
     for commit_line in commits:
-        if not commit_line:
+        if not commit_line.strip():
             continue
         try:
-            subject, body, metadata = re.split(
-                r"_BODY_START_|_BODY_END_", commit_line, maxsplit=2
-            )
-            commit_hash, author, date_str = metadata.split("|", 2)
-
+            subject, body, commit_hash, author, date_str = commit_line.split("\t", 4)
             subject = subject.strip()
             body = body.strip()
 
             match = re.match(pattern, subject)
             commit_type = "other"
-            description = subject
             is_breaking = False
 
             if match:
                 commit_type = match.group(1).lower()
                 is_breaking = match.group(3) == "!"
-                description = match.group(4).strip()
 
             if "BREAKING CHANGE" in body:
                 is_breaking = True
 
             category_key = type_mapping.get(commit_type, "Other")
-            if is_breaking and category_key != "Features":
-                category_key = "Bug Fixes"  # Or a dedicated "Breaking Changes" category
+            if is_breaking and category_key not in ["Features", "Bug Fixes"]:
+                category_key = "Bug Fixes"
 
+            # Always use the full subject line for the description.
             categories[category_key].append(
-                (description, body, commit_hash, author, date_str)
+                (subject, body, commit_hash, author, date_str)
             )
         except ValueError:
             categories["Other"].append((commit_line, "", "", "", ""))
@@ -144,9 +137,9 @@ def format_changelog(
     """Format the categorized commits into a changelog string."""
     now_date = datetime.now().strftime("%Y-%m-%d")
     header = (
-        f"## [{current_tag.lstrip('v')}] - {now_date}\n\n"
+        f"## [{current_tag.lstrip('v')}] - {now_date}\n"
         if current_tag
-        else f"## [Unreleased] - {now_date}\n\n"
+        else f"## [Unreleased] - {now_date}\n"
     )
 
     content_parts: List[str] = [header]
@@ -170,19 +163,20 @@ def format_changelog(
         if commits_in_category:
             found_commits = True
             content_parts.append(f"### {category_key}\n")
-            for description, body, commit_hash, author, date_str in commits_in_category:
+            for subject, body, commit_hash, author, date_str in commits_in_category:
                 short_hash = commit_hash[:7] if commit_hash else ""
-                content_parts.append(f"- {description} ({short_hash})")
+                content_parts.append(f"- {subject} ({short_hash})")
                 if body:
-                    # Indent body for better readability in Markdown
-                    indented_body = "\n".join(f"  {line}" for line in body.split("\n"))
-                    content_parts.append(f"  \n{indented_body}\n")
+                    indented_body = "\n".join(
+                        f"  {line}" for line in body.strip().split("\n")
+                    )
+                    content_parts.append(f"\n{indented_body}\n")
             content_parts.append("")
 
     if not found_commits:
         content_parts.append("No significant changes since the last release.\n")
 
-    return "\n".join(content_parts)
+    return "\n".join(content_parts).strip()
 
 
 def main():
