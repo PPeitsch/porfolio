@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.5.0] - 2025-06-19
+
+### Added
+- **Developer Tool**: Created a new script `scripts/generate_changelog.py` to automatically generate changelog drafts from git history. The script parses conventional commits, categorizes them, and includes the full commit body for detailed release notes. (Closes #26)
+
+
 ## [1.4.1] - 2025-06-19
 
 ### Fixed
