@@ -157,7 +157,7 @@ body {
 
 /* --- Shared Utility Styles --- */
 /* A class for simulating password input using CSS text-security */
-.input.password-mask {
+.password-mask {
     -webkit-text-security: disc;
     text-security: disc;
 }
