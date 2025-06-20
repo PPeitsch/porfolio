@@ -51,9 +51,10 @@ def get_current_tag() -> Optional[str]:
 
 def get_commit_history(since_tag: str) -> List[str]:
     """Retrieve the commit history since a specified tag."""
-    command = ["git", "log", "--pretty=format:%s|%h|%an|%ad", "--date=short"]
-    if since_tag:  # Only add range if since_tag is not an initial commit hash
-        # if since_tag is a full commit hash it might be the initial commit
+    # Use a unique separator to parse subject, body, and metadata
+    commit_format = "%s_BODY_START_%b_BODY_END_%h|%an|%ad"
+    command = ["git", "log", f"--pretty=format:{commit_format}", "--date=short"]
+    if since_tag:
         if not (len(since_tag) == 40 and re.match(r"^[0-9a-f]{40}$", since_tag)):
             command.insert(2, f"{since_tag}..HEAD")
 
@@ -63,14 +64,15 @@ def get_commit_history(since_tag: str) -> List[str]:
         text=True,
         check=True,
     )
-    return result.stdout.splitlines()
+    # Use a unique record separator that's unlikely to be in commit messages
+    return result.stdout.split("\n")
 
 
 def categorize_commits(
     commits: List[str],
-) -> Dict[str, List[Tuple[str, str, str, str]]]:
+) -> Dict[str, List[Tuple[str, str, str, str, str]]]:
     """Categorize commits by their conventional commit type."""
-    categories: Dict[str, List[Tuple[str, str, str, str]]] = {
+    categories: Dict[str, List[Tuple[str, str, str, str, str]]] = {
         "Features": [],
         "Bug Fixes": [],
         "Documentation": [],
@@ -80,66 +82,72 @@ def categorize_commits(
         "Testing": [],
         "Build": [],
         "CI": [],
-        "Chore": [],  # Added Chore
+        "Chore": [],
         "Other": [],
     }
-
     type_mapping = {
         "feat": "Features",
         "fix": "Bug Fixes",
         "docs": "Documentation",
-        "style": "Style",  # Kept separate from Other for more granularity
+        "style": "Style",
         "refactor": "Refactoring",
         "perf": "Performance",
         "test": "Testing",
         "build": "Build",
         "ci": "CI",
-        "chore": "Chore",  # Added Chore
+        "chore": "Chore",
     }
-
-    pattern = r"^([a-z]+)(\([a-zA-Z0-9_ -]+\))?:\s*(.*)"
-    # Example: feat(parser): add ability to parse arrays
-    # Group 1: type (feat)
-    # Group 2: scope ((parser)) - optional
-    # Group 3: description (add ability to parse arrays)
+    pattern = r"^([a-z]+)(\([a-zA-Z0-9_ -]+\))?(!?):\s*(.*)"
 
     for commit_line in commits:
+        if not commit_line:
+            continue
         try:
-            message, commit_hash, author, date_str = commit_line.split("|", 3)
-            message = message.strip()
+            subject, body, metadata = re.split(
+                r"_BODY_START_|_BODY_END_", commit_line, maxsplit=2
+            )
+            commit_hash, author, date_str = metadata.split("|", 2)
 
-            match = re.match(pattern, message)
-            commit_type = "other"  # Default if no conventional prefix
-            description = message  # Default if no conventional prefix
+            subject = subject.strip()
+            body = body.strip()
+
+            match = re.match(pattern, subject)
+            commit_type = "other"
+            description = subject
+            is_breaking = False
 
             if match:
                 commit_type = match.group(1).lower()
-                # scope = match.group(2) # Scope can be captured if needed
-                description = match.group(3).strip()
+                is_breaking = match.group(3) == "!"
+                description = match.group(4).strip()
+
+            if "BREAKING CHANGE" in body:
+                is_breaking = True
 
             category_key = type_mapping.get(commit_type, "Other")
+            if is_breaking and category_key != "Features":
+                category_key = "Bug Fixes"  # Or a dedicated "Breaking Changes" category
+
             categories[category_key].append(
-                (description, commit_hash, author, date_str)
+                (description, body, commit_hash, author, date_str)
             )
         except ValueError:
-            # Fallback for commits not matching the split pattern
-            categories["Other"].append(
-                (commit_line, "", "", "")
-            )  # Store raw line if split fails
+            categories["Other"].append((commit_line, "", "", "", ""))
             continue
     return categories
 
 
 def format_changelog(
-    categories: Dict[str, List[Tuple[str, str, str, str]]], current_tag: Optional[str]
+    categories: Dict[str, List[Tuple[str, str, str, str, str]]],
+    current_tag: Optional[str],
 ) -> str:
     """Format the categorized commits into a changelog string."""
     now_date = datetime.now().strftime("%Y-%m-%d")
-
-    if current_tag:
-        header = f"## [{current_tag.lstrip('v')}] - {now_date}\n\n"
-    else:
-        header = f"## [Unreleased] - {now_date}\n\n"
+    header = (
+        f"## [{current_tag.lstrip('v')}] - {now_date}\n\n"
+        if current_tag
+        else f"## [Unreleased] - {now_date}\n\n"
+    )
 
     content_parts: List[str] = [header]
     ordered_categories = [
@@ -162,11 +170,14 @@ def format_changelog(
         if commits_in_category:
             found_commits = True
             content_parts.append(f"### {category_key}\n")
-            for description, commit_hash, author, date_str in commits_in_category:
-                # Limit hash to 7 characters for brevity
+            for description, body, commit_hash, author, date_str in commits_in_category:
                 short_hash = commit_hash[:7] if commit_hash else ""
                 content_parts.append(f"- {description} ({short_hash})")
-            content_parts.append("\n")
+                if body:
+                    # Indent body for better readability in Markdown
+                    indented_body = "\n".join(f"  {line}" for line in body.split("\n"))
+                    content_parts.append(f"  \n{indented_body}\n")
+            content_parts.append("")
 
     if not found_commits:
         content_parts.append("No significant changes since the last release.\n")
@@ -177,7 +188,7 @@ def format_changelog(
 def main():
     """Generate and print the changelog based on git history."""
     latest_tagged_commit = get_latest_tag()
-    current_release_tag = get_current_tag()  # This will be the new tag being released
+    current_release_tag = get_current_tag()
 
     if latest_tagged_commit:
         commits_list = get_commit_history(latest_tagged_commit)
@@ -189,7 +200,6 @@ def main():
         changelog_output = format_changelog(categorized, current_release_tag)
         print(changelog_output)
     else:
-        # This case might occur if there are no tags and get_latest_tag returned None
         print("## [Initial Release]\n\n- First version of the project.\n")
 
 
