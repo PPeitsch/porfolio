@@ -99,23 +99,38 @@ def test_openai_service_api_error(MockOpenAI):
 
 
 # --- Test GeminiService ---
-@patch("google.generativeai.GenerativeModel")
-@patch("google.generativeai.configure")
-def test_gemini_service_success(mock_configure, MockGenerativeModel):
+@patch("common.llm_services.genai.Client")
+def test_gemini_service_success(MockGenAIClient):
     """Test GeminiService successful text response."""
-    mock_model = MagicMock()
+    # Setup the nested mock structure: Client -> models -> generate_content
+    mock_client_instance = MagicMock()
+    mock_models_object = MagicMock()
     mock_response = MagicMock()
-    mock_response.candidates[0].content.parts[0].text = "Hello Gemini"
-    # Ensure function_call does not exist for this test case
-    del mock_response.candidates[0].content.parts[0].function_call
-    mock_model.generate_content.return_value = mock_response
-    MockGenerativeModel.return_value = mock_model
+    mock_part = MagicMock()
 
+    # Configure the part to represent a text-only response.
+    # The .function_call attribute must be explicitly set to a falsy value (e.g., None)
+    # so that the `if part.function_call:` check in the implementation fails as expected
+    mock_part.text = "Hello Gemini"
+    mock_part.function_call = None
+
+    # Configure the full response object to contain the text-only part
+    mock_response.text = "Hello Gemini"
+    mock_response.candidates = [MagicMock()]
+    mock_response.candidates[0].content.parts = [mock_part]
+
+    # Configure the mock client hierarchy
+    mock_models_object.generate_content.return_value = mock_response
+    mock_client_instance.models = mock_models_object
+    MockGenAIClient.return_value = mock_client_instance
+
+    # Now, instantiate the service. It will use the mocked client.
     service = GeminiService(api_key="fake_key")
     response = service.get_chat_response(messages=[], system_prompt="")
 
+    # Assert that the correct text response is returned
     assert response == "Hello Gemini"
-    mock_model.generate_content.assert_called_once()
+    mock_models_object.generate_content.assert_called_once()
 
 
 # --- Test get_llm_service Factory ---
