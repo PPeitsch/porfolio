@@ -72,8 +72,9 @@ class AnthropicService(LLMService):
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Union[str, List[Dict[str, Any]]]:
         try:
+            model_name = current_app.config.get("ANTHROPIC_MODEL")
             response = self.client.messages.create(
-                model="claude-3-haiku-20240307",
+                model=model_name,
                 max_tokens=1024,
                 system=system_prompt,
                 messages=messages,
@@ -125,8 +126,9 @@ class OpenAIService(LLMService):
     ) -> Union[str, List[Dict[str, Any]]]:
         all_messages = [{"role": "system", "content": system_prompt}] + messages
         try:
+            model_name = current_app.config.get("OPENAI_MODEL")
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=model_name,
                 messages=all_messages,
                 tools=tools,
                 tool_choice="auto" if tools else None,
@@ -224,8 +226,14 @@ class GeminiService(LLMService):
         )
 
         try:
-            response = self.client.models.generate_content(
-                model="gemini-1.5-flash",
+            model_name = current_app.config.get("GEMINI_MODEL")
+            # The `genai` library client is a single model, so we re-initialize
+            # the client if the model name changes, though this is less common.
+            # A better approach would be to get a model object.
+            # For simplicity, we just use the name here.
+            model_instance = genai.GenerativeModel(model_name)
+
+            response = model_instance.generate_content(
                 contents=gemini_history,
                 config=config,
             )
