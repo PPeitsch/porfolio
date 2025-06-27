@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.6.0] - 2025-06-27
+
+### Changed
+- **Overhauled Gemini AI Integration**: The `GeminiService` has been completely refactored to use the modern `google-genai` library and its documented best practices. The previous unstable implementation was replaced, ensuring reliable tool-use and conversation flow.
+- **Externalized AI Configuration**: All hardcoded LLM model names have been moved to `config.py` to be configurable via environment variables. The system prompt text was moved to `data/system_prompt.txt` to decouple it from the source code.
+- **Improved Dependency Management**: The `pip-tools` package is now included as a formal development dependency to ensure a smooth and reproducible setup for new environments. The `google-genai` library was also upgraded to resolve Pydantic warnings at startup.
+- **Updated Documentation**: All UI screenshots in the `README.md` have been refreshed to reflect the latest versions, and a broken badge link was corrected.
+
+### Fixed
+- **Gemini Service Stability**: Resolved a cascade of `TypeError`s and logical errors within the `GeminiService` that prevented it from using tools correctly. This includes fixing the construction of the conversation history and the method for passing the system prompt to the API.
+- **LLM Test Suite**: Stabilized the entire test suite for `llm_services.py`. Corrected all faulty mock configurations, provided necessary Flask app contexts to tests, and increased test coverage to nearly 100% for the module.
+
+
 ## [1.5.0] - 2025-06-19
 
 ### Added

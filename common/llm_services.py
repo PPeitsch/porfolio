@@ -1,11 +1,13 @@
 import abc
+import json
 import logging
 from typing import Any, Dict, List, Optional, Type, Union
 
 import anthropic
-import google.generativeai as genai
 import openai
 from flask import current_app
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +72,9 @@ class AnthropicService(LLMService):
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Union[str, List[Dict[str, Any]]]:
         try:
+            model_name = current_app.config.get("ANTHROPIC_MODEL")
             response = self.client.messages.create(
-                model="claude-3-haiku-20240307",
+                model=model_name,
                 max_tokens=1024,
                 system=system_prompt,
                 messages=messages,
@@ -123,8 +126,9 @@ class OpenAIService(LLMService):
     ) -> Union[str, List[Dict[str, Any]]]:
         all_messages = [{"role": "system", "content": system_prompt}] + messages
         try:
+            model_name = current_app.config.get("OPENAI_MODEL")
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=model_name,
                 messages=all_messages,
                 tools=tools,
                 tool_choice="auto" if tools else None,
@@ -153,12 +157,14 @@ class OpenAIService(LLMService):
 
 
 class GeminiService(LLMService):
-    """LLM Service implementation for Google's Gemini models."""
+    """
+    LLM Service implementation for Google's Gemini models, based on the `genai`
+    library.
+    """
 
-    def _initialize_client(self) -> genai.GenerativeModel:
-        logger.info("Initializing Google Gemini client.")
-        genai.configure(api_key=self.api_key)
-        return genai.GenerativeModel("gemini-1.5-flash")
+    def _initialize_client(self) -> genai.Client:
+        logger.info("Initializing Google Gemini client (genai library).")
+        return genai.Client(api_key=self.api_key)
 
     def get_chat_response(
         self,
@@ -166,42 +172,97 @@ class GeminiService(LLMService):
         system_prompt: str,
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Union[str, List[Dict[str, Any]]]:
-        # Gemini requires a specific format for tool definitions
-        gemini_tools = [{"function_declarations": tools}] if tools else None
+        gemini_tools = None
+        if tools:
+            function_declarations = [
+                types.FunctionDeclaration(
+                    name=tool_def["name"],
+                    description=tool_def["description"],
+                    parameters=tool_def.get("input_schema"),
+                )
+                for tool_def in tools
+            ]
+            gemini_tools = [types.Tool(function_declarations=function_declarations)]
 
-        try:
-            model = genai.GenerativeModel(
-                "gemini-1.5-flash",
-                system_instruction=system_prompt,
-                tools=gemini_tools,
-            )
-            # Convert messages to Gemini's format
-            gemini_messages = []
-            for msg in messages:
-                role = "model" if msg["role"] == "assistant" else "user"
-                gemini_messages.append(
-                    {"role": role, "parts": [{"text": msg["content"]}]}
+        # For this library version, the system prompt must be the first user message.
+        gemini_history = [
+            types.Content(role="user", parts=[types.Part(text=system_prompt)])
+        ]
+        for msg in messages:
+            role = "user" if msg["role"] == "user" else "model"
+            content = msg.get("content")
+
+            if msg.get("type") == "tool_result":
+                tool_results = msg.get("content", [])
+                tool_response_parts = [
+                    types.Part.from_function_response(
+                        name=tool_result["tool_use_id"],
+                        response={"result": json.loads(tool_result["content"])},
+                    )
+                    for tool_result in tool_results
+                ]
+                gemini_history.append(
+                    types.Content(role="user", parts=tool_response_parts)
+                )
+            elif isinstance(content, list):
+                tool_call_parts = [
+                    types.Part(
+                        function_call=types.FunctionCall(
+                            name=c["name"], args=c["input"]
+                        )
+                    )
+                    for c in content
+                ]
+                gemini_history.append(
+                    types.Content(role="model", parts=tool_call_parts)
+                )
+            else:
+                gemini_history.append(
+                    types.Content(role=role, parts=[types.Part(text=str(content))])
                 )
 
-            response = model.generate_content(
-                gemini_messages, tool_config={"function_calling_config": "AUTO"}
+        config = (
+            types.GenerateContentConfig(tools=gemini_tools) if gemini_tools else None
+        )
+
+        try:
+            model_name = current_app.config.get("GEMINI_MODEL")
+            response = self.client.models.generate_content(
+                model=model_name,
+                contents=gemini_history,
+                config=config,
             )
-            response_part = response.candidates[0].content.parts[0]
 
-            # Check if the model wants to call a function
-            if hasattr(response_part, "function_call"):
-                fc = response_part.function_call
-                return [
-                    {
-                        "id": str(fc.name),
-                        "name": fc.name,
-                        "input": {k: v for k, v in fc.args.items()},
-                    }
-                ]
+            if not response.candidates:
+                logger.error("No response candidates received from Gemini.")
+                return "An error occurred while communicating with the AI service."
 
-            return str(response_part.text)
+            candidate_parts = response.candidates[0].content.parts
+            tool_calls = []
+            has_function_call = False
+            for part in candidate_parts:
+                if part.function_call:
+                    has_function_call = True
+                    fc = part.function_call
+                    tool_calls.append(
+                        {
+                            "id": fc.name,
+                            "name": fc.name,
+                            "input": dict(fc.args),
+                        }
+                    )
+
+            if has_function_call:
+                logger.info(
+                    f"Gemini requested tool calls: {[tc['name'] for tc in tool_calls]}"
+                )
+                return tool_calls
+
+            logger.info("Gemini returned a text response.")
+            return str(response.text).strip()
+
         except Exception as e:
-            logger.error(f"Google Gemini API error: {e}")
+            logger.error(f"Google Gemini API error (genai lib): {e}", exc_info=True)
             return "Sorry, I'm having trouble connecting to the AI service (Gemini)."
 
 

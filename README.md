@@ -9,7 +9,7 @@
 [![Linting: Flake8](https://img.shields.io/badge/linting-flake8-yellowgreen)](https://flake8.pycqa.org/)
 [![Code Quality](https://github.com/PPeitsch/porfolio/actions/workflows/code-quality.yml/badge.svg)](https://github.com/PPeitsch/porfolio/actions/workflows/code-quality.yml)
 [![Tests](https://github.com/PPeitsch/porfolio/actions/workflows/tests.yml/badge.svg)](https://github.com/PPeitsch/porfolio/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/PPeitsch/porfolio/graph/badge.svg)](https://codecov.io/gh/PPeitsch/porfolio)
+[![codecov](https://codecov.io/gh/PPeitsch/porfolio/graph/badge.svg?token=PGot9fslGJ)](https://codecov.io/gh/PPeitsch/porfolio)
 [![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-brightgreen.svg?style=flat)](.github/CONTRIBUTING.md)
 
 
@@ -33,7 +33,7 @@ A modern, multi-view portfolio website built with Flask, showcasing projects and
   <tr>
     <td width="50%" align="center">
       <p><strong>3. Recruiter (AI Chat) View</strong></p>
-      <img src="docs/images/recruiter-chat-view.png" alt="Screenshot of the AI-powered chat assistant" width="100%">
+      <img src="docs/images/recruiter-view.png" alt="Screenshot of the AI-powered chat assistant" width="100%">
     </td>
     <td width="50%" align="center">
       <p><strong>4. Visual Overview</strong></p>
