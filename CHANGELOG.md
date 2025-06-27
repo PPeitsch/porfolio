@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.6.1] - 2025-06-27
+
+### Security
+- **Fixed Access Code Exposure**: Resolved a critical security vulnerability in the Recruiter (AI Chat) view where the user's access code was being displayed in the chat history after submission. The code is now processed for authentication only and is never rendered in the UI.
+
+
 ## [1.6.0] - 2025-06-27
 
 ### Changed

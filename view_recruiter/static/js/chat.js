@@ -75,7 +75,8 @@ window.initializeRecruiterView = function(callbacks) {
    async function handleCodeSubmission(code) {
        isLoading = true;
        setInputState(false, 'Verifying code...');
-       addMessage(code, 'user');
+       // Do NOT add the code to the chat display. This is the security fix.
+       // addMessage(code, 'user');
        addMessage('', 'bot', true);
 
 
