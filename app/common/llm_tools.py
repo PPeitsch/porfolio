@@ -1,6 +1,6 @@
 from typing import Any, Callable, Dict, List
 
-from common import utils
+from app.common import utils
 
 # A mapping from tool name to the actual callable function.
 # This allows the chat handler to dynamically execute the correct function
@@ -20,8 +20,8 @@ TOOL_DEFINITIONS: List[Dict[str, Any]] = [
     {
         "name": "get_professional_summary",
         "description": (
-            "Retrieves the professional summary or overview of Pablo Peitsch. "
-            "Use this to answer general questions about his background and focus."
+            "Retrieves the professional summary or overview of the portfolio owner. "
+            "Use this to answer general questions about their background and focus."
         ),
         "input_schema": {
             "type": "object",
@@ -31,8 +31,8 @@ TOOL_DEFINITIONS: List[Dict[str, Any]] = [
     {
         "name": "get_skills",
         "description": (
-            "Retrieves a list of Pablo Peitsch's technical skills. Use this to "
-            "answer questions about his expertise in specific technologies, "
+            "Retrieves a list of the portfolio owner's technical skills. Use this to "
+            "answer questions about their expertise in specific technologies, "
             "languages, or frameworks."
         ),
         "input_schema": {

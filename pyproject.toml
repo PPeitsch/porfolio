@@ -122,6 +122,8 @@ github_url = "https://github.com/PPeitsch/porfolio"
 live_url = "https://ppeitsch.com.ar/visual"
 
 [tool.pytest.ini_options]
-pythonpath = [
-  "."
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
 ]

@@ -4,7 +4,7 @@ import pytest
 from httpx import Request
 from openai import APIError
 
-from common.llm_services import (
+from app.common.llm_services import (
     AnthropicService,
     GeminiService,
     LLMService,

@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import yaml
 
-from common.utils import (
+from app.common.utils import (
     get_professional_summary,
     get_project_details,
     get_project_list,

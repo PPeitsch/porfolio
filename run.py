@@ -1,6 +1,6 @@
 import os
 
-from shell import create_app
+from app.shell import create_app
 
 # For now, default to development using the base Config
 config_name = os.getenv("FLASK_CONFIG", "default")

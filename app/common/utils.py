@@ -20,9 +20,13 @@ def _get_data_filepath(filename):
         str: The absolute path to the data file.
     """
     if current_app:
-        base_path = os.path.dirname(current_app.root_path)
+        # From app/shell, go up two levels to the project root
+        base_path = os.path.dirname(os.path.dirname(current_app.root_path))
     else:
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # For standalone scripts, go up from app/common/
+        base_path = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
     filepath = os.path.join(base_path, "data", filename)
     return filepath
 
