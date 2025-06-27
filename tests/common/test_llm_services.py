@@ -17,7 +17,7 @@ from common.llm_services import (
 def test_llm_service_abc_requires_api_key():
     """Test that instantiating a service without an API key raises ValueError."""
     with pytest.raises(ValueError, match="requires an API key"):
-        # Create a dummy concrete class for testing the ABC
+
         class DummyService(LLMService):
             def _initialize_client(self):
                 return None
@@ -30,7 +30,7 @@ def test_llm_service_abc_requires_api_key():
 
 # --- Test AnthropicService ---
 @patch("anthropic.Anthropic")
-def test_anthropic_service_success(MockAnthropic):
+def test_anthropic_service_success(MockAnthropic, app):
     """Test AnthropicService successful text response."""
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -39,15 +39,16 @@ def test_anthropic_service_success(MockAnthropic):
     mock_client.messages.create.return_value = mock_response
     MockAnthropic.return_value = mock_client
 
-    service = AnthropicService(api_key="fake_key")
-    response = service.get_chat_response(messages=[], system_prompt="")
+    with app.app_context():
+        service = AnthropicService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
 
     assert response == "Hello Anthropic"
     mock_client.messages.create.assert_called_once()
 
 
 @patch("anthropic.Anthropic")
-def test_anthropic_service_tool_use(MockAnthropic):
+def test_anthropic_service_tool_use(MockAnthropic, app):
     """Test AnthropicService tool use response."""
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -56,8 +57,9 @@ def test_anthropic_service_tool_use(MockAnthropic):
     mock_client.messages.create.return_value = mock_response
     MockAnthropic.return_value = mock_client
 
-    service = AnthropicService(api_key="fake_key")
-    response = service.get_chat_response(messages=[], system_prompt="")
+    with app.app_context():
+        service = AnthropicService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
 
     assert isinstance(response, list)
     assert response[0]["id"] == "t1"
@@ -65,7 +67,7 @@ def test_anthropic_service_tool_use(MockAnthropic):
 
 # --- Test OpenAIService ---
 @patch("openai.OpenAI")
-def test_openai_service_success(MockOpenAI):
+def test_openai_service_success(MockOpenAI, app):
     """Test OpenAIService successful text response."""
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -74,25 +76,26 @@ def test_openai_service_success(MockOpenAI):
     mock_client.chat.completions.create.return_value = mock_response
     MockOpenAI.return_value = mock_client
 
-    service = OpenAIService(api_key="fake_key")
-    response = service.get_chat_response(messages=[], system_prompt="")
+    with app.app_context():
+        service = OpenAIService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
 
     assert response == "Hello OpenAI"
     mock_client.chat.completions.create.assert_called_once()
 
 
 @patch("openai.OpenAI")
-def test_openai_service_api_error(MockOpenAI):
+def test_openai_service_api_error(MockOpenAI, app):
     """Test OpenAIService API error handling."""
     mock_client = MagicMock()
-    # The APIError requires a request object.
     mock_client.chat.completions.create.side_effect = APIError(
         "Test error", request=Request(method="POST", url="http://test.url"), body=None
     )
     MockOpenAI.return_value = mock_client
 
-    service = OpenAIService(api_key="fake_key")
-    response = service.get_chat_response(messages=[], system_prompt="")
+    with app.app_context():
+        service = OpenAIService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
 
     assert "Sorry" in response
     assert "(OpenAI)" in response
@@ -100,35 +103,26 @@ def test_openai_service_api_error(MockOpenAI):
 
 # --- Test GeminiService ---
 @patch("common.llm_services.genai.Client")
-def test_gemini_service_success(MockGenAIClient):
+def test_gemini_service_success(MockGenAIClient, app):
     """Test GeminiService successful text response."""
-    # Setup the nested mock structure: Client -> models -> generate_content
     mock_client_instance = MagicMock()
     mock_models_object = MagicMock()
     mock_response = MagicMock()
     mock_part = MagicMock()
 
-    # Configure the part to represent a text-only response.
-    # The .function_call attribute must be explicitly set to a falsy value (e.g., None)
-    # so that the `if part.function_call:` check in the implementation fails as expected
     mock_part.text = "Hello Gemini"
     mock_part.function_call = None
-
-    # Configure the full response object to contain the text-only part
     mock_response.text = "Hello Gemini"
     mock_response.candidates = [MagicMock()]
     mock_response.candidates[0].content.parts = [mock_part]
-
-    # Configure the mock client hierarchy
     mock_models_object.generate_content.return_value = mock_response
     mock_client_instance.models = mock_models_object
     MockGenAIClient.return_value = mock_client_instance
 
-    # Now, instantiate the service. It will use the mocked client.
-    service = GeminiService(api_key="fake_key")
-    response = service.get_chat_response(messages=[], system_prompt="")
+    with app.app_context():
+        service = GeminiService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
 
-    # Assert that the correct text response is returned
     assert response == "Hello Gemini"
     mock_models_object.generate_content.assert_called_once()
 
@@ -146,7 +140,6 @@ def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
         get_llm_service()
         MockAnthropic.assert_called_once_with(api_key="key1")
 
-    # Reset mocks for the next case
     MockAnthropic.reset_mock()
 
     # Test OpenAI
@@ -179,4 +172,4 @@ def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
         app.config["OPENAI_API_KEY"] = None
         service = get_llm_service()
         assert service is None
-        MockOpenAI.assert_not_called()  # Ensure constructor was not called
+        MockOpenAI.assert_not_called()
