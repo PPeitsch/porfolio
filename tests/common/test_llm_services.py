@@ -176,7 +176,7 @@ def test_gemini_service_tool_use(MockGenAIClient, app):
         MagicMock(),
         MagicMock(),
     )
-    # Correctly configure the mock object's attributes
+    # Correctly configure the mock object's attributes for the response
     mock_function_call = MagicMock()
     mock_function_call.name = "get_project_details"
     mock_function_call.args = {"project_id": "portfolio"}
@@ -186,9 +186,23 @@ def test_gemini_service_tool_use(MockGenAIClient, app):
     mock_client_instance.models = mock_models_object
     MockGenAIClient.return_value = mock_client_instance
 
+    # Provide a valid tool definition to prevent KeyError during request setup
+    valid_tool_def = [
+        {
+            "name": "get_project_details",
+            "description": "Get details about a project.",
+            "input_schema": {
+                "type": "object",
+                "properties": {"project_id": {"type": "string"}},
+            },
+        }
+    ]
+
     with app.app_context():
         service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="", tools=[{}])
+        response = service.get_chat_response(
+            messages=[], system_prompt="", tools=valid_tool_def
+        )
 
     assert isinstance(response, list)
     assert response[0]["name"] == "get_project_details"
@@ -260,6 +274,7 @@ def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
     MockGemini.reset_mock()
 
     with app.app_context():
+        app.config["LLM_PROVIDER"] = "unsupported"
         app.config["LLM_PROVIDER"] = "unsupported"
         service = get_llm_service()
         assert service is None
