@@ -227,13 +227,8 @@ class GeminiService(LLMService):
 
         try:
             model_name = current_app.config.get("GEMINI_MODEL")
-            # The `genai` library client is a single model, so we re-initialize
-            # the client if the model name changes, though this is less common.
-            # A better approach would be to get a model object.
-            # For simplicity, we just use the name here.
-            model_instance = genai.GenerativeModel(model_name)
-
-            response = model_instance.generate_content(
+            response = self.client.models.generate_content(
+                model=model_name,
                 contents=gemini_history,
                 config=config,
             )
