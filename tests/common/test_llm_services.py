@@ -12,17 +12,6 @@ from common.llm_services import (
     get_llm_service,
 )
 
-# Mocking the google.genai library at the top level for Gemini tests
-# This is because it might not be installed in all test environments.
-# We also mock the specific error class we want to raise.
-google_genai_mock = MagicMock()
-try:
-    from google.genai.errors import ClientError
-
-    google_genai_mock.errors.ClientError = ClientError
-except ImportError:
-    google_genai_mock.errors.ClientError = type("ClientError", (Exception,), {})
-
 
 # --- Test Abstract Base Class ---
 def test_llm_service_abc_requires_api_key():
@@ -62,7 +51,12 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
     """Test AnthropicService tool use response."""
     mock_client = MagicMock()
     mock_response = MagicMock()
-    tool_call = MagicMock(type="tool_use", id="t1", name="get_weather", input={})
+    # Correctly configure the mock object's attributes
+    tool_call = MagicMock()
+    tool_call.type = "tool_use"
+    tool_call.id = "t1"
+    tool_call.name = "get_weather"
+    tool_call.input = {}
     mock_response.content = [tool_call]
     mock_response.stop_reason = "tool_use"
     mock_client.messages.create.return_value = mock_response
@@ -112,7 +106,10 @@ def test_openai_service_success(MockOpenAI, app):
 def test_openai_service_tool_use(MockOpenAI, app):
     """Test OpenAIService tool use response."""
     mock_client = MagicMock()
-    mock_function = MagicMock(name="get_weather", arguments='{"location": "Boston"}')
+    # Correctly configure the mock object's attributes
+    mock_function = MagicMock()
+    mock_function.name = "get_weather"
+    mock_function.arguments = '{"location": "Boston"}'
     mock_tool_call = MagicMock(id="t1", function=mock_function)
     mock_message = MagicMock(content=None, tool_calls=[mock_tool_call])
     mock_choice = MagicMock(message=mock_message)
@@ -179,10 +176,10 @@ def test_gemini_service_tool_use(MockGenAIClient, app):
         MagicMock(),
         MagicMock(),
     )
-    # Replicating the function_call structure from the PDF
-    mock_function_call = MagicMock(
-        name="get_project_details", args={"project_id": "portfolio"}
-    )
+    # Correctly configure the mock object's attributes
+    mock_function_call = MagicMock()
+    mock_function_call.name = "get_project_details"
+    mock_function_call.args = {"project_id": "portfolio"}
     mock_part.function_call = mock_function_call
     mock_response.candidates = [MagicMock(content=MagicMock(parts=[mock_part]))]
     mock_models_object.generate_content.return_value = mock_response
@@ -200,11 +197,10 @@ def test_gemini_service_tool_use(MockGenAIClient, app):
 
 @patch("common.llm_services.genai.Client")
 def test_gemini_service_api_error(MockGenAIClient, app):
-    """Test GeminiService API error handling using the observed ClientError."""
+    """Test GeminiService API error handling using a generic Exception."""
     mock_client_instance, mock_models_object = MagicMock(), MagicMock()
-    mock_models_object.generate_content.side_effect = (
-        google_genai_mock.errors.ClientError("API key not valid")
-    )
+    # Use a generic Exception for a more robust test
+    mock_models_object.generate_content.side_effect = Exception("Simulated API Error")
     mock_client_instance.models = mock_models_object
     MockGenAIClient.return_value = mock_client_instance
 
@@ -224,7 +220,7 @@ def test_gemini_service_no_candidates(MockGenAIClient, app):
         MagicMock(),
         MagicMock(),
     )
-    mock_response.candidates = []  # Simulate an empty candidates list
+    mock_response.candidates = []
     mock_models_object.generate_content.return_value = mock_response
     mock_client_instance.models = mock_models_object
     MockGenAIClient.return_value = mock_client_instance
