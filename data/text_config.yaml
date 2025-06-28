@@ -1,0 +1,16 @@
+# Text templates for various parts of the application
+# Placeholders like {name} will be replaced with data from cv.yaml
+
+# Descriptions for the tools used by the AI assistant.
+llm_tool_descriptions:
+  get_professional_summary: "Retrieves the professional summary or overview of {name}. Use this to answer general questions about their background and focus."
+  get_skills: "Retrieves a list of {name}'s technical skills. Use this to answer questions about their expertise in specific technologies, languages, or frameworks."
+  get_project_list: "Retrieves a summary list of all available projects. Use this when the user asks for an overview of projects or wants to know what projects exist."
+  get_project_details: "Retrieve detailed information for a specific project based on its unique identifier (ID). Use this when the user asks for details about a specific project by name or ID."
+
+# Text templates for the Command-Line Interface (CLI) view.
+cli:
+  neofetch:
+    host_template: "{name}'s Portfolio"
+    os_name: "FlaskOS Portfolio"
+    shell_name: "Web-CLI"

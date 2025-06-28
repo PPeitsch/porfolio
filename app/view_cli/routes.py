@@ -4,7 +4,7 @@ import textwrap
 from flask import g, jsonify
 
 from app.common.decorators import token_required
-from app.common.utils import load_cv_data, load_projects_data
+from app.common.utils import load_cv_data, load_projects_data, load_text_config
 
 from . import cli_bp
 
@@ -35,6 +35,7 @@ def get_cached_data(data_type="cv"):
     return None
 
 
+# Replace the existing handle_command_api function with this one
 @cli_bp.route("/api/command/<path:command_line>")
 @token_required
 def handle_command_api(command_line):
@@ -42,6 +43,7 @@ def handle_command_api(command_line):
     logger.debug(f"CLI API received command: {command_line}")
     CV_DATA = get_cached_data("cv")
     PROJECTS_DATA, PROJECTS_DICT = get_cached_data("projects")
+    TEXT_CONFIG = load_text_config()  # Load the new text config
 
     if not CV_DATA or PROJECTS_DATA is None:
         logger.error("CLI API failed: CV or Projects data not loaded into context.")
@@ -239,6 +241,8 @@ def handle_command_api(command_line):
             project_count = len(PROJECTS_DATA)
             skill_count = len(CV_DATA.get("skills", []))
 
+            cli_config = TEXT_CONFIG.get("cli", {}).get("neofetch", {})
+
             logo = [
                 "      _______      ",
                 "     /       \\     ",
@@ -251,12 +255,12 @@ def handle_command_api(command_line):
             info = [
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
                 "-----------------------",
-                "OS: FlaskOS Portfolio",
-                f"Host: {name}'s Portfolio",
+                f"OS: {cli_config.get('os_name', 'FlaskOS Portfolio')}",
+                f"Host: {cli_config.get('host_template', '{name}''s Portfolio').format(name=name)}",
                 f"Title: {title}",
                 f"Projects: {project_count}",
                 f"Skills: {skill_count}",
-                "Shell: Web-CLI",
+                f"Shell: {cli_config.get('shell_name', 'Web-CLI')}",
             ]
 
             for i in range(max(len(logo), len(info))):
