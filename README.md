@@ -25,14 +25,14 @@ An interactive, multi-view portfolio website built with Python, Flask, and vanil
       <img src="docs/images/selector-view.png" alt="Screenshot of the initial view selector page" width="100%">
     </td>
     <td width="50%" align="center">
-      <p><strong>2. Recruiter (AI Chat) View</strong></p>
-      <img src="docs/images/recruiter-view.png" alt="Screenshot of the AI-powered chat assistant" width="100%">
+      <p><strong>2. Developer (CLI) View</strong></p>
+      <img src="docs/images/cli-view.png" alt="Screenshot of the interactive terminal view" width="100%">
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <p><strong>3. Secure Authentication Prompt</strong></p>
-      <img src="docs/images/cli-auth-view.png" alt="Screenshot of the secure authentication prompt for the CLI" width="100%">
+      <p><strong>3. Recruiter (AI Chat) View</strong></p>
+      <img src="docs/images/recruiter-view.png" alt="Screenshot of the AI-powered chat assistant" width="100%">
     </td>
     <td width="50%" align="center">
       <p><strong>4. Visual Overview</strong></p>
@@ -54,6 +54,13 @@ An interactive, multi-view portfolio website built with Python, Flask, and vanil
     *   Dynamic content (CV, projects, text templates) is loaded from simple `.yaml` and `.txt` files, making updates easy and code-free.
     *   LLM provider (Anthropic, OpenAI, Gemini) and specific models can be configured entirely through environment variables.
 *   **✅ Quality Assured:** Enforces a high standard of code quality through a robust CI/CD pipeline and pre-commit hooks. Includes automated formatting (Black, isort), linting (Flake8), static type checking (MyPy), security scanning (Bandit), and a comprehensive test suite with over 80% coverage.
+
+### 🔐 Authentication in Action
+Both the CLI and Recruiter views are protected by a secure access code prompt to prevent unauthorized use.
+
+<p align="center">
+  <img src="docs/images/cli-auth-view.png" alt="Secure authentication prompt for the CLI" width="75%">
+</p>
 
 ## 🚀 Quick Start & Development
 
