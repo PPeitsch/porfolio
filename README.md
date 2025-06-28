@@ -125,5 +125,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <p align="center">
-Built with Flask and a multi-persona approach.
+An interactive experience, built with Python & ❤️ by <a href="https://github.com/PPeitsch" target="_blank">PPeitsch</a>.
 </p>
