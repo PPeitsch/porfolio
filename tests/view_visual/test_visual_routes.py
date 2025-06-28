@@ -18,8 +18,7 @@ MOCK_PROJECTS = [
 ]
 
 
-# The 'client' and 'app' fixtures are provided by conftest.py
-@patch("view_visual.routes.load_projects_data", return_value=(MOCK_PROJECTS, {}))
+@patch("app.view_visual.routes.load_projects_data", return_value=(MOCK_PROJECTS, {}))
 def test_get_projects_for_visual_success(mock_load_projects, client):
     """
     Test that the /visual/api/projects endpoint returns correctly
@@ -60,7 +59,7 @@ def test_get_projects_for_visual_success(mock_load_projects, client):
     assert len(project["technologies"]) == 4  # Should be truncated to 4
 
 
-@patch("view_visual.routes.load_projects_data", return_value=(None, None))
+@patch("app.view_visual.routes.load_projects_data", return_value=(None, None))
 def test_get_projects_for_visual_failure(mock_load_projects, client):
     """
     Test the endpoint's failure case when project data cannot be loaded.

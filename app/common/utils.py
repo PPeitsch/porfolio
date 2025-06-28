@@ -20,9 +20,15 @@ def _get_data_filepath(filename):
         str: The absolute path to the data file.
     """
     if current_app:
-        base_path = os.path.dirname(current_app.root_path)
+        # The 'instance_path' is outside the 'app' package, in the project root.
+        # We go one level up from the instance path to get to the project root.
+        project_root = os.path.dirname(current_app.instance_path)
+        base_path = project_root
     else:
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # For standalone scripts, go up from app/common/
+        base_path = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
     filepath = os.path.join(base_path, "data", filename)
     return filepath
 

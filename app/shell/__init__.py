@@ -37,27 +37,27 @@ def create_app(config_name="default"):
 
     with app.app_context():
         # Import and register all blueprints for the application
-        from shell.routes import shell_bp
+        from app.shell.routes import shell_bp
 
         app.register_blueprint(shell_bp)
         logging.info("Registered shell blueprint.")
 
-        from auth import auth_bp
+        from app.auth import auth_bp
 
         app.register_blueprint(auth_bp, url_prefix="/auth")
         logging.info("Registered auth blueprint with prefix /auth.")
 
-        from view_cli import cli_bp
+        from app.view_cli import cli_bp
 
         app.register_blueprint(cli_bp, url_prefix="/cli")
         logging.info("Registered cli blueprint with prefix /cli.")
 
-        from view_recruiter import recruiter_bp
+        from app.view_recruiter import recruiter_bp
 
         app.register_blueprint(recruiter_bp, url_prefix="/recruiter")
         logging.info("Registered recruiter blueprint with prefix /recruiter.")
 
-        from view_visual import visual_bp
+        from app.view_visual import visual_bp
 
         app.register_blueprint(visual_bp, url_prefix="/visual")
         logging.info("Registered visual blueprint with prefix /visual.")

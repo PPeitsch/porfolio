@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import yaml
 
-from common.utils import (
+from app.common.utils import (
     get_professional_summary,
     get_project_details,
     get_project_list,
@@ -17,7 +17,8 @@ from common.utils import (
 
 @patch("builtins.open")
 @patch("yaml.safe_load")
-def test_load_yaml_data_success(mock_safe_load, mock_open):
+@patch("app.common.utils._get_data_filepath")
+def test_load_yaml_data_success(mock_get_path, mock_safe_load, mock_open):
     """Test successful loading and parsing of a YAML file."""
     # Arrange
     mock_safe_load.return_value = {"key": "value"}
@@ -30,7 +31,8 @@ def test_load_yaml_data_success(mock_safe_load, mock_open):
 
 
 @patch("builtins.open", side_effect=FileNotFoundError)
-def test_load_yaml_data_file_not_found(mock_open):
+@patch("app.common.utils._get_data_filepath")
+def test_load_yaml_data_file_not_found(mock_get_path, mock_open):
     """Test handling of FileNotFoundError."""
     # Act
     data = load_yaml_data("non_existent.yaml")
@@ -40,7 +42,8 @@ def test_load_yaml_data_file_not_found(mock_open):
 
 @patch("builtins.open")
 @patch("yaml.safe_load", side_effect=yaml.YAMLError)
-def test_load_yaml_data_yaml_error(mock_safe_load, mock_open):
+@patch("app.common.utils._get_data_filepath")
+def test_load_yaml_data_yaml_error(mock_get_path, mock_safe_load, mock_open):
     """Test handling of YAML parsing errors."""
     # Act
     data = load_yaml_data("malformed.yaml")
@@ -66,21 +69,21 @@ MOCK_PROJECTS_DATA = [
 ]
 
 
-@patch("common.utils.load_cv_data", return_value=MOCK_CV_DATA)
+@patch("app.common.utils.load_cv_data", return_value=MOCK_CV_DATA)
 def test_get_professional_summary(mock_load_cv):
     """Test that get_professional_summary returns the correct summary."""
     summary = get_professional_summary()
     assert summary == "A test summary."
 
 
-@patch("common.utils.load_cv_data", return_value=MOCK_CV_DATA)
+@patch("app.common.utils.load_cv_data", return_value=MOCK_CV_DATA)
 def test_get_skills(mock_load_cv):
     """Test that get_skills returns the list of skills."""
     skills = get_skills()
     assert skills == ["Python", "Flask"]
 
 
-@patch("common.utils.load_projects_data", return_value=(MOCK_PROJECTS_DATA, {}))
+@patch("app.common.utils.load_projects_data", return_value=(MOCK_PROJECTS_DATA, {}))
 def test_get_project_list(mock_load_projects):
     """Test that get_project_list returns a correctly formatted list."""
     project_list = get_project_list()
@@ -90,7 +93,7 @@ def test_get_project_list(mock_load_projects):
     assert project_list[1]["short_description"] == "Second project."
 
 
-@patch("common.utils.load_projects_data")
+@patch("app.common.utils.load_projects_data")
 def test_get_project_details_found(mock_load_projects):
     """Test finding an existing project's details."""
     # Arrange
@@ -103,7 +106,7 @@ def test_get_project_details_found(mock_load_projects):
     assert details["title"] == "Project One"
 
 
-@patch("common.utils.load_projects_data")
+@patch("app.common.utils.load_projects_data")
 def test_get_project_details_not_found(mock_load_projects):
     """Test returning None for a non-existent project."""
     # Arrange
@@ -118,7 +121,7 @@ def test_get_project_details_not_found(mock_load_projects):
 # --- Tests for Context-Caching Functions (load_*) ---
 
 
-@patch("common.utils.load_yaml_data")
+@patch("app.common.utils.load_yaml_data")
 def test_load_cv_data_caching(mock_load_yaml, app):
     """Test that CV data is loaded once and then cached in 'g'."""
     # Arrange: Mock the return value of the YAML loader
@@ -135,7 +138,7 @@ def test_load_cv_data_caching(mock_load_yaml, app):
     mock_load_yaml.assert_called_once()
 
 
-@patch("common.utils.load_yaml_data")
+@patch("app.common.utils.load_yaml_data")
 def test_load_projects_data_caching(mock_load_yaml, app):
     """Test that projects data is loaded once and cached in 'g'."""
     # Arrange

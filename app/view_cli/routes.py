@@ -3,8 +3,8 @@ import textwrap
 
 from flask import g, jsonify
 
-from common.decorators import token_required
-from common.utils import load_cv_data, load_projects_data
+from app.common.decorators import token_required
+from app.common.utils import load_cv_data, load_projects_data
 
 from . import cli_bp
 

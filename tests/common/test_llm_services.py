@@ -4,7 +4,7 @@ import pytest
 from httpx import Request
 from openai import APIError
 
-from common.llm_services import (
+from app.common.llm_services import (
     AnthropicService,
     GeminiService,
     LLMService,
@@ -12,24 +12,36 @@ from common.llm_services import (
     get_llm_service,
 )
 
+# Mocking the google.genai library at the top level for Gemini tests
+# This is because it might not be installed in all test environments.
+# We also mock the specific error class we want to raise.
+google_genai_mock = MagicMock()
+try:
+    from google.genai.errors import ClientError
+
+    google_genai_mock.errors.ClientError = ClientError
+except ImportError:
+    google_genai_mock.errors.ClientError = type("ClientError", (Exception,), {})
+
 
 # --- Test Abstract Base Class ---
-def test_llm_service_abc_requires_api_key():
+def test_llm_service_abc_requires_api_key(app):
     """Test that instantiating a service without an API key raises ValueError."""
-    with pytest.raises(ValueError, match="requires an API key"):
+    with app.app_context():
+        with pytest.raises(ValueError, match="requires an API key"):
 
-        class DummyService(LLMService):
-            def _initialize_client(self):
-                return None
+            class DummyService(LLMService):
+                def _initialize_client(self):
+                    return None
 
-            def get_chat_response(self, messages, system_prompt, tools=None):
-                return "dummy"
+                def get_chat_response(self, messages, system_prompt, tools=None):
+                    return "dummy"
 
-        DummyService(api_key=None)
+            DummyService(api_key=None)
 
 
 # --- Test AnthropicService ---
-@patch("anthropic.Anthropic")
+@patch("app.common.llm_services.anthropic.Anthropic")
 def test_anthropic_service_success(MockAnthropic, app):
     """Test AnthropicService successful text response."""
     mock_client = MagicMock()
@@ -46,7 +58,7 @@ def test_anthropic_service_success(MockAnthropic, app):
     assert response == "Hello Anthropic"
 
 
-@patch("anthropic.Anthropic")
+@patch("app.common.llm_services.anthropic.Anthropic")
 def test_anthropic_service_tool_use(MockAnthropic, app):
     """Test AnthropicService tool use response."""
     mock_client = MagicMock()
@@ -70,7 +82,7 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
     assert response[0]["name"] == "get_weather"
 
 
-@patch("anthropic.Anthropic")
+@patch("app.common.llm_services.anthropic.Anthropic")
 def test_anthropic_service_api_error(MockAnthropic, app):
     """Test AnthropicService API error handling."""
     mock_client = MagicMock()
@@ -85,7 +97,7 @@ def test_anthropic_service_api_error(MockAnthropic, app):
 
 
 # --- Test OpenAIService ---
-@patch("openai.OpenAI")
+@patch("app.common.llm_services.openai.OpenAI")
 def test_openai_service_success(MockOpenAI, app):
     """Test OpenAIService successful text response."""
     mock_client = MagicMock()
@@ -102,7 +114,7 @@ def test_openai_service_success(MockOpenAI, app):
     assert response == "Hello OpenAI"
 
 
-@patch("openai.OpenAI")
+@patch("app.common.llm_services.openai.OpenAI")
 def test_openai_service_tool_use(MockOpenAI, app):
     """Test OpenAIService tool use response."""
     mock_client = MagicMock()
@@ -125,7 +137,7 @@ def test_openai_service_tool_use(MockOpenAI, app):
     assert response[0]["name"] == "get_weather"
 
 
-@patch("openai.OpenAI")
+@patch("app.common.llm_services.openai.OpenAI")
 def test_openai_service_api_error(MockOpenAI, app):
     """Test OpenAIService API error handling."""
     mock_client = MagicMock()
@@ -143,7 +155,7 @@ def test_openai_service_api_error(MockOpenAI, app):
 
 
 # --- Test GeminiService ---
-@patch("common.llm_services.genai.Client")
+@patch("app.common.llm_services.genai.Client")
 def test_gemini_service_success(MockGenAIClient, app):
     """Test GeminiService successful text response."""
     mock_client_instance, mock_models_object, mock_response, mock_part = (
@@ -167,7 +179,7 @@ def test_gemini_service_success(MockGenAIClient, app):
     assert response == "Hello Gemini"
 
 
-@patch("common.llm_services.genai.Client")
+@patch("app.common.llm_services.genai.Client")
 def test_gemini_service_tool_use(MockGenAIClient, app):
     """Test GeminiService tool use response based on PDF examples."""
     mock_client_instance, mock_models_object, mock_response, mock_part = (
@@ -209,7 +221,7 @@ def test_gemini_service_tool_use(MockGenAIClient, app):
     assert response[0]["input"]["project_id"] == "portfolio"
 
 
-@patch("common.llm_services.genai.Client")
+@patch("app.common.llm_services.genai.Client")
 def test_gemini_service_api_error(MockGenAIClient, app):
     """Test GeminiService API error handling using a generic Exception."""
     mock_client_instance, mock_models_object = MagicMock(), MagicMock()
@@ -226,7 +238,7 @@ def test_gemini_service_api_error(MockGenAIClient, app):
     assert "(Gemini)" in response
 
 
-@patch("common.llm_services.genai.Client")
+@patch("app.common.llm_services.genai.Client")
 def test_gemini_service_no_candidates(MockGenAIClient, app):
     """Test GeminiService handling of a response with no candidates."""
     mock_client_instance, mock_models_object, mock_response = (
@@ -247,9 +259,9 @@ def test_gemini_service_no_candidates(MockGenAIClient, app):
 
 
 # --- Test get_llm_service Factory ---
-@patch("common.llm_services.AnthropicService")
-@patch("common.llm_services.OpenAIService")
-@patch("common.llm_services.GeminiService")
+@patch("app.common.llm_services.AnthropicService")
+@patch("app.common.llm_services.OpenAIService")
+@patch("app.common.llm_services.GeminiService")
 def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
     """Test the factory function for creating LLM services."""
     with app.app_context():
@@ -274,7 +286,6 @@ def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
     MockGemini.reset_mock()
 
     with app.app_context():
-        app.config["LLM_PROVIDER"] = "unsupported"
         app.config["LLM_PROVIDER"] = "unsupported"
         service = get_llm_service()
         assert service is None

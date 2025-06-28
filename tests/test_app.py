@@ -1,4 +1,3 @@
-# The fixtures 'app' and 'client' are now available from conftest.py
 import pytest
 
 
@@ -30,7 +29,7 @@ def test_get_view_partial_routes_success(client, view_name):
     elif view_name == "recruiter":
         assert b'id="chat-window"' in response.data
     elif view_name == "visual":
-        assert b'id="visual-container"' in response.data
+        assert b'id="project-grid"' in response.data
 
 
 def test_get_view_partial_route_not_found(client):

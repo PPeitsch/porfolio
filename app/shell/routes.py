@@ -2,7 +2,7 @@ import logging
 
 from flask import Blueprint, render_template
 
-from common.utils import load_cv_data
+from app.common.utils import load_cv_data
 
 logger = logging.getLogger(__name__)
 

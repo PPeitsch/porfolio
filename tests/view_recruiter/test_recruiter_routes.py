@@ -4,8 +4,7 @@ from unittest.mock import MagicMock, patch
 from tests.helpers import generate_test_token
 
 
-# The 'client' and 'app' fixtures are provided by conftest.py
-@patch("view_recruiter.routes.get_llm_service")
+@patch("app.view_recruiter.routes.get_llm_service")
 def test_chat_simple_text_response(mock_get_llm_service, client, app):
     """
     Test a simple chat interaction where the LLM returns a direct text response.
@@ -31,8 +30,8 @@ def test_chat_simple_text_response(mock_get_llm_service, client, app):
     mock_service.get_chat_response.assert_called_once()
 
 
-@patch("view_recruiter.routes.get_llm_service")
-@patch("view_recruiter.routes.TOOL_MAP")
+@patch("app.view_recruiter.routes.get_llm_service")
+@patch("app.view_recruiter.routes.TOOL_MAP")
 def test_chat_with_tool_use(mock_tool_map, mock_get_llm_service, client, app):
     """
     Test a chat interaction that involves a tool call.

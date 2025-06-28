@@ -5,9 +5,10 @@ from typing import Any, Dict, List
 
 from flask import abort, jsonify, request, send_from_directory
 
-from common.decorators import token_required
-from common.llm_services import get_llm_service
-from common.llm_tools import TOOL_DEFINITIONS, TOOL_MAP
+from app.common.decorators import token_required
+from app.common.llm_services import get_llm_service
+from app.common.llm_tools import TOOL_DEFINITIONS, TOOL_MAP
+from app.common.utils import load_cv_data, load_system_prompt
 
 from . import recruiter_bp
 
@@ -45,29 +46,22 @@ def handle_chat():
         logger.error("LLM service could not be initialized. Check configuration.")
         return jsonify({"reply": "Error: Chatbot not configured correctly."}), 503
 
-    # Load data needed for the prompt
-    from common.utils import load_cv_data, load_system_prompt
-
     cv_data = load_cv_data()
     owner_name = cv_data.get("name", "the portfolio owner")
 
-    # Load and format the system prompt
     raw_prompt = load_system_prompt()
     system_prompt = raw_prompt.format(name=owner_name)
 
-    # Start with the current user message
     messages: List[Dict[str, Any]] = chat_history + [
         {"role": "user", "content": user_message}
     ]
 
-    # --- Tool-use loop ---
     while True:
         response = llm_service.get_chat_response(
             messages=messages, system_prompt=system_prompt, tools=TOOL_DEFINITIONS
         )
 
         if isinstance(response, str):
-            # Final text response from LLM
             return jsonify(
                 {
                     "reply": response,
@@ -76,7 +70,6 @@ def handle_chat():
             )
 
         if isinstance(response, list) and len(response) > 0:
-            # It's a tool call request
             tool_calls = response
             messages.append({"role": "assistant", "content": tool_calls})
 

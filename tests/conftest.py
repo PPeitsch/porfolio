@@ -1,8 +1,8 @@
 import pytest
 from flask import jsonify
 
-from common.decorators import token_required
-from shell import create_app
+from app.common.decorators import token_required
+from app.shell import create_app
 
 
 @pytest.fixture(scope="module")

@@ -3,7 +3,7 @@ import os
 
 from flask import abort, jsonify, send_from_directory
 
-from common.utils import load_projects_data
+from app.common.utils import load_projects_data
 
 from . import visual_bp
 
