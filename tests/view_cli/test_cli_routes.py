@@ -1,8 +1,8 @@
-import datetime
 from unittest.mock import patch
 
-import jwt
 import pytest
+
+from tests.helpers import generate_test_token
 
 MOCK_CV_DATA_CLI = {
     "name": "Test User",
@@ -16,17 +16,6 @@ MOCK_PROJECTS_DATA_CLI = [
     {"id": "p2", "title": "Project 2", "live_url": "http://live.url"},
 ]
 MOCK_PROJECTS_DICT_CLI = {p["id"]: p for p in MOCK_PROJECTS_DATA_CLI}
-
-
-def generate_test_token(app):
-    """Helper function to generate a valid JWT for tests."""
-    payload = {
-        "sub": "test_access",
-        "iat": datetime.datetime.now(datetime.timezone.utc),
-        "exp": datetime.datetime.now(datetime.timezone.utc)
-        + datetime.timedelta(minutes=5),
-    }
-    return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
 
 # The 'client' and 'app' fixtures are provided by conftest.py
@@ -50,7 +39,7 @@ def test_cli_command_unauthorized(client):
         ("uname -a", "FlaskOS"),
     ],
 )
-@patch("view_cli.routes.get_cached_data")
+@patch("app.view_cli.routes.get_cached_data")
 def test_cli_all_commands(mock_get_cached_data, client, app, command, expected_output):
     """Test a wide range of CLI commands using parameterization."""
     # Arrange
@@ -71,7 +60,7 @@ def test_cli_all_commands(mock_get_cached_data, client, app, command, expected_o
     assert any(expected_output in line for line in response_data["output"])
 
 
-@patch("view_cli.routes.get_cached_data", return_value=({}, {}))
+@patch("app.view_cli.routes.get_cached_data", return_value=({}, {}))
 def test_cli_command_unknown(mock_get_cached_data, client, app):
     """Test an unknown command returns an error."""
     token = generate_test_token(app)
@@ -85,7 +74,7 @@ def test_cli_command_unknown(mock_get_cached_data, client, app):
 
 
 @patch(
-    "view_cli.routes.get_cached_data",
+    "app.view_cli.routes.get_cached_data",
     return_value=(MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
 )
 def test_cli_command_show_project_not_found(mock_get_cached_data, client, app):
