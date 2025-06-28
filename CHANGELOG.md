@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.7.0] - 2025-06-27
+
+### Changed
+- **Project Structure**: Migrated the entire codebase to a standard `app-layout` by moving all Python source packages (`shell`, `auth`, `common`, etc.) into a new top-level `app/` directory. This improves maintainability, eliminates import path ambiguity, and removes the need for `pythonpath` workarounds.
+
+### Fixed
+- **Import Resolution**: Updated all absolute imports throughout the application and test suite to function correctly within the new `app-layout` structure.
+- **Circular Dependencies**: Corrected the blueprint initialization pattern to resolve all circular import errors and `flake8` linting issues that arose during the refactoring.
+- **Test Suite Adaptation**: Fixed all broken tests by updating mock paths and ensuring they run successfully with the new layout.
+
+
 ## [1.6.1] - 2025-06-27
 
 ### Security
