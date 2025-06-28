@@ -243,6 +243,7 @@ def handle_command_api(command_line):
 
             cli_config = TEXT_CONFIG.get("cli", {}).get("neofetch", {})
 
+            host_template = cli_config.get("host_template", "{name}'s Portfolio")
             logo = [
                 "      _______      ",
                 "     /       \\     ",
@@ -256,7 +257,7 @@ def handle_command_api(command_line):
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
                 "-----------------------",
                 f"OS: {cli_config.get('os_name', 'FlaskOS Portfolio')}",
-                f"Host: {cli_config.get('host_template', '{name}''s Portfolio').format(name=name)}",
+                f"Host: {host_template.format(name=name)}",
                 f"Title: {title}",
                 f"Projects: {project_count}",
                 f"Skills: {skill_count}",

@@ -7,7 +7,7 @@ from flask import abort, jsonify, request, send_from_directory
 
 from app.common.decorators import token_required
 from app.common.llm_services import get_llm_service
-from app.common.llm_tools import TOOL_DEFINITIONS, TOOL_MAP
+from app.common.llm_tools import TOOL_MAP
 from app.common.utils import load_cv_data, load_system_prompt
 
 from . import recruiter_bp
