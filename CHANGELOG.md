@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.7.1] - 2025-06-28
+
+### Added
+- **`LICENSE` File**: Added the formal MIT License file to the project root for legal clarity.
+
+### Changed
+- **`README.md` Overhaul**: Completely updated the `README.md` with refreshed content, a new screenshot gallery layout to include all 5 project views, and a new personalized footer.
+
+
 ## [1.7.0] - 2025-06-27
 
 ### Changed
