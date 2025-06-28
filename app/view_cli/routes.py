@@ -260,14 +260,8 @@ def handle_command_api(command_line):
             neofetch_config = cli_config.get("neofetch", {})
             host_template = neofetch_config.get("host_template", "{name}'s Portfolio")
 
-            logo = [
-                "      _______      ",
-                "     /       \\     ",
-                "    /  o   o  \\    ",
-                "   |    ^      |   ",
-                "    \\  \\___/  /    ",
-                "     \\_______/     ",
-            ]
+            logo_str = neofetch_config.get("logo", "ASCII art not found.")
+            logo = logo_str.strip().split("\n")
 
             info = [
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
