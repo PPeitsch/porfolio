@@ -35,7 +35,6 @@ def get_cached_data(data_type="cv"):
     return None
 
 
-# Replace the existing handle_command_api function with this one
 @cli_bp.route("/api/command/<path:command_line>")
 @token_required
 def handle_command_api(command_line):
@@ -43,7 +42,7 @@ def handle_command_api(command_line):
     logger.debug(f"CLI API received command: {command_line}")
     CV_DATA = get_cached_data("cv")
     PROJECTS_DATA, PROJECTS_DICT = get_cached_data("projects")
-    TEXT_CONFIG = load_text_config()  # Load the new text config
+    TEXT_CONFIG = load_text_config()
 
     if not CV_DATA or PROJECTS_DATA is None:
         logger.error("CLI API failed: CV or Projects data not loaded into context.")
@@ -59,30 +58,45 @@ def handle_command_api(command_line):
     output = []
     error = None
     terminal_width = 80
+    cli_config = TEXT_CONFIG.get("cli", {})
 
     try:
         if command == "help":
-            output.append("[INFO] Portfolio Commands:")
-            output.append("  whoami         - Display summary about me")
-            output.append("  skills         - List my technical skills")
-            output.append("  contact        - Show contact information")
-            output.append("  links          - Show social and repository links")
-            output.append("  ls projects    - List available projects")
-            output.append("  show <project> - Show details for a specific project")
-            output.append("")
-            output.append("[INFO] Window & System Commands:")
-            output.append("  maximize       - Maximize the terminal window")
-            output.append("  minimize       - Minimize the terminal window")
-            output.append("  restore        - Restore window from min/max state")
-            output.append(
-                "  win-reset      - Reset window to default size and position"
+            help_config = cli_config.get("commands", {})
+            output.append(help_config.get("portfolio_header", "Portfolio Commands:"))
+
+            portfolio_commands = [
+                item
+                for item in help_config.get("items", [])
+                if item.get("group") == "portfolio"
+            ]
+            max_cmd_len = (
+                max(len(c["command"]) for c in portfolio_commands)
+                if portfolio_commands
+                else 0
             )
-            output.append("  clear          - Clear the terminal screen")
-            output.append("  date           - Display the current date and time")
-            output.append("  echo <text>    - Display a line of text")
-            output.append("  uname -a       - Print simulated system information")
-            output.append("  neofetch       - Show a visual summary of the portfolio")
-            output.append("  exit / close   - Close the terminal window")
+            for cmd in portfolio_commands:
+                output.append(
+                    f"  {cmd['command'].ljust(max_cmd_len)} - {cmd['description']}"
+                )
+
+            output.append("")
+            output.append(help_config.get("system_header", "System Commands:"))
+
+            system_commands = [
+                item
+                for item in help_config.get("items", [])
+                if item.get("group") == "system"
+            ]
+            max_cmd_len = (
+                max(len(c["command"]) for c in system_commands)
+                if system_commands
+                else 0
+            )
+            for cmd in system_commands:
+                output.append(
+                    f"  {cmd['command'].ljust(max_cmd_len)} - {cmd['description']}"
+                )
 
         elif command == "whoami":
             output.append(f"Name:    {CV_DATA.get('name', 'N/A')}")
@@ -233,7 +247,9 @@ def handle_command_api(command_line):
                 output.append("  (No social links configured)")
 
         elif command == "uname" and args and args[0] == "-a":
-            output.append("FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like")
+            output.append(
+                cli_config.get("uname", "FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like")
+            )
 
         elif command == "neofetch":
             name = CV_DATA.get("name", "N/A")
@@ -241,9 +257,9 @@ def handle_command_api(command_line):
             project_count = len(PROJECTS_DATA)
             skill_count = len(CV_DATA.get("skills", []))
 
-            cli_config = TEXT_CONFIG.get("cli", {}).get("neofetch", {})
+            neofetch_config = cli_config.get("neofetch", {})
+            host_template = neofetch_config.get("host_template", "{name}'s Portfolio")
 
-            host_template = cli_config.get("host_template", "{name}'s Portfolio")
             logo = [
                 "      _______      ",
                 "     /       \\     ",
@@ -256,12 +272,12 @@ def handle_command_api(command_line):
             info = [
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
                 "-----------------------",
-                f"OS: {cli_config.get('os_name', 'FlaskOS Portfolio')}",
+                f"OS: {neofetch_config.get('os_name', 'FlaskOS Portfolio')}",
                 f"Host: {host_template.format(name=name)}",
                 f"Title: {title}",
                 f"Projects: {project_count}",
                 f"Skills: {skill_count}",
-                f"Shell: {cli_config.get('shell_name', 'Web-CLI')}",
+                f"Shell: {neofetch_config.get('shell_name', 'Web-CLI')}",
             ]
 
             for i in range(max(len(logo), len(info))):
