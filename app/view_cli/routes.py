@@ -266,7 +266,7 @@ def handle_command_api(command_line):
             try:
                 logo_path = _get_data_filepath("neofetch_logo.txt")
                 with open(logo_path, "r", encoding="utf-8") as f:
-                    logo = f.read().strip("\n").split("\n")
+                    logo = [line.rstrip() for line in f.readlines()]
             except FileNotFoundError:
                 logger.warning("neofetch_logo.txt not found. Using fallback.")
                 logo = ["(Logo not found)"]
@@ -283,10 +283,13 @@ def handle_command_api(command_line):
             ]
             max_logo_width = max(len(line) for line in logo) if logo else 0
 
-            for i in range(max(len(logo), len(info))):
-                logo_line = logo[i] if i < len(logo) else " " * max_logo_width
+            num_lines = max(len(logo), len(info))
+            for i in range(num_lines):
+                logo_line = logo[i] if i < len(logo) else ""
                 info_line = info[i] if i < len(info) else ""
-                output.append(f"{logo_line}  {info_line}")
+
+                padded_logo_line = logo_line.ljust(max_logo_width)
+                output.append(f"{padded_logo_line}  {info_line}")
 
         elif command == "":
             pass
