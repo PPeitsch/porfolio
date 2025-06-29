@@ -271,6 +271,7 @@ def handle_command_api(command_line):
                 logger.warning("neofetch_logo.txt not found. Using fallback.")
                 logo = ["(Logo not found)"]
 
+            # The info list should be clean, without any extra spacing lines.
             info = [
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
                 "-----------------------",
@@ -282,12 +283,22 @@ def handle_command_api(command_line):
                 f"Shell: {neofetch_config.get('shell_name', 'Web-CLI')}",
             ]
             max_logo_width = max(len(line) for line in logo) if logo else 0
+            # Define how many lines to shift the logo down.
+            # 2 lines = user@host + separator
+            logo_vertical_offset = 0
 
-            num_lines = max(len(logo), len(info))
+            # The total height is the max of the info list or the shifted logo.
+            num_lines = max(len(logo) + logo_vertical_offset, len(info))
+
             for i in range(num_lines):
-                logo_line = logo[i] if i < len(logo) else ""
+                # Get the info line for the current row.
                 info_line = info[i] if i < len(info) else ""
 
+                # Calculate the correct index for the logo based on the offset.
+                logo_index = i - logo_vertical_offset
+
+                # Get the logo line only if the calculated index is valid.
+                logo_line = logo[logo_index] if 0 <= logo_index < len(logo) else ""
                 padded_logo_line = logo_line.ljust(max_logo_width)
                 output.append(f"{padded_logo_line}  {info_line}")
 
