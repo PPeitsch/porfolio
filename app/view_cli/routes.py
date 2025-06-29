@@ -260,15 +260,19 @@ def handle_command_api(command_line):
             neofetch_config = cli_config.get("neofetch", {})
             host_template = neofetch_config.get("host_template", "{name}'s Portfolio")
 
+            # Load the logo directly from its own text file for robustness.
             from app.common.utils import _get_data_filepath
 
             logo = []
             try:
-                logo_path = _get_data_filepath("neofetch_logo.txt")
+                # The path now includes the 'logo/' subdirectory.
+                # Change the filename here to select a different logo.
+                logo_path = _get_data_filepath("logo/neofetch_logo_bear.txt")
                 with open(logo_path, "r", encoding="utf-8") as f:
+                    # Use rstrip to remove trailing whitespace but keep leading spaces
                     logo = [line.rstrip() for line in f.readlines()]
             except FileNotFoundError:
-                logger.warning("neofetch_logo.txt not found. Using fallback.")
+                logger.warning(f"Logo file not found at {logo_path}. Using fallback.")
                 logo = ["(Logo not found)"]
 
             # The info list should be clean, without any extra spacing lines.
@@ -285,7 +289,7 @@ def handle_command_api(command_line):
             max_logo_width = max(len(line) for line in logo) if logo else 0
             # Define how many lines to shift the logo down.
             # 2 lines = user@host + separator
-            logo_vertical_offset = 0
+            logo_vertical_offset = 1
 
             # The total height is the max of the info list or the shifted logo.
             num_lines = max(len(logo) + logo_vertical_offset, len(info))
