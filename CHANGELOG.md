@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.8.0] - 2025-06-28
+
+### Added
+- **Dynamic Text Configuration**: Introduced a `data/text_config.yaml` file to centralize user-specific text strings.
+- **Selectable ASCII Logos**: Created a collection of 10+ unique ASCII art logos for the `neofetch` command, now located in a dedicated `data/logo/` directory for easy customization.
+
+### Changed
+- **Configurable LLM Tools**: The AI assistant's tool definitions are now generated dynamically, pulling descriptions from `text_config.yaml` to include the portfolio owner's name.
+- **Fully Configurable CLI**: The CLI view is now almost entirely configured through data files. The `help` command, `uname` output, and all `neofetch` text (including the logo) are sourced from external files.
+
+### Fixed
+- **YAML Parsing Error**: Resolved a persistent `pre-commit` failure by moving the `neofetch` logo from the YAML file to a separate `.txt` file, making the configuration more robust.
+- **CLI Visual Alignment**: Corrected all layout and spacing issues in the `neofetch` command output for a polished and aesthetically pleasing presentation.
+
+
 ## [1.7.1] - 2025-06-28
 
 ### Added

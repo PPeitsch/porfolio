@@ -185,3 +185,16 @@ def load_system_prompt() -> str:
     except Exception as e:
         logger.error(f"An unexpected error occurred loading {filepath}: {e}")
         return "You are a helpful assistant."
+
+
+def load_text_config():
+    """Loads text configuration from text_config.yaml, caching it in the context.
+
+    Returns:
+        dict: A dictionary containing the text configuration.
+    """
+    if "text_config" not in g:
+        logger.info("Loading text_config.yaml into context g")
+        loaded_data = load_yaml_data("text_config.yaml")
+        g.text_config = loaded_data if isinstance(loaded_data, dict) else {}
+    return g.text_config

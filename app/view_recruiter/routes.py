@@ -7,7 +7,7 @@ from flask import abort, jsonify, request, send_from_directory
 
 from app.common.decorators import token_required
 from app.common.llm_services import get_llm_service
-from app.common.llm_tools import TOOL_DEFINITIONS, TOOL_MAP
+from app.common.llm_tools import TOOL_MAP
 from app.common.utils import load_cv_data, load_system_prompt
 
 from . import recruiter_bp
@@ -52,13 +52,18 @@ def handle_chat():
     raw_prompt = load_system_prompt()
     system_prompt = raw_prompt.format(name=owner_name)
 
+    # Dynamically generate tool definitions with the owner's name
+    from app.common.llm_tools import get_tool_definitions
+
+    dynamic_tools = get_tool_definitions(owner_name)
+
     messages: List[Dict[str, Any]] = chat_history + [
         {"role": "user", "content": user_message}
     ]
 
     while True:
         response = llm_service.get_chat_response(
-            messages=messages, system_prompt=system_prompt, tools=TOOL_DEFINITIONS
+            messages=messages, system_prompt=system_prompt, tools=dynamic_tools
         )
 
         if isinstance(response, str):

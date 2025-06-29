@@ -4,7 +4,7 @@ import textwrap
 from flask import g, jsonify
 
 from app.common.decorators import token_required
-from app.common.utils import load_cv_data, load_projects_data
+from app.common.utils import load_cv_data, load_projects_data, load_text_config
 
 from . import cli_bp
 
@@ -42,6 +42,7 @@ def handle_command_api(command_line):
     logger.debug(f"CLI API received command: {command_line}")
     CV_DATA = get_cached_data("cv")
     PROJECTS_DATA, PROJECTS_DICT = get_cached_data("projects")
+    TEXT_CONFIG = load_text_config()
 
     if not CV_DATA or PROJECTS_DATA is None:
         logger.error("CLI API failed: CV or Projects data not loaded into context.")
@@ -57,30 +58,45 @@ def handle_command_api(command_line):
     output = []
     error = None
     terminal_width = 80
+    cli_config = TEXT_CONFIG.get("cli", {})
 
     try:
         if command == "help":
-            output.append("[INFO] Portfolio Commands:")
-            output.append("  whoami         - Display summary about me")
-            output.append("  skills         - List my technical skills")
-            output.append("  contact        - Show contact information")
-            output.append("  links          - Show social and repository links")
-            output.append("  ls projects    - List available projects")
-            output.append("  show <project> - Show details for a specific project")
-            output.append("")
-            output.append("[INFO] Window & System Commands:")
-            output.append("  maximize       - Maximize the terminal window")
-            output.append("  minimize       - Minimize the terminal window")
-            output.append("  restore        - Restore window from min/max state")
-            output.append(
-                "  win-reset      - Reset window to default size and position"
+            help_config = cli_config.get("commands", {})
+            output.append(help_config.get("portfolio_header", "Portfolio Commands:"))
+
+            portfolio_commands = [
+                item
+                for item in help_config.get("items", [])
+                if item.get("group") == "portfolio"
+            ]
+            max_cmd_len = (
+                max(len(c["command"]) for c in portfolio_commands)
+                if portfolio_commands
+                else 0
             )
-            output.append("  clear          - Clear the terminal screen")
-            output.append("  date           - Display the current date and time")
-            output.append("  echo <text>    - Display a line of text")
-            output.append("  uname -a       - Print simulated system information")
-            output.append("  neofetch       - Show a visual summary of the portfolio")
-            output.append("  exit / close   - Close the terminal window")
+            for cmd in portfolio_commands:
+                output.append(
+                    f"  {cmd['command'].ljust(max_cmd_len)} - {cmd['description']}"
+                )
+
+            output.append("")
+            output.append(help_config.get("system_header", "System Commands:"))
+
+            system_commands = [
+                item
+                for item in help_config.get("items", [])
+                if item.get("group") == "system"
+            ]
+            max_cmd_len = (
+                max(len(c["command"]) for c in system_commands)
+                if system_commands
+                else 0
+            )
+            for cmd in system_commands:
+                output.append(
+                    f"  {cmd['command'].ljust(max_cmd_len)} - {cmd['description']}"
+                )
 
         elif command == "whoami":
             output.append(f"Name:    {CV_DATA.get('name', 'N/A')}")
@@ -231,7 +247,9 @@ def handle_command_api(command_line):
                 output.append("  (No social links configured)")
 
         elif command == "uname" and args and args[0] == "-a":
-            output.append("FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like")
+            output.append(
+                cli_config.get("uname", "FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like")
+            )
 
         elif command == "neofetch":
             name = CV_DATA.get("name", "N/A")
@@ -239,30 +257,54 @@ def handle_command_api(command_line):
             project_count = len(PROJECTS_DATA)
             skill_count = len(CV_DATA.get("skills", []))
 
-            logo = [
-                "      _______      ",
-                "     /       \\     ",
-                "    /  o   o  \\    ",
-                "   |    ^      |   ",
-                "    \\  \\___/  /    ",
-                "     \\_______/     ",
-            ]
+            neofetch_config = cli_config.get("neofetch", {})
+            host_template = neofetch_config.get("host_template", "{name}'s Portfolio")
 
+            # Load the logo directly from its own text file for robustness.
+            from app.common.utils import _get_data_filepath
+
+            logo = []
+            try:
+                # The path now includes the 'logo/' subdirectory.
+                # Change the filename here to select a different logo.
+                logo_path = _get_data_filepath("logo/neofetch_logo_bear.txt")
+                with open(logo_path, "r", encoding="utf-8") as f:
+                    # Use rstrip to remove trailing whitespace but keep leading spaces
+                    logo = [line.rstrip() for line in f.readlines()]
+            except FileNotFoundError:
+                logger.warning(f"Logo file not found at {logo_path}. Using fallback.")
+                logo = ["(Logo not found)"]
+
+            # The info list should be clean, without any extra spacing lines.
             info = [
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
                 "-----------------------",
-                "OS: FlaskOS Portfolio",
-                f"Host: {name}'s Portfolio",
+                f"OS: {neofetch_config.get('os_name', 'FlaskOS Portfolio')}",
+                f"Host: {host_template.format(name=name)}",
                 f"Title: {title}",
                 f"Projects: {project_count}",
                 f"Skills: {skill_count}",
-                "Shell: Web-CLI",
+                f"Shell: {neofetch_config.get('shell_name', 'Web-CLI')}",
             ]
+            max_logo_width = max(len(line) for line in logo) if logo else 0
+            # Define how many lines to shift the logo down.
+            # 2 lines = user@host + separator
+            logo_vertical_offset = 1
 
-            for i in range(max(len(logo), len(info))):
-                logo_line = logo[i] if i < len(logo) else " " * 19
+            # The total height is the max of the info list or the shifted logo.
+            num_lines = max(len(logo) + logo_vertical_offset, len(info))
+
+            for i in range(num_lines):
+                # Get the info line for the current row.
                 info_line = info[i] if i < len(info) else ""
-                output.append(f"{logo_line}  {info_line}")
+
+                # Calculate the correct index for the logo based on the offset.
+                logo_index = i - logo_vertical_offset
+
+                # Get the logo line only if the calculated index is valid.
+                logo_line = logo[logo_index] if 0 <= logo_index < len(logo) else ""
+                padded_logo_line = logo_line.ljust(max_logo_width)
+                output.append(f"{padded_logo_line}  {info_line}")
 
         elif command == "":
             pass
