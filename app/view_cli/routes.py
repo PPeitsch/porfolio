@@ -260,8 +260,16 @@ def handle_command_api(command_line):
             neofetch_config = cli_config.get("neofetch", {})
             host_template = neofetch_config.get("host_template", "{name}'s Portfolio")
 
-            logo_str = neofetch_config.get("logo", "ASCII art not found.")
-            logo = logo_str.strip().split("\n")
+            from app.common.utils import _get_data_filepath
+
+            logo = []
+            try:
+                logo_path = _get_data_filepath("neofetch_logo.txt")
+                with open(logo_path, "r", encoding="utf-8") as f:
+                    logo = f.read().strip("\n").split("\n")
+            except FileNotFoundError:
+                logger.warning("neofetch_logo.txt not found. Using fallback.")
+                logo = ["(Logo not found)"]
 
             info = [
                 f"{name}@{CV_DATA.get('website', 'localhost')}",
@@ -273,9 +281,10 @@ def handle_command_api(command_line):
                 f"Skills: {skill_count}",
                 f"Shell: {neofetch_config.get('shell_name', 'Web-CLI')}",
             ]
+            max_logo_width = max(len(line) for line in logo) if logo else 0
 
             for i in range(max(len(logo), len(info))):
-                logo_line = logo[i] if i < len(logo) else " " * 19
+                logo_line = logo[i] if i < len(logo) else " " * max_logo_width
                 info_line = info[i] if i < len(info) else ""
                 output.append(f"{logo_line}  {info_line}")
 

@@ -38,13 +38,6 @@ cli:
     host_template: "{name}'s Portfolio"
     os_name: "FlaskOS Portfolio"
     shell_name: "Web-CLI"
-    logo: |
-          _______
-         /       \
-        /  o   o  \
-       |    ^      |
-        \  \___/  /
-         \_______/
 
   # Templates for the `uname -a` command.
   uname: "FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like"
