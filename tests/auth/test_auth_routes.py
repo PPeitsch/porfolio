@@ -63,19 +63,17 @@ def test_verify_access_code_missing_code_key(client):
     assert response_data["error"] == "Access code is required."
 
 
-def test_verify_access_code_server_config_error(app):
+def test_verify_access_code_server_config_error(client, app, monkeypatch):
     """
     Test 503 error when server keys are not configured.
     """
-    # Create a temporary app with a modified config for this specific test
-    app.config["SECRET_KEY"] = None
-    payload = {"code": app.config["RECRUITER_ACCESS_CODE"]}
+    # Use monkeypatch to safely modify the config for the duration of this test
+    monkeypatch.setitem(app.config, "RECRUITER_ACCESS_CODE", None)
+    payload = {"code": "any-code"}
 
-    # Use the test_client from the modified app instance
-    with app.test_client() as client:
-        response = client.post(
-            "/auth/verify", data=json.dumps(payload), content_type="application/json"
-        )
+    response = client.post(
+        "/auth/verify", data=json.dumps(payload), content_type="application/json"
+    )
     response_data = response.get_json()
 
     assert response.status_code == 503
