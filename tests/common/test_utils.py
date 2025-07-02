@@ -92,7 +92,7 @@ def test_load_cv_data_caching(mock_load_yaml, app):
     expected_data.setdefault("social_links", {})
 
     assert data1 == expected_data
-    assert data2 == data1  # Assert that the cached object is returned
+    assert data2 is data1
     mock_load_yaml.assert_called_once()
 
 
@@ -106,7 +106,7 @@ def test_load_projects_data_caching(mock_load_yaml, app):
         list1, dict1 = load_projects_data()
         list2, dict2 = load_projects_data()
     assert list1 == MOCK_PROJECTS_DATA
-    assert list1 is list2  # Assert that the cached object is returned
+    assert list1 is list2
     mock_load_yaml.assert_called_once()
 
 
@@ -117,10 +117,33 @@ def test_load_text_config_caching(mock_load_yaml, app):
     with app.app_context():
         g.pop("text_config", None)
         data1 = load_text_config()
-        # Call again to test caching
         load_text_config()
     assert data1 == {"key": "value"}
     mock_load_yaml.assert_called_once()
+
+
+@patch("app.common.utils.load_yaml_data")
+def test_loaders_with_bad_data_type(mock_load_yaml, app):
+    """Test loaders handle incorrect data types from YAML files."""
+    with app.app_context():
+        g.pop("cv_data", None)
+        g.pop("projects_data", None)
+        g.pop("text_config", None)
+        # Test load_cv_data with a list instead of a dict
+        mock_load_yaml.return_value = []
+        cv_data = load_cv_data()
+        assert cv_data["name"] == "Default Name"
+
+        # Test load_projects_data with a dict instead of a list
+        mock_load_yaml.return_value = {}
+        projects_data, projects_dict = load_projects_data()
+        assert projects_data == []
+        assert projects_dict == {}
+
+        # Test load_text_config with a list instead of a dict
+        mock_load_yaml.return_value = []
+        text_config = load_text_config()
+        assert text_config == {}
 
 
 @patch("builtins.open", side_effect=FileNotFoundError)
@@ -158,3 +181,7 @@ def test_get_project_functions(mock_load_projects):
     assert get_project_list() is not None
     assert get_project_details("p1")["title"] == "Proj 1"
     assert get_project_details("nonexistent") is None
+
+    # Test with no projects
+    mock_load_projects.return_value = ([], {})
+    assert get_project_list() == []

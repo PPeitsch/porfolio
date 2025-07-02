@@ -31,10 +31,10 @@ def test_llm_service_abc_requires_api_key(app):
 
             class DummyService(LLMService):
                 def _initialize_client(self):
-                    return None
+                    raise NotImplementedError
 
                 def get_chat_response(self, messages, system_prompt, tools=None):
-                    return "dummy"
+                    raise NotImplementedError
 
             DummyService(api_key=None)
 
@@ -80,7 +80,6 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
 def test_anthropic_service_api_error(MockAnthropic, app):
     """Test AnthropicService API error handling."""
     mock_client = MagicMock()
-    # The AnthropicAPIError requires a 'body' argument.
     mock_client.messages.create.side_effect = AnthropicAPIError(
         "Anthropic error", request=Request("POST", "http://test"), body=None
     )

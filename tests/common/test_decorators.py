@@ -1,11 +1,11 @@
 import datetime
+from unittest.mock import patch
 
 import jwt
 
 from tests.helpers import generate_test_token
 
 
-# The 'client' and 'app' fixtures are provided by conftest.py
 def test_token_required_success(client, app):
     """Test accessing a protected route with a valid token."""
     token = generate_test_token(app)
@@ -40,7 +40,6 @@ def test_token_required_invalid_token(client):
 
 def test_token_required_expired_token(client, app):
     """Test protected route with an expired token."""
-    # Create a token that expired in the past
     payload = {
         "sub": "test_access",
         "iat": datetime.datetime.now(datetime.timezone.utc)
@@ -54,3 +53,26 @@ def test_token_required_expired_token(client, app):
     response = client.get("/protected", headers=headers)
     assert response.status_code == 401
     assert response.get_json()["error"] == "Token has expired."
+
+
+@patch("app.common.decorators.jwt.decode")
+def test_token_required_generic_decode_error(mock_decode, client, app):
+    """Test protected route with a generic token decoding error."""
+    mock_decode.side_effect = Exception("A generic decoding error")
+    token = generate_test_token(app)
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/protected", headers=headers)
+    assert response.status_code == 401
+    assert "Token processing error" in response.get_json()["error"]
+
+
+def test_token_required_no_secret_key(client, app):
+    """Test protected route when server has no SECRET_KEY configured."""
+    original_key = app.config.pop("SECRET_KEY")
+    token = generate_test_token(app)  # This will fail as SECRET_KEY is gone
+    app.config["SECRET_KEY"] = original_key  # Restore for other tests
+
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/protected", headers=headers)
+    assert response.status_code == 500
+    assert "Server configuration error" in response.get_json()["error"]
