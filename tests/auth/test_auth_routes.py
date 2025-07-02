@@ -66,17 +66,18 @@ def test_verify_access_code_server_config_error(client, app):
     """
     Test 503 error when server keys are not configured.
     """
-    with app.app_context():
-        original_key = app.config.pop("SECRET_KEY", None)
-        payload = {"code": "any-code"}
+    # Create a temporary app with a modified config for this specific test
+    app.config["SECRET_KEY"] = None
+    payload = {"code": "any-code"}
 
-        response = client.post(
-            "/auth/verify", data=json.dumps(payload), content_type="application/json"
-        )
-        response_data = response.get_json()
+    # Use the test_client from the modified app instance
+    response = app.test_client().post(
+        "/auth/verify", data=json.dumps(payload), content_type="application/json"
+    )
+    response_data = response.get_json()
 
-        app.config["SECRET_KEY"] = original_key
-
+    # The test fixture will re-create the app for subsequent tests,
+    # so we don't need to restore the key manually.
     assert response.status_code == 503
     assert "Authentication system is not configured" in response_data["error"]
 
