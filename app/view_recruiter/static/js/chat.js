@@ -31,15 +31,14 @@ window.initializeRecruiterView = function (callbacks) {
     const TOKEN_KEY = 'app_access_token';
     const THEME_KEY = 'cli_theme';
     let conversationHistory = [];
-    const availableThemes = ['default', 'dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
+    const availableThemes = ['dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
     let currentThemeIndex = 0;
 
     function applyTheme(themeName) {
-        // Set default to dracula if 'default' is chosen
-        const effectiveTheme = themeName === 'default' ? 'dracula' : themeName;
-        chatWindow.dataset.theme = effectiveTheme;
-        localStorage.setItem(THEME_KEY, themeName); // Store the user's actual choice ('default' or a specific name)
+        chatWindow.dataset.theme = themeName;
+        localStorage.setItem(THEME_KEY, themeName);
         currentThemeIndex = availableThemes.indexOf(themeName);
+        if (currentThemeIndex === -1) currentThemeIndex = 0;
     }
 
     function cycleTheme() {
@@ -88,7 +87,9 @@ window.initializeRecruiterView = function (callbacks) {
 
         try {
             const response = await fetch('/auth/verify', {
-                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code: code}),
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code: code}),
             });
 
             document.getElementById('typing-indicator')?.remove();
@@ -136,10 +137,14 @@ window.initializeRecruiterView = function (callbacks) {
 
         try {
             const response = await fetch('/recruiter/api/chat', {
-                method: 'POST', headers: {
-                    'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
-                }, body: JSON.stringify({
-                    message: message, history: conversationHistory.slice(0, -1)
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    message: message,
+                    history: conversationHistory.slice(0, -1)
                 }),
             });
 

@@ -31,7 +31,7 @@
     --scrollbar-track: #282a36;
 }
 
-/* Catppuccin Theme (old default) */
+/* Catppuccin Theme */
 .os-window[data-theme="catppuccin"] {
     --bg: #1e1e2e;
     --fg: #cad3f5;

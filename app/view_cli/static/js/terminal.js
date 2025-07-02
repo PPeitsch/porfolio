@@ -39,7 +39,7 @@ window.initializeCliView = function(callbacks) {
       'man', 'theme', 'maximize', 'minimize', 'restore', 'win-reset', 'clear', 'date', 'echo',
       'uname', 'neofetch', 'exit', 'close'
   ];
-  const availableThemes = ['default', 'dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
+  const availableThemes = ['dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
 
   function writeOutput(text, className = null) {
       const line = document.createElement("div");
@@ -79,7 +79,7 @@ window.initializeCliView = function(callbacks) {
       clearScreen();
       writeOutput("Welcome to the PPeitsch CLI Portfolio!");
       writeOutput("Type 'help' for a list of available commands.");
-      writeOutput("Type 'theme light' or 'theme dracula' to change the look.");
+      writeOutput("Type 'theme light' or 'theme gruvbox' to change the look.");
       writeOutput("");
   }
 
@@ -135,9 +135,16 @@ window.initializeCliView = function(callbacks) {
 
       const localCommands = {
           'theme': (args) => {
-              const themeName = (args[0] || 'dracula').toLowerCase();
+              const themeName = (args[0] || '').toLowerCase();
+              if (!themeName) {
+                  const currentTheme = localStorage.getItem(THEME_KEY) || 'dracula';
+                  writeOutput(`Current theme: '${currentTheme}'.`, 'info-message');
+                  writeOutput(`Available themes: ${availableThemes.join(', ')}`);
+                  return;
+              }
+
               if (availableThemes.includes(themeName)) {
-                  cliWindow.dataset.theme = themeName === 'default' ? 'dracula' : themeName;
+                  cliWindow.dataset.theme = themeName;
                   localStorage.setItem(THEME_KEY, themeName);
                   writeOutput(`Theme set to '${themeName}'.`, 'info-message');
               } else {
@@ -281,7 +288,7 @@ window.initializeCliView = function(callbacks) {
   function initializeTerminal() {
       const savedTheme = localStorage.getItem(THEME_KEY) || 'dracula';
       if (availableThemes.includes(savedTheme)) {
-          cliWindow.dataset.theme = savedTheme === 'default' ? 'dracula' : savedTheme;
+          cliWindow.dataset.theme = savedTheme;
       }
 
       const token = sessionStorage.getItem(TOKEN_KEY);
