@@ -434,4 +434,7 @@ def handle_command_api(command_line):
     if action:
         response_data.update(action)
 
+    prompt_config = TEXT_CONFIG.get("cli", {}).get("prompt", {})
+    response_data["prompt"] = prompt_config
+
     return jsonify(response_data)

@@ -26,6 +26,7 @@ cli:
      - { command: "show <project>", description: "Show details for a specific project", group: "portfolio" }
      - { command: "open <project>", description: "Open a project's live URL in a new tab", group: "portfolio" }
      - { command: "man <command>", description: "Display the manual page for a command", group: "system" }
+     - { command: "theme <name>", description: "Change the terminal color scheme (e.g., light, dracula)", group: "system" }
      - { command: "maximize", description: "Maximize the terminal window", group: "system" }
      - { command: "minimize", description: "Minimize the terminal window", group: "system" }
      - { command: "restore", description: "Restore window from min/max state", group: "system" }
@@ -68,6 +69,12 @@ cli:
      - "    This includes a full description, technologies used, and all external links (live, code, etc.)."
      - "EXAMPLE"
      - "    > show portfolio"
+
+ # Configuration for the CLI prompt.
+ prompt:
+   template: "{user}@{host}:~ $"
+   user: "developer"
+   host: "portfolio"
 
  # Templates for the `neofetch` command.
  neofetch:

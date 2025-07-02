@@ -27,16 +27,18 @@ window.initializeCliView = function(callbacks) {
   }
 
   // --- State Management ---
-  let authState = 'awaiting_password'; // 'awaiting_password' or 'authenticated'
+  let authState = 'awaiting_password';
+  let promptConfig = { template: "{user}@{host}:~ $", user: "user", host: "localhost" };
   const commandHistory = [];
   let historyIndex = -1;
   let isFetching = false;
   const TOKEN_KEY = 'app_access_token';
   const availableCommands = [
       'help', 'whoami', 'skills', 'contact', 'links', 'ls', 'filter', 'show', 'open',
-      'man', 'maximize', 'minimize', 'restore', 'win-reset', 'clear', 'date', 'echo',
+      'man', 'theme', 'maximize', 'minimize', 'restore', 'win-reset', 'clear', 'date', 'echo',
       'uname', 'neofetch', 'exit', 'close'
   ];
+  const availableThemes = ['default', 'light', 'dracula', 'solarized'];
 
   function writeOutput(text, className = null) {
       const line = document.createElement("div");
@@ -57,32 +59,36 @@ window.initializeCliView = function(callbacks) {
   function clearScreen() { outputDiv.innerHTML = ""; }
   function scrollToBottom() { outputDiv.scrollTop = outputDiv.scrollHeight; }
 
+  function updatePrompt() {
+      const { template, user, host } = promptConfig;
+      const promptText = template.replace("{user}", user).replace("{host}", host);
+      promptSpan.textContent = promptText;
+  }
+
   function showLoginPrompt() {
       clearScreen();
       promptSpan.textContent = "password:";
-      inputElem.classList.add('password-mask'); // Add the CSS class
+      inputElem.classList.add('password-mask');
       writeOutput("Authentication required for CLI access.");
   }
 
   function showAuthenticatedPrompt() {
-      promptSpan.textContent = "portfolio:~ $";
-      inputElem.classList.remove('password-mask'); // Remove the CSS class
+      updatePrompt();
+      inputElem.classList.remove('password-mask');
       clearScreen();
       writeOutput("Welcome to the PPeitsch CLI Portfolio!");
       writeOutput("Type 'help' for a list of available commands.");
-      writeOutput("You can drag this window by its title bar.");
+      writeOutput("Type 'theme light' or 'theme dracula' to change the look.");
       writeOutput("");
   }
 
   async function processCommand(commandLine) {
       if (authState === 'awaiting_password') {
           const code = commandLine.trim();
-          if (!code) return; // Ignore empty submissions
+          if (!code) return;
 
           isFetching = true;
           inputElem.disabled = true;
-          // We no longer write the fake password to the output to avoid clutter and potential security issues.
-          // The user sees what they type in the input line itself.
 
           try {
               const response = await fetch('/auth/verify', {
@@ -98,6 +104,7 @@ window.initializeCliView = function(callbacks) {
 
               const data = await response.json();
               sessionStorage.setItem(TOKEN_KEY, data.token);
+              if (data.prompt) { promptConfig = data.prompt; }
               authState = 'authenticated';
               showAuthenticatedPrompt();
 
@@ -122,6 +129,15 @@ window.initializeCliView = function(callbacks) {
       const args = parts.slice(1);
 
       const localCommands = {
+          'theme': (args) => {
+              const themeName = (args[0] || 'default').toLowerCase();
+              if (availableThemes.includes(themeName)) {
+                  cliWindow.dataset.theme = themeName === 'default' ? '' : themeName;
+                  writeOutput(`Theme set to '${themeName}'.`, 'info-message');
+              } else {
+                  writeOutput(`Error: Theme '${themeName}' not found. Available themes: ${availableThemes.join(', ')}`, 'error-message');
+              }
+          },
           'maximize': windowControls.maximize,
           'minimize': windowControls.minimize,
           'restore': () => { if (cliWindow.classList.contains('minimized')) windowControls.minimize(); else windowControls.maximize(); },
@@ -129,22 +145,12 @@ window.initializeCliView = function(callbacks) {
           'exit': windowControls.close,
           'win-reset': windowControls.reset,
           'clear': clearScreen,
+          'date': () => writeOutput(new Date().toString()),
+          'echo': (args) => writeOutput(args.join(' ')),
       };
 
       if (localCommands[command]) {
-          localCommands[command]();
-          inputElem.focus();
-          return;
-      }
-
-      if (command === 'date') {
-          writeOutput(new Date().toString());
-          inputElem.focus();
-          return;
-      }
-
-      if (command === 'echo') {
-          writeOutput(args.join(' '));
+          localCommands[command](args);
           inputElem.focus();
           return;
       }
@@ -165,9 +171,7 @@ window.initializeCliView = function(callbacks) {
 
       try {
           const response = await fetch(`/cli/api/command/${encodeURIComponent(commandLine)}`, {
-              headers: {
-                  'Authorization': `Bearer ${token}`
-              }
+              headers: { 'Authorization': `Bearer ${token}` }
           });
 
           if (response.status === 401) {
@@ -180,21 +184,18 @@ window.initializeCliView = function(callbacks) {
 
           if (!response.ok) {
               let errorMsg = `Server error: ${response.status}`;
-              try {
-                  const errorData = await response.json();
-                  if (errorData && errorData.error) { errorMsg = `Server error: ${errorData.error}`; }
-              } catch (e) {}
+              try { const errorData = await response.json(); if (errorData && errorData.error) { errorMsg = `Server error: ${errorData.error}`; } } catch (e) {}
               throw new Error(errorMsg);
           }
+
           const data = await response.json();
+          if (data.prompt) {
+              promptConfig = data.prompt;
+              updatePrompt();
+          }
           if (data.output && data.output.length > 0) { data.output.forEach((line) => writeOutput(line)); }
           if (data.error) { writeOutput(data.error, "error-message"); }
-
-          // --- Handle special frontend actions ---
-          if (data.action === 'open_url' && data.url) {
-              window.open(data.url, '_blank');
-          }
-
+          if (data.action === 'open_url' && data.url) { window.open(data.url, '_blank'); }
 
       } catch (error) {
           console.error("Error processing command:", error);
@@ -212,18 +213,22 @@ window.initializeCliView = function(callbacks) {
   function handleTabCompletion() {
       const currentInput = inputElem.value;
       const parts = currentInput.split(' ');
-      const currentCommandPart = parts[0];
+      const currentWord = parts[parts.length - 1];
 
-      // For now, we only complete the command itself
-      if (parts.length > 1) return;
 
-      const matchingCommands = availableCommands.filter(cmd => cmd.startsWith(currentCommandPart));
-
-      if (matchingCommands.length === 1) {
-          inputElem.value = matchingCommands[0] + ' ';
-      } else if (matchingCommands.length > 1) {
-          writeOutput(promptSpan.textContent + " " + currentInput, "echo-command");
-          writeOutput(matchingCommands.join('   '), 'completion-options');
+      if (parts.length === 1) { // Completing command
+          const matchingCommands = availableCommands.filter(cmd => cmd.startsWith(currentWord));
+          if (matchingCommands.length === 1) {
+              inputElem.value = matchingCommands[0] + ' ';
+          } else if (matchingCommands.length > 1) {
+              writeOutput(promptSpan.textContent + " " + currentInput, "echo-command");
+              writeOutput(matchingCommands.join('   '), 'completion-options');
+          }
+      } else if (parts.length === 2 && parts[0] === 'theme') { // Completing theme
+          const matchingThemes = availableThemes.filter(theme => theme.startsWith(currentWord));
+          if (matchingThemes.length === 1) {
+              inputElem.value = parts[0] + ' ' + matchingThemes[0];
+          }
       }
   }
 
@@ -256,9 +261,7 @@ window.initializeCliView = function(callbacks) {
           }
       } else if (event.key === "l" && event.ctrlKey) {
           event.preventDefault();
-          if (authState === 'authenticated') {
-              processCommand("clear");
-          }
+          if (authState === 'authenticated') { processCommand("clear"); }
       } else if (event.key === "Tab") {
           if (authState === 'authenticated') {
               event.preventDefault();
@@ -273,10 +276,9 @@ window.initializeCliView = function(callbacks) {
   function initializeTerminal() {
       const token = sessionStorage.getItem(TOKEN_KEY);
       if (token) {
-          // A more robust check could be to decode the token and check expiration.
-          // For now, if a token exists, we assume the user is authenticated.
           authState = 'authenticated';
           showAuthenticatedPrompt();
+          // We don't have prompt config here yet, will be updated on first command.
       } else {
           authState = 'awaiting_password';
           showLoginPrompt();
