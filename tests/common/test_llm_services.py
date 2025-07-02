@@ -1,3 +1,4 @@
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -24,19 +25,27 @@ except ImportError:
     google_genai_mock.errors.ClientError = type("ClientError", (Exception,), {})
 
 
-def test_llm_service_abc_requires_api_key(app):
-    """Test that instantiating a service without an API key raises ValueError."""
+def test_llm_service_abc_methods(app):
+    """Test that ABC methods raise NotImplementedError."""
+
+    class BadService(LLMService):
+        # Missing _initialize_client implementation
+        def get_chat_response(self, messages, system_prompt, tools=None):
+            pass
+
+    class AnotherBadService(LLMService):
+        def _initialize_client(self):
+            return None  # Implemented
+
+        # Missing get_chat_response implementation
+
     with app.app_context():
-        with pytest.raises(ValueError, match="requires an API key"):
+        with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+            BadService(api_key="key")
 
-            class DummyService(LLMService):
-                def _initialize_client(self):
-                    raise NotImplementedError
-
-                def get_chat_response(self, messages, system_prompt, tools=None):
-                    raise NotImplementedError
-
-            DummyService(api_key=None)
+        service = AnotherBadService(api_key="key")
+        with pytest.raises(NotImplementedError):
+            service.get_chat_response(messages=[], system_prompt="")
 
 
 @patch("app.common.llm_services.anthropic.Anthropic")
@@ -226,34 +235,38 @@ def test_gemini_service_success(MockGenAIClient, app):
 
 
 @patch("app.common.llm_services.genai.Client")
-def test_gemini_service_tool_use(MockGenAIClient, app):
-    """Test GeminiService tool use response."""
-    mock_client, mock_models, mock_response, mock_part = (
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-    )
-    mock_function_call = MagicMock(args={"location": "Boston"})
-    mock_function_call.name = "get_weather"
-    mock_part.function_call = mock_function_call
-    mock_response.candidates = [MagicMock(content=MagicMock(parts=[mock_part]))]
-    mock_models.generate_content.return_value = mock_response
-    mock_client.models = mock_models
+def test_gemini_service_history_processing(MockGenAIClient, app):
+    """Test GeminiService history processing for different message types."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = MagicMock(text="OK")
     MockGenAIClient.return_value = mock_client
 
-    valid_tool_def = [
-        {"name": "get_weather", "description": "Get weather.", "input_schema": {}}
+    # A complex history to test all branches
+    history = [
+        {"role": "user", "content": "Initial query"},
+        {"role": "assistant", "content": [{"name": "tool_a", "input": {}}]},
+        {
+            "role": "user",
+            "content": [
+                {"tool_use_id": "tool_a", "content": json.dumps({"status": "done"})}
+            ],
+            "type": "tool_result",
+        },
+        {"role": "assistant", "content": "Final message from assistant"},
     ]
 
     with app.app_context():
         service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(
-            messages=[], system_prompt="", tools=valid_tool_def
-        )
+        service.get_chat_response(messages=history, system_prompt="")
 
-    assert isinstance(response, list)
-    assert response[0]["name"] == "get_weather"
+    # Verify that generate_content was called
+    mock_client.models.generate_content.assert_called_once()
+    call_args = mock_client.models.generate_content.call_args[1]
+    # Check that the history was converted correctly
+    assert len(call_args["contents"]) == 5  # system_prompt + 4 history messages
+    assert call_args["contents"][2].role == "model"  # assistant tool call
+    assert call_args["contents"][3].role == "user"  # tool_result
+    assert call_args["contents"][4].role == "model"  # final assistant message
 
 
 @patch("app.common.llm_services.genai.Client")
