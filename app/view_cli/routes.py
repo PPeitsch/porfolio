@@ -48,26 +48,33 @@ def get_cached_data(data_type="cv"):
 def _handle_help(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
     output = []
     help_config = text_config.get("cli", {}).get("commands", {})
-    output.append(help_config.get("portfolio_header", "Portfolio Commands:"))
 
+    def get_cmd_base(c):
+        # Helper to get command name without arguments for alignment calculation
+        return re.sub(r"\s<.*>", "", c["command"])
+
+    # --- Portfolio Commands ---
+    output.append(help_config.get("portfolio_header", "Portfolio Commands:"))
     portfolio_commands = [
         item
         for item in help_config.get("items", [])
         if item.get("group") == "portfolio"
     ]
-    # Remove arguments like '<...>' for alignment calculation
-    get_cmd_base = lambda c: re.sub(r"\s<.*>", "", c["command"])
     max_cmd_len = (
         max(len(get_cmd_base(c)) for c in portfolio_commands)
         if portfolio_commands
         else 0
     )
     for cmd in portfolio_commands:
-        output.append(
-            f"  {cmd['command'].ljust(max_cmd_len + (len(cmd['command']) - len(get_cmd_base(cmd))))} - {cmd['description']}"
-        )
+        command_str = cmd["command"]
+        # Calculate padding needed to align descriptions
+        padding = max_cmd_len + (len(command_str) - len(get_cmd_base(cmd)))
+        line = f"  {command_str.ljust(padding)} - {cmd['description']}"
+        output.append(line)
 
     output.append("")
+
+    # --- System Commands ---
     output.append(help_config.get("system_header", "System Commands:"))
 
     system_commands = [
@@ -77,9 +84,11 @@ def _handle_help(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str],
         max(len(get_cmd_base(c)) for c in system_commands) if system_commands else 0
     )
     for cmd in system_commands:
-        output.append(
-            f"  {cmd['command'].ljust(max_cmd_len + (len(cmd['command']) - len(get_cmd_base(cmd))))} - {cmd['description']}"
-        )
+        command_str = cmd["command"]
+        padding = max_cmd_len + (len(command_str) - len(get_cmd_base(cmd)))
+        line = f"  {command_str.ljust(padding)} - {cmd['description']}"
+        output.append(line)
+
     return output, None
 
 
@@ -357,8 +366,7 @@ def _handle_man(
         return None, "[ERROR] Usage: man <command>. Please specify a command."
 
     command_name = args[0].lower()
-    # Handle multi-word commands for man pages, e.g., 'exit / close' -> 'exit'
-    if command_name == "exit" or command_name == "close":
+    if command_name in ("exit", "close"):
         command_name = "exit"
 
     manuals = text_config.get("cli", {}).get("manuals", {})
