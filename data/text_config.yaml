@@ -3,41 +3,74 @@
 
 # Descriptions for the tools used by the AI assistant.
 llm_tool_descriptions:
-  get_professional_summary: "Retrieves the professional summary or overview of {name}. Use this to answer general questions about their background and focus."
-  get_skills: "Retrieves a list of {name}'s technical skills. Use this to answer questions about their expertise in specific technologies, languages, or frameworks."
-  get_project_list: "Retrieves a summary list of all available projects. Use this when the user asks for an overview of projects or wants to know what projects exist."
-  get_project_details: "Retrieve detailed information for a specific project based on its unique identifier (ID). Use this when the user asks for details about a specific project by name or ID."
+ get_professional_summary: "Retrieves the professional summary or overview of {name}. Use this to answer general questions about their background and focus."
+ get_skills: "Retrieves a list of {name}'s technical skills. Use this to answer questions about their expertise in specific technologies, languages, or frameworks."
+ get_project_list: "Retrieves a summary list of all available projects. Use this when the user asks for an overview of projects or wants to know what projects exist."
+ get_project_details: "Retrieve detailed information for a specific project based on its unique identifier (ID). Use this when the user asks for details about a specific project by name or ID."
 
 # Text templates for the Command-Line Interface (CLI) view.
 cli:
-  # The `help` command will be dynamically generated from this list.
-  # The 'command' key must match the logic in the handle_command_api function.
-  commands:
-    portfolio_header: "[INFO] Portfolio Commands:"
-    system_header: "[INFO] Window & System Commands:"
-    items:
-      - { command: "whoami", description: "Display summary about me", group: "portfolio" }
-      - { command: "skills", description: "List my technical skills", group: "portfolio" }
-      - { command: "contact", description: "Show contact information", group: "portfolio" }
-      - { command: "links", description: "Show social and repository links", group: "portfolio" }
-      - { command: "ls projects", description: "List available projects", group: "portfolio" }
-      - { command: "show <project>", description: "Show details for a specific project", group: "portfolio" }
-      - { command: "maximize", description: "Maximize the terminal window", group: "system" }
-      - { command: "minimize", description: "Minimize the terminal window", group: "system" }
-      - { command: "restore", description: "Restore window from min/max state", group: "system" }
-      - { command: "win-reset", description: "Reset window to default size and position", group: "system" }
-      - { command: "clear", description: "Clear the terminal screen", group: "system" }
-      - { command: "date", description: "Display the current date and time", group: "system" }
-      - { command: "echo <text>", description: "Display a line of text", group: "system" }
-      - { command: "uname -a", description: "Print simulated system information", group: "system" }
-      - { command: "neofetch", description: "Show a visual summary of the portfolio", group: "system" }
-      - { command: "exit / close", description: "Close the terminal window", group: "system" }
+ # The `help` command will be dynamically generated from this list.
+ # The 'command' key must match the logic in the handle_command_api function.
+ commands:
+   portfolio_header: "[INFO] Portfolio Commands:"
+   system_header: "[INFO] Window & System Commands:"
+   items:
+     - { command: "whoami", description: "Display summary about me", group: "portfolio" }
+     - { command: "skills", description: "List my technical skills", group: "portfolio" }
+     - { command: "contact", description: "Show contact information", group: "portfolio" }
+     - { command: "links", description: "Show social and repository links", group: "portfolio" }
+     - { command: "ls projects", description: "List available projects", group: "portfolio" }
+     - { command: "show <project>", description: "Show details for a specific project", group: "portfolio" }
+     - { command: "man <command>", description: "Display the manual page for a command", group: "system" }
+     - { command: "maximize", description: "Maximize the terminal window", group: "system" }
+     - { command: "minimize", description: "Minimize the terminal window", group: "system" }
+     - { command: "restore", description: "Restore window from min/max state", group: "system" }
+     - { command: "win-reset", description: "Reset window to default size and position", group: "system" }
+     - { command: "clear", description: "Clear the terminal screen", group: "system" }
+     - { command: "date", description: "Display the current date and time", group: "system" }
+     - { command: "echo <text>", description: "Display a line of text", group: "system" }
+     - { command: "uname -a", description: "Print simulated system information", group: "system" }
+     - { command: "neofetch", description: "Show a visual summary of the portfolio", group: "system" }
+     - { command: "exit / close", description: "Close the terminal window", group: "system" }
 
-  # Templates for the `neofetch` command.
-  neofetch:
-    host_template: "{name}'s Portfolio"
-    os_name: "FlaskOS Portfolio"
-    shell_name: "Web-CLI"
+ # Manual pages for the 'man' command
+ manuals:
+   man:
+     - "NAME"
+     - "    man - display the manual page for a command"
+     - "SYNOPSIS"
+     - "    man [command]"
+     - "DESCRIPTION"
+     - "    Displays detailed information about a given command, including its purpose, usage, and examples."
+     - "EXAMPLE"
+     - "    > man show"
+   ls:
+     - "NAME"
+     - "    ls - list directory contents (in this case, projects)"
+     - "SYNOPSIS"
+     - "    ls projects"
+     - "DESCRIPTION"
+     - "    Lists all available projects with their unique ID and title."
+     - "    The project ID is used with the 'show' command to get more details."
+     - "EXAMPLE"
+     - "    > ls projects"
+   show:
+     - "NAME"
+     - "    show - display detailed information about a specific item"
+     - "SYNOPSIS"
+     - "    show <project_id>"
+     - "DESCRIPTION"
+     - "    Retrieves and displays all available details for a specific project, identified by its ID."
+     - "    This includes a full description, technologies used, and all external links (live, code, etc.)."
+     - "EXAMPLE"
+     - "    > show portfolio"
 
-  # Templates for the `uname -a` command.
-  uname: "FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like"
+ # Templates for the `neofetch` command.
+ neofetch:
+   host_template: "{name}'s Portfolio"
+   os_name: "FlaskOS Portfolio"
+   shell_name: "Web-CLI"
+
+ # Templates for the `uname -a` command.
+ uname: "FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like"
