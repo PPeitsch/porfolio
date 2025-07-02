@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Import the actual Anthropic APIError to be caught correctly
+from anthropic import APIError as AnthropicAPIError
 from httpx import Request
 from openai import APIError
 
@@ -59,7 +62,7 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
     mock_client = MagicMock()
     mock_response = MagicMock()
     tool_call = MagicMock(type="tool_use", id="t1", input={})
-    tool_call.name = "get_weather"  # Set the name attribute on the mock
+    tool_call.name = "get_weather"
     mock_response.content = [tool_call]
     mock_response.stop_reason = "tool_use"
     mock_client.messages.create.return_value = mock_response
@@ -77,9 +80,9 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
 def test_anthropic_service_api_error(MockAnthropic, app):
     """Test AnthropicService API error handling."""
     mock_client = MagicMock()
-    # The APIError requires a body argument.
-    mock_client.messages.create.side_effect = APIError(
-        "Anthropic error", request=Request("POST", "http://test"), body=None
+    # Raise the actual AnthropicAPIError
+    mock_client.messages.create.side_effect = AnthropicAPIError(
+        "Anthropic error", request=Request("POST", "http://test")
     )
     MockAnthropic.return_value = mock_client
 
@@ -112,7 +115,7 @@ def test_openai_service_tool_use(MockOpenAI, app):
     """Test OpenAIService tool use response."""
     mock_client = MagicMock()
     mock_function = MagicMock(arguments='{"location": "Boston"}')
-    mock_function.name = "get_weather"  # Set the name attribute on the mock
+    mock_function.name = "get_weather"
     mock_tool_call = MagicMock(id="t1", function=mock_function)
     mock_message = MagicMock(content=None, tool_calls=[mock_tool_call])
     mock_choice = MagicMock(message=mock_message)
@@ -178,14 +181,13 @@ def test_gemini_service_tool_use(MockGenAIClient, app):
         MagicMock(),
     )
     mock_function_call = MagicMock(args={"location": "Boston"})
-    mock_function_call.name = "get_weather"  # Set the name attribute on the mock
+    mock_function_call.name = "get_weather"
     mock_part.function_call = mock_function_call
     mock_response.candidates = [MagicMock(content=MagicMock(parts=[mock_part]))]
     mock_models.generate_content.return_value = mock_response
     mock_client.models = mock_models
     MockGenAIClient.return_value = mock_client
 
-    # Provide a valid tool definition to prevent KeyError
     valid_tool_def = [
         {"name": "get_weather", "description": "Get weather.", "input_schema": {}}
     ]
