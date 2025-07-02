@@ -3,6 +3,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 import yaml
+from flask import g
 
 from app.common.utils import (
     _get_data_filepath,
@@ -22,7 +23,6 @@ from app.common.utils import (
 def test_get_data_filepath_standalone():
     """Test filepath generation when running as a standalone script."""
     path = _get_data_filepath("test.txt")
-    # Use os.path.join to create a platform-agnostic path fragment to check for
     expected_fragment = os.path.join("data", "test.txt")
     assert expected_fragment in path
 
@@ -84,12 +84,10 @@ def test_load_cv_data_caching(mock_load_yaml, app):
     """Test that CV data is loaded once and then cached in 'g'."""
     mock_load_yaml.return_value = MOCK_CV_DATA.copy()
     with app.app_context():
-        # Clear g to ensure a fresh load
-        app.g.pop("cv_data", None)
+        g.pop("cv_data", None)
         data1 = load_cv_data()
         data2 = load_cv_data()
 
-    # The function adds default keys if they're missing
     expected_data = MOCK_CV_DATA.copy()
     expected_data.setdefault("title", "Default Title")
     expected_data.setdefault("social_links", {})
@@ -104,8 +102,8 @@ def test_load_projects_data_caching(mock_load_yaml, app):
     """Test that projects data is loaded once and cached in 'g'."""
     mock_load_yaml.return_value = MOCK_PROJECTS_DATA
     with app.app_context():
-        app.g.pop("projects_data", None)
-        app.g.pop("projects_dict", None)
+        g.pop("projects_data", None)
+        g.pop("projects_dict", None)
         list1, dict1 = load_projects_data()
         list2, dict2 = load_projects_data()
     assert list1 == MOCK_PROJECTS_DATA
@@ -117,7 +115,7 @@ def test_load_text_config_caching(mock_load_yaml, app):
     """Test that text config data is loaded once and cached in 'g'."""
     mock_load_yaml.return_value = {"key": "value"}
     with app.app_context():
-        app.g.pop("text_config", None)
+        g.pop("text_config", None)
         data1 = load_text_config()
         data2 = load_text_config()
     assert data1 == {"key": "value"}
@@ -138,3 +136,24 @@ def test_load_system_prompt_generic_exception(mock_get_path, mock_open_):
     """Test fallback for generic exceptions."""
     prompt = load_system_prompt()
     assert "helpful assistant" in prompt
+
+
+@patch(
+    "app.common.utils.load_cv_data", return_value={"summary": "Summary", "skills": []}
+)
+def test_data_access_functions(mock_load_cv):
+    """Test data access functions for LLM tools."""
+    assert get_professional_summary() == "Summary"
+    assert get_skills() == []
+
+
+@patch("app.common.utils.load_projects_data")
+def test_get_project_functions(mock_load_projects):
+    """Test project access functions for LLM tools."""
+    projects_list = [{"id": "p1", "title": "Proj 1"}]
+    projects_dict = {"p1": projects_list[0]}
+    mock_load_projects.return_value = (projects_list, projects_dict)
+
+    assert get_project_list() is not None
+    assert get_project_details("p1")["title"] == "Proj 1"
+    assert get_project_details("nonexistent") is None
