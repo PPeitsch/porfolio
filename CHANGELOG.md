@@ -17,6 +17,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.9.0] - 2025-07-02
+
+### Added
+- **Advanced CLI Commands**: Introduced new interactive commands:
+  - `man <command>`: Displays a detailed manual page for any command.
+  - `filter --tech <name>`: Filters the project list by technology.
+  - `open <project_id>`: Opens a project's live URL in a new browser tab.
+- **CLI Tab Autocompletion**: Implemented `Tab` autocompletion for commands and theme names, improving usability.
+- **Shared Theming System**:
+  - Created a unified theming system with multiple schemes (`dracula`, `light`, `solarized`, `gruvbox`, `catppuccin`).
+  - Added a `theme` command to the CLI to switch themes.
+  - Implemented a theme switcher button in the Recruiter view.
+- **Persistent UI State**: Theme selection is now persisted in `localStorage`, ensuring a consistent look across sessions and views.
+- **Customizable CLI Prompt**: The terminal prompt can now be fully configured via `data/text_config.yaml`.
+
+### Changed
+- **CLI Command Processing**: Refactored the backend command handler from a large `if/elif` chain to a more scalable and maintainable dispatch table pattern.
+- **Default Theme**: The default theme for both CLI and Recruiter views is now "Dracula" for a modern, consistent look.
+
+### Fixed
+- **CLI `help` Alignment**: Corrected the column alignment in the `help` command output for a cleaner presentation.
+- **CLI `man` Command**: Expanded manual entries to cover all available commands, making the feature fully comprehensive.
+- **CLI Empty Command**: Resolved a 404 error that occurred when submitting an empty command in the terminal.
+- **Theme Logic**: Fixed an issue where the `theme` command would incorrectly reset to default and synchronized the list of available themes between the CLI and Recruiter views.
+
+
 ## [1.8.0] - 2025-06-28
 
 ### Added
