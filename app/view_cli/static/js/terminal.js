@@ -32,6 +32,11 @@ window.initializeCliView = function(callbacks) {
   let historyIndex = -1;
   let isFetching = false;
   const TOKEN_KEY = 'app_access_token';
+  const availableCommands = [
+      'help', 'whoami', 'skills', 'contact', 'links', 'ls', 'filter', 'show', 'open',
+      'man', 'maximize', 'minimize', 'restore', 'win-reset', 'clear', 'date', 'echo',
+      'uname', 'neofetch', 'exit', 'close'
+  ];
 
   function writeOutput(text, className = null) {
       const line = document.createElement("div");
@@ -204,6 +209,24 @@ window.initializeCliView = function(callbacks) {
       }
   }
 
+  function handleTabCompletion() {
+      const currentInput = inputElem.value;
+      const parts = currentInput.split(' ');
+      const currentCommandPart = parts[0];
+
+      // For now, we only complete the command itself
+      if (parts.length > 1) return;
+
+      const matchingCommands = availableCommands.filter(cmd => cmd.startsWith(currentCommandPart));
+
+      if (matchingCommands.length === 1) {
+          inputElem.value = matchingCommands[0] + ' ';
+      } else if (matchingCommands.length > 1) {
+          writeOutput(promptSpan.textContent + " " + currentInput, "echo-command");
+          writeOutput(matchingCommands.join('   '), 'completion-options');
+      }
+  }
+
   inputElem.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
           event.preventDefault();
@@ -235,6 +258,11 @@ window.initializeCliView = function(callbacks) {
           event.preventDefault();
           if (authState === 'authenticated') {
               processCommand("clear");
+          }
+      } else if (event.key === "Tab") {
+          if (authState === 'authenticated') {
+              event.preventDefault();
+              handleTabCompletion();
           }
       }
   });
