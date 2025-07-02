@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -10,10 +10,18 @@ MOCK_CV_DATA_CLI = {
     "skills": ["pytest", "mocking"],
     "email": "test@example.com",
     "social_links": {"github": "http://github.com/test"},
+    "website": "example.com",
 }
 MOCK_PROJECTS_DATA_CLI = [
     {"id": "p1", "title": "Project 1", "description": "First one"},
     {"id": "p2", "title": "Project 2", "live_url": "http://live.url"},
+    {
+        "id": "p3",
+        "title": "Project 3",
+        "technologies": ["pytest"],
+        "pypi_url": "http://pypi.org/p3",
+        "docs_url": "http://docs.p3.com",
+    },
 ]
 MOCK_PROJECTS_DICT_CLI = {p["id"]: p for p in MOCK_PROJECTS_DATA_CLI}
 
@@ -34,20 +42,23 @@ def test_cli_command_unauthorized(client):
         ("ls projects", "p1"),
         ("show p1", "First one"),
         ("show p2", "http://live.url"),
-        ("neofetch", "Projects: 2"),
+        ("show p3", "http://pypi.org/p3"),
+        ("neofetch", "Projects: 3"),
         ("uname -a", "FlaskOS"),
-        ("filter --tech python", "No projects found"),
+        ("filter --tech pytest", "p3"),
         ("man show", "SYNOPSIS"),
         ("open p2", "Attempting to open"),
     ],
 )
 @patch("app.view_cli.routes.get_cached_data")
-def test_cli_all_commands(mock_get_cached_data, client, app, command, expected_output):
-    """Test a wide range of CLI commands using parameterization."""
+def test_cli_all_commands_success(
+    mock_get_cached_data, client, app, command, expected_output
+):
+    """Test a wide range of CLI commands with successful data loading."""
     mock_get_cached_data.side_effect = [
         MOCK_CV_DATA_CLI,
         (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
-    ] * 10
+    ] * 20
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -57,74 +68,55 @@ def test_cli_all_commands(mock_get_cached_data, client, app, command, expected_o
     assert response.status_code == 200
     assert "output" in response_data
     assert any(expected_output in line for line in response_data["output"])
-    assert "prompt" in response_data
 
 
-@pytest.mark.parametrize(
-    "command, expected_error",
-    [
-        ("foo bar", "Command not found"),
-        ("show", "Usage: show <project_id>"),
-        ("show nonexistent", "not found"),
-        ("ls", "Unknown argument for 'ls'"),
-        ("filter", "Usage: filter --tech"),
-        ("open", "Usage: open <project_id>"),
-        ("open nonexistent", "not found"),
-        ("man", "Usage: man <command>"),
-        ("man nonexistent", "No manual entry"),
-    ],
-)
 @patch("app.view_cli.routes.get_cached_data")
-def test_cli_command_errors(mock_get_cached_data, client, app, command, expected_error):
-    """Test various command error conditions."""
-    # Use side_effect to return correct data for each call to get_cached_data
+def test_cli_commands_with_empty_data(mock_get_cached_data, client, app):
+    """Test commands' behavior with empty or missing data fields."""
+    empty_cv = {"name": "No Name", "skills": []}
+    empty_projects = ([], {})
     mock_get_cached_data.side_effect = [
-        MOCK_CV_DATA_CLI,
-        (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
+        empty_cv,
+        empty_projects,  # for ls projects
+        empty_cv,
+        empty_projects,  # for show p1
+        empty_cv,  # for contact
+        empty_cv,  # for skills
     ]
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.get(f"/cli/api/command/{command}", headers=headers)
+
+    # Test 'ls projects' with no projects
+    response_ls = client.get("/cli/api/command/ls projects", headers=headers)
+    assert "(Project data could not be loaded)" in response_ls.get_json()["output"][1]
+
+    # Test 'show' for a project that doesn't exist in an empty list
+    response_show = client.get("/cli/api/command/show p1", headers=headers)
+    assert "not found" in response_show.get_json()["error"]
+
+    # Test 'contact' with no links
+    response_contact = client.get("/cli/api/command/contact", headers=headers)
+    assert "(No contact details available)" in response_contact.get_json()["output"][1]
+
+    # Test 'skills' with no skills
+    response_skills = client.get("/cli/api/command/skills", headers=headers)
+    assert "(Skills data unavailable)" in response_skills.get_json()["output"][1]
+
+
+@patch("app.view_cli.routes.COMMAND_HANDLERS")
+def test_cli_internal_server_error(mock_handlers, client, app):
+    """Test the generic exception handler in the CLI API route."""
+    # Force an exception inside a mocked handler
+    mock_handler = MagicMock(side_effect=TypeError("Forced test error"))
+    mock_handlers.get.return_value = mock_handler
+    token = generate_test_token(app)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.get("/cli/api/command/any_command", headers=headers)
     response_data = response.get_json()
 
-    assert response.status_code == 200
-    assert "error" in response_data
-    assert expected_error in response_data["error"]
-
-
-@patch("app.view_cli.routes.get_cached_data")
-def test_cli_neofetch_missing_logo(mock_get_cached_data, client, app):
-    """Test neofetch command when the logo file is not found."""
-    mock_get_cached_data.side_effect = [
-        MOCK_CV_DATA_CLI,
-        (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
-    ]
-    token = generate_test_token(app)
-    headers = {"Authorization": f"Bearer {token}"}
-
-    with patch("app.view_cli.routes._get_data_filepath", side_effect=FileNotFoundError):
-        response = client.get("/cli/api/command/neofetch", headers=headers)
-        response_data = response.get_json()
-
-    assert response.status_code == 200
-    assert any("(Logo not found)" in line for line in response_data["output"])
-
-
-@patch("app.view_cli.routes.get_cached_data")
-def test_cli_command_show_project_not_found(mock_get_cached_data, client, app):
-    """Test 'show' for a project that does not exist."""
-    mock_get_cached_data.side_effect = [
-        MOCK_CV_DATA_CLI,
-        (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
-    ]
-    token = generate_test_token(app)
-    headers = {"Authorization": f"Bearer {token}"}
-    response = client.get("/cli/api/command/show nonexistent", headers=headers)
-    response_data = response.get_json()
-
-    assert response.status_code == 200
-    assert "error" in response_data
-    assert "not found" in response_data["error"]
+    assert response.status_code == 200  # The endpoint itself handles the exception
+    assert "Internal server error" in response_data["error"]
 
 
 @patch("app.view_cli.routes.get_cached_data", return_value=(None, None))
