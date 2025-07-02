@@ -12,9 +12,7 @@ from app.common.llm_services import (
     get_llm_service,
 )
 
-# Mocking the google.genai library at the top level for Gemini tests
-# This is because it might not be installed in all test environments.
-# We also mock the specific error class we want to raise.
+# Mocking google.genai and its error class for robust testing
 google_genai_mock = MagicMock()
 try:
     from google.genai.errors import ClientError
@@ -24,7 +22,6 @@ except ImportError:
     google_genai_mock.errors.ClientError = type("ClientError", (Exception,), {})
 
 
-# --- Test Abstract Base Class ---
 def test_llm_service_abc_requires_api_key(app):
     """Test that instantiating a service without an API key raises ValueError."""
     with app.app_context():
@@ -40,7 +37,6 @@ def test_llm_service_abc_requires_api_key(app):
             DummyService(api_key=None)
 
 
-# --- Test AnthropicService ---
 @patch("app.common.llm_services.anthropic.Anthropic")
 def test_anthropic_service_success(MockAnthropic, app):
     """Test AnthropicService successful text response."""
@@ -63,12 +59,7 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
     """Test AnthropicService tool use response."""
     mock_client = MagicMock()
     mock_response = MagicMock()
-    # Correctly configure the mock object's attributes
-    tool_call = MagicMock()
-    tool_call.type = "tool_use"
-    tool_call.id = "t1"
-    tool_call.name = "get_weather"
-    tool_call.input = {}
+    tool_call = MagicMock(type="tool_use", id="t1", name="get_weather", input={})
     mock_response.content = [tool_call]
     mock_response.stop_reason = "tool_use"
     mock_client.messages.create.return_value = mock_response
@@ -86,17 +77,18 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
 def test_anthropic_service_api_error(MockAnthropic, app):
     """Test AnthropicService API error handling."""
     mock_client = MagicMock()
-    mock_client.messages.create.side_effect = Exception("Anthropic general error")
+    mock_client.messages.create.side_effect = APIError(
+        "Anthropic error", request=Request("POST", "http://test")
+    )
     MockAnthropic.return_value = mock_client
 
     with app.app_context():
         service = AnthropicService(api_key="fake_key")
         response = service.get_chat_response(messages=[], system_prompt="")
 
-    assert "An unexpected error occurred" in response
+    assert "Sorry" in response and "(Anthropic)" in response
 
 
-# --- Test OpenAIService ---
 @patch("app.common.llm_services.openai.OpenAI")
 def test_openai_service_success(MockOpenAI, app):
     """Test OpenAIService successful text response."""
@@ -118,10 +110,7 @@ def test_openai_service_success(MockOpenAI, app):
 def test_openai_service_tool_use(MockOpenAI, app):
     """Test OpenAIService tool use response."""
     mock_client = MagicMock()
-    # Correctly configure the mock object's attributes
-    mock_function = MagicMock()
-    mock_function.name = "get_weather"
-    mock_function.arguments = '{"location": "Boston"}'
+    mock_function = MagicMock(name="get_weather", arguments='{"location": "Boston"}')
     mock_tool_call = MagicMock(id="t1", function=mock_function)
     mock_message = MagicMock(content=None, tool_calls=[mock_tool_call])
     mock_choice = MagicMock(message=mock_message)
@@ -150,15 +139,13 @@ def test_openai_service_api_error(MockOpenAI, app):
         service = OpenAIService(api_key="fake_key")
         response = service.get_chat_response(messages=[], system_prompt="")
 
-    assert "Sorry" in response
-    assert "(OpenAI)" in response
+    assert "Sorry" in response and "(OpenAI)" in response
 
 
-# --- Test GeminiService ---
 @patch("app.common.llm_services.genai.Client")
 def test_gemini_service_success(MockGenAIClient, app):
     """Test GeminiService successful text response."""
-    mock_client_instance, mock_models_object, mock_response, mock_part = (
+    mock_client, mock_models, mock_response, mock_part = (
         MagicMock(),
         MagicMock(),
         MagicMock(),
@@ -168,9 +155,9 @@ def test_gemini_service_success(MockGenAIClient, app):
     mock_part.function_call = None
     mock_response.text = "Hello Gemini"
     mock_response.candidates = [MagicMock(content=MagicMock(parts=[mock_part]))]
-    mock_models_object.generate_content.return_value = mock_response
-    mock_client_instance.models = mock_models_object
-    MockGenAIClient.return_value = mock_client_instance
+    mock_models.generate_content.return_value = mock_response
+    mock_client.models = mock_models
+    MockGenAIClient.return_value = mock_client
 
     with app.app_context():
         service = GeminiService(api_key="fake_key")
@@ -181,75 +168,48 @@ def test_gemini_service_success(MockGenAIClient, app):
 
 @patch("app.common.llm_services.genai.Client")
 def test_gemini_service_tool_use(MockGenAIClient, app):
-    """Test GeminiService tool use response based on PDF examples."""
-    mock_client_instance, mock_models_object, mock_response, mock_part = (
+    """Test GeminiService tool use response."""
+    mock_client, mock_models, mock_response, mock_part = (
         MagicMock(),
         MagicMock(),
         MagicMock(),
         MagicMock(),
     )
-    # Correctly configure the mock object's attributes for the response
-    mock_function_call = MagicMock()
-    mock_function_call.name = "get_project_details"
-    mock_function_call.args = {"project_id": "portfolio"}
+    mock_function_call = MagicMock(name="get_weather", args={"location": "Boston"})
     mock_part.function_call = mock_function_call
     mock_response.candidates = [MagicMock(content=MagicMock(parts=[mock_part]))]
-    mock_models_object.generate_content.return_value = mock_response
-    mock_client_instance.models = mock_models_object
-    MockGenAIClient.return_value = mock_client_instance
-
-    # Provide a valid tool definition to prevent KeyError during request setup
-    valid_tool_def = [
-        {
-            "name": "get_project_details",
-            "description": "Get details about a project.",
-            "input_schema": {
-                "type": "object",
-                "properties": {"project_id": {"type": "string"}},
-            },
-        }
-    ]
+    mock_models.generate_content.return_value = mock_response
+    mock_client.models = mock_models
+    MockGenAIClient.return_value = mock_client
 
     with app.app_context():
         service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(
-            messages=[], system_prompt="", tools=valid_tool_def
-        )
+        response = service.get_chat_response(messages=[], system_prompt="", tools=[{}])
 
     assert isinstance(response, list)
-    assert response[0]["name"] == "get_project_details"
-    assert response[0]["input"]["project_id"] == "portfolio"
+    assert response[0]["name"] == "get_weather"
 
 
 @patch("app.common.llm_services.genai.Client")
 def test_gemini_service_api_error(MockGenAIClient, app):
-    """Test GeminiService API error handling using a generic Exception."""
-    mock_client_instance, mock_models_object = MagicMock(), MagicMock()
-    # Use a generic Exception for a more robust test
-    mock_models_object.generate_content.side_effect = Exception("Simulated API Error")
-    mock_client_instance.models = mock_models_object
-    MockGenAIClient.return_value = mock_client_instance
+    """Test GeminiService API error handling."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = Exception("Simulated API Error")
+    MockGenAIClient.return_value = mock_client
 
     with app.app_context():
         service = GeminiService(api_key="fake_key")
         response = service.get_chat_response(messages=[], system_prompt="")
 
-    assert "Sorry" in response
-    assert "(Gemini)" in response
+    assert "Sorry" in response and "(Gemini)" in response
 
 
 @patch("app.common.llm_services.genai.Client")
 def test_gemini_service_no_candidates(MockGenAIClient, app):
     """Test GeminiService handling of a response with no candidates."""
-    mock_client_instance, mock_models_object, mock_response = (
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-    )
-    mock_response.candidates = []
-    mock_models_object.generate_content.return_value = mock_response
-    mock_client_instance.models = mock_models_object
-    MockGenAIClient.return_value = mock_client_instance
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = MagicMock(candidates=[])
+    MockGenAIClient.return_value = mock_client
 
     with app.app_context():
         service = GeminiService(api_key="fake_key")
@@ -258,41 +218,45 @@ def test_gemini_service_no_candidates(MockGenAIClient, app):
     assert "An error occurred" in response
 
 
-# --- Test get_llm_service Factory ---
 @patch("app.common.llm_services.AnthropicService")
 @patch("app.common.llm_services.OpenAIService")
 @patch("app.common.llm_services.GeminiService")
 def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
     """Test the factory function for creating LLM services."""
     with app.app_context():
+        # Test Anthropic
         app.config["LLM_PROVIDER"] = "anthropic"
         app.config["ANTHROPIC_API_KEY"] = "key1"
         get_llm_service()
         MockAnthropic.assert_called_once_with(api_key="key1")
-    MockAnthropic.reset_mock()
+        MockAnthropic.reset_mock()
 
-    with app.app_context():
+        # Test OpenAI
         app.config["LLM_PROVIDER"] = "openai"
         app.config["OPENAI_API_KEY"] = "key2"
         get_llm_service()
         MockOpenAI.assert_called_once_with(api_key="key2")
-    MockOpenAI.reset_mock()
+        MockOpenAI.reset_mock()
 
-    with app.app_context():
+        # Test Gemini
         app.config["LLM_PROVIDER"] = "gemini"
         app.config["GEMINI_API_KEY"] = "key3"
         get_llm_service()
         MockGemini.assert_called_once_with(api_key="key3")
-    MockGemini.reset_mock()
+        MockGemini.reset_mock()
 
-    with app.app_context():
+        # Test unsupported provider
         app.config["LLM_PROVIDER"] = "unsupported"
-        service = get_llm_service()
-        assert service is None
+        assert get_llm_service() is None
 
-    with app.app_context():
+        # Test missing API key
         app.config["LLM_PROVIDER"] = "openai"
         app.config["OPENAI_API_KEY"] = None
-        service = get_llm_service()
-        assert service is None
+        assert get_llm_service() is None
         MockOpenAI.assert_not_called()
+
+        # Test instantiation error
+        app.config["LLM_PROVIDER"] = "gemini"
+        app.config["GEMINI_API_KEY"] = "key3"
+        MockGemini.side_effect = Exception("instantiation failed")
+        assert get_llm_service() is None

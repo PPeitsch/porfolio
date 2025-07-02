@@ -18,7 +18,6 @@ MOCK_PROJECTS_DATA_CLI = [
 MOCK_PROJECTS_DICT_CLI = {p["id"]: p for p in MOCK_PROJECTS_DATA_CLI}
 
 
-# The 'client' and 'app' fixtures are provided by conftest.py
 def test_cli_command_unauthorized(client):
     """Test that accessing the CLI command endpoint without a token fails."""
     response = client.get("/cli/api/command/whoami")
@@ -78,10 +77,11 @@ def test_cli_all_commands(mock_get_cached_data, client, app, command, expected_o
 @patch("app.view_cli.routes.get_cached_data")
 def test_cli_command_errors(mock_get_cached_data, client, app, command, expected_error):
     """Test various command error conditions."""
-    mock_get_cached_data.return_value = (
+    # Use side_effect to return correct data for each call to get_cached_data
+    mock_get_cached_data.side_effect = [
         MOCK_CV_DATA_CLI,
         (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
-    )
+    ]
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
     response = client.get(f"/cli/api/command/{command}", headers=headers)
@@ -95,14 +95,13 @@ def test_cli_command_errors(mock_get_cached_data, client, app, command, expected
 @patch("app.view_cli.routes.get_cached_data")
 def test_cli_neofetch_missing_logo(mock_get_cached_data, client, app):
     """Test neofetch command when the logo file is not found."""
-    mock_get_cached_data.return_value = (
+    mock_get_cached_data.side_effect = [
         MOCK_CV_DATA_CLI,
         (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
-    )
+    ]
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
 
-    # Patch the filepath function to simulate a non-existent file
     with patch("app.view_cli.routes._get_data_filepath", side_effect=FileNotFoundError):
         response = client.get("/cli/api/command/neofetch", headers=headers)
         response_data = response.get_json()
@@ -114,10 +113,10 @@ def test_cli_neofetch_missing_logo(mock_get_cached_data, client, app):
 @patch("app.view_cli.routes.get_cached_data")
 def test_cli_command_show_project_not_found(mock_get_cached_data, client, app):
     """Test 'show' for a project that does not exist."""
-    mock_get_cached_data.return_value = (
+    mock_get_cached_data.side_effect = [
         MOCK_CV_DATA_CLI,
         (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
-    )
+    ]
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
     response = client.get("/cli/api/command/show nonexistent", headers=headers)
