@@ -61,6 +61,37 @@ def test_chat_with_tool_use(mock_tool_map, mock_get_llm_service, client, app):
     mock_project_list_func.assert_called_once()
 
 
+@patch("app.view_recruiter.routes.get_llm_service")
+@patch("app.view_recruiter.routes.TOOL_MAP")
+def test_chat_with_tool_use_and_exception(
+    mock_tool_map, mock_get_llm_service, client, app
+):
+    """Test tool execution when the tool function itself raises an exception."""
+    mock_service = MagicMock()
+    mock_service.get_chat_response.side_effect = [
+        [{"id": "tool123", "name": "failing_tool", "input": {}}],
+        "Fallback response after tool failure.",
+    ]
+    mock_get_llm_service.return_value = mock_service
+
+    failing_tool_func = MagicMock(side_effect=Exception("Tool failed!"))
+    mock_tool_map.__getitem__.side_effect = lambda key: {
+        "failing_tool": failing_tool_func
+    }.get(key)
+    mock_tool_map.__contains__.return_value = True
+
+    token = generate_test_token(app)
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    payload = {"message": "Run the failing tool", "history": []}
+
+    response = client.post(
+        "/recruiter/api/chat", headers=headers, data=json.dumps(payload)
+    )
+    assert response.status_code == 200
+    assert "Fallback response" in response.get_json()["reply"]
+    failing_tool_func.assert_called_once()
+
+
 def test_chat_unauthorized(client):
     """Test that the chat endpoint requires authorization."""
     response = client.post(
@@ -112,7 +143,6 @@ def test_chat_llm_service_not_configured(mock_get_llm, client, app):
 
 
 @patch("app.view_recruiter.routes.get_llm_service")
-@patch("app.view_recruiter.routes.TOOL_MAP", {})
 def test_chat_tool_not_found(mock_get_llm_service, client, app):
     """Test chat handler when the LLM requests a tool that doesn't exist."""
     mock_service = MagicMock()
@@ -129,5 +159,28 @@ def test_chat_tool_not_found(mock_get_llm_service, client, app):
     )
     assert response.status_code == 200
     assert response.get_json()["reply"] == "Final fallback response"
-    # Check that the error was logged internally
     assert mock_service.get_chat_response.call_count == 2
+
+
+@patch("app.view_recruiter.routes.get_llm_service")
+def test_chat_unexpected_llm_response(mock_get_llm_service, client, app):
+    """Test chat handler with an unexpected (non-str, non-list) LLM response."""
+    mock_service = MagicMock()
+    mock_service.get_chat_response.return_value = {"unexpected": "object"}
+    mock_get_llm_service.return_value = mock_service
+
+    token = generate_test_token(app)
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    response = client.post(
+        "/recruiter/api/chat", headers=headers, data=json.dumps({"message": "test"})
+    )
+    assert response.status_code == 500
+    assert "unexpected error occurred" in response.get_json()["reply"]
+
+
+@patch("app.view_recruiter.routes.send_from_directory")
+def test_recruiter_static_file_not_found(mock_send, client):
+    """Test the except block for the static file route."""
+    mock_send.side_effect = FileNotFoundError
+    response = client.get("/recruiter/static/nonexistent.css")
+    assert response.status_code == 404
