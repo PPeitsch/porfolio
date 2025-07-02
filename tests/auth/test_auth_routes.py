@@ -21,6 +21,7 @@ def test_verify_access_code_success(client, app):
     assert "token" in response_data
     assert "prompt" in response_data
 
+    # This try-except block is for test validation, not part of the SUT
     try:
         token = response_data["token"]
         decoded_payload = jwt.decode(
@@ -29,6 +30,12 @@ def test_verify_access_code_success(client, app):
         assert decoded_payload["sub"] == "recruiter_access"
     except jwt.PyJWTError as e:
         pytest.fail(f"JWT validation failed: {e}")
+
+
+def test_verify_access_code_success_invalid_token(client, app):
+    """Test that the test helper itself fails on an invalid token."""
+    with pytest.raises(jwt.PyJWTError):
+        jwt.decode("an-invalid-token", app.config["SECRET_KEY"], algorithms=["HS256"])
 
 
 def test_verify_access_code_invalid_code(client):
@@ -67,7 +74,6 @@ def test_verify_access_code_server_config_error(client, app, monkeypatch):
     """
     Test 503 error when server keys are not configured.
     """
-    # Use monkeypatch to safely modify the config for the duration of this test
     monkeypatch.setitem(app.config, "RECRUITER_ACCESS_CODE", None)
     payload = {"code": "any-code"}
 
