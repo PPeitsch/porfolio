@@ -1,4 +1,4 @@
-import os
+import sys
 from unittest.mock import patch
 
 import pytest
@@ -55,25 +55,20 @@ def test_create_app_no_config_file(monkeypatch):
     Test that the app factory handles a missing config.py by falling back
     to a default secret key.
     """
-    # Temporarily rename config.py to simulate its absence
-    original_path = "config.py"
-    temp_path = "config.py.tmp"
-    if os.path.exists(original_path):
-        os.rename(original_path, temp_path)
+    # Temporarily remove the 'config' module from sys.modules to force ImportError
+    monkeypatch.setitem(sys.modules, "config", None)
 
-    # We need to unload the create_app module to force re-import
+    # We need to reload the app factory module to trigger the import error
+    from importlib import reload
+
     from app import shell
 
-    if "app.shell" in __import__("sys").modules:
-        del __import__("sys").modules["app.shell"]
+    reload(shell)
+    from app.shell import create_app
 
-    try:
-        from app.shell import create_app
+    app = create_app()
+    assert app.config["SECRET_KEY"] == "default-fallback-key-error"
 
-        # This should now trigger the ImportError in the factory
-        app = create_app()
-        assert app.config["SECRET_KEY"] == "default-fallback-key-error"
-    finally:
-        # Restore the original state
-        if os.path.exists(temp_path):
-            os.rename(temp_path, original_path)
+    # Clean up by restoring the module if necessary for other tests,
+    # though pytest usually isolates this.
+    reload(shell)
