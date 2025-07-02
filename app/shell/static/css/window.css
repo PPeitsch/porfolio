@@ -1,8 +1,8 @@
 /* --- Reusable OS-style Window Styles --- */
 .os-window {
     position: absolute;
-    background-color: #1e1e2e; /* Catppuccin Macchiato Base */
-    border: 1px solid #494d64; /* Catppuccin Macchiato Overlay0 */
+    background-color: var(--bg, #1e1e2e);
+    border: 1px solid var(--border-color, #494d64);
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     display: flex;
@@ -39,11 +39,11 @@
 .os-window.minimized {
     /* Behavior: shrink to title bar height and go to a corner */
     height: 32px !important;
-    width: 250px !important; /* Give it a fixed small width */
-    left: auto !important; /* Unset left */
-    right: 20px !important; /* Stick to the right */
-    top: auto !important; /* Unset top */
-    bottom: 0px !important; /* Stick to the bottom */
+    width: 250px !important;
+    left: auto !important;
+    right: 20px !important;
+    top: auto !important;
+    bottom: 0px !important;
     overflow: hidden;
 }
 
@@ -54,14 +54,14 @@
 .title-bar {
     flex-shrink: 0;
     height: 32px;
-    background-color: #363a4f; /* Catppuccin Macchiato Surface1 */
+    background-color: var(--title-bar-bg, #363a4f);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 4px 0 12px;
     cursor: grab;
     user-select: none;
-    border-bottom: 1px solid #494d64;
+    border-bottom: 1px solid var(--border-color, #494d64);
 }
 
 .title-bar:active {
@@ -84,13 +84,13 @@
     mask-position: center;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
-    background-color: #cad3f5; /* Catppuccin Macchiato Text */
+    background-color: var(--title-bar-fg, #cad3f5);
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
 .control-btn:hover {
-    background-color: #5b6078;
+    background-color: var(--bright-black, #5b6078);
 }
 
 .control-btn.minimize {
@@ -109,14 +109,14 @@
 }
 
 .control-btn.close:hover {
-    background-color: #ed8796; /* Catppuccin Macchiato Red */
+    background-color: var(--red, #ed8796);
 }
 
 .title-text {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     font-weight: 500;
-    color: #cad3f5;
+    color: var(--title-bar-fg, #cad3f5);
     pointer-events: none;
     display: flex;
     align-items: center;

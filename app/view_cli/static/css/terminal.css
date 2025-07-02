@@ -6,7 +6,7 @@
     background-color: transparent;
     border-radius: 0 0 8px 8px;
     transition: display 0.2s;
-    color: #cdd6f4;
+    color: var(--fg, #cdd6f4);
     overflow: hidden;
 }
 
@@ -17,30 +17,30 @@
     white-space: pre-wrap;
     word-break: break-all;
     scrollbar-width: thin;
-    scrollbar-color: #585b70 #313244;
+    scrollbar-color: var(--scrollbar-thumb, #585b70) var(--scrollbar-track, #313244);
 }
 
 #output::-webkit-scrollbar {
     width: 8px;
 }
 #output::-webkit-scrollbar-track {
-    background: #313244;
+    background: var(--scrollbar-track, #313244);
 }
 #output::-webkit-scrollbar-thumb {
-    background-color: #585b70;
+    background-color: var(--scrollbar-thumb, #585b70);
     border-radius: 4px;
-    border: 2px solid #313244;
+    border: 2px solid var(--scrollbar-track, #313244);
 }
 
 .input-line {
     display: flex;
     padding: 0.5rem 0.75rem;
-    border-top: 1px solid #45475a;
+    border-top: 1px solid var(--input-line-border, #45475a);
     flex-shrink: 0;
 }
 
 .prompt {
-    color: #89b4fa;
+    color: var(--blue, #89b4fa);
     margin-right: 0.5rem;
     white-space: nowrap;
 }
@@ -48,43 +48,47 @@
 .input {
     background: transparent;
     border: none;
-    color: #cdd6f4;
+    color: var(--fg, #cdd6f4);
     flex-grow: 1;
     outline: none;
-    caret-color: #f5e0dc;
+    caret-color: var(--cursor-color, #f5e0dc);
 }
 .input:focus {
     outline: none;
 }
 
 a.terminal-link {
-    color: #89dceb;
+    color: var(--cyan, #89dceb);
     text-decoration: underline;
     text-underline-offset: 2px;
     cursor: pointer;
     transition: color 0.2s ease;
 }
 a.terminal-link:hover {
-    color: #94e2d5;
+    color: var(--bright-cyan, #94e2d5);
     text-decoration: none;
 }
 
 .error-message {
-    color: #f38ba8;
+    color: var(--red, #f38ba8);
 }
 
 .echo-command {
-    color: #a6adc8;
+    color: var(--bright-black, #a6adc8);
     opacity: 0.8;
 }
 
 .info-message {
-    color: #a6e3a1;
+    color: var(--green, #a6e3a1);
     font-weight: 500;
 }
 
+.completion-options {
+    color: var(--yellow, #f9e2af);
+}
+
 .link-section-title {
-    color: #f9e2af;
+    color: var(--yellow, #f9e2af);
     font-weight: 500;
     margin-top: 0.4em;
     display: block;

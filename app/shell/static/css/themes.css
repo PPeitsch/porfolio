@@ -1,0 +1,152 @@
+/* --- Terminal Color Themes --- */
+/* Variables are scoped to the window element for easy switching via data-theme attribute */
+
+/* Default Theme (Dracula) */
+.os-window {
+    --bg: #282a36;
+    --fg: #f8f8f2;
+    --selection-bg: #44475a;
+    --cursor-color: #f8f8f2;
+    --black: #21222c;
+    --red: #ff5555;
+    --green: #50fa7b;
+    --yellow: #f1fa8c;
+    --blue: #bd93f9;
+    --magenta: #ff79c6;
+    --cyan: #8be9fd;
+    --white: #f8f8f2;
+    --bright-black: #6272a4;
+    --bright-red: #ff6e6e;
+    --bright-green: #69ff94;
+    --bright-yellow: #ffffa5;
+    --bright-blue: #d6acff;
+    --bright-magenta: #ff92df;
+    --bright-cyan: #a4ffff;
+    --bright-white: #ffffff;
+    --title-bar-bg: #21222c;
+    --title-bar-fg: #f8f8f2;
+    --border-color: #44475a;
+    --input-line-border: #44475a;
+    --scrollbar-thumb: #6272a4;
+    --scrollbar-track: #282a36;
+}
+
+/* Catppuccin Theme */
+.os-window[data-theme="catppuccin"] {
+    --bg: #1e1e2e;
+    --fg: #cad3f5;
+    --selection-bg: #575268;
+    --cursor-color: #f5e0dc;
+    --black: #494d64;
+    --red: #ed8796;
+    --green: #a6e3a1;
+    --yellow: #f9e2af;
+    --blue: #89b4fa;
+    --magenta: #f5c2e7;
+    --cyan: #89dceb;
+    --white: #cad3f5;
+    --bright-black: #5b6078;
+    --bright-red: #ed8796;
+    --bright-green: #a6e3a1;
+    --bright-yellow: #f9e2af;
+    --bright-blue: #89b4fa;
+    --bright-magenta: #f5c2e7;
+    --bright-cyan: #89dceb;
+    --bright-white: #a5adce;
+    --title-bar-bg: #363a4f;
+    --title-bar-fg: #cad3f5;
+    --border-color: #494d64;
+    --input-line-border: #45475a;
+    --scrollbar-thumb: #585b70;
+    --scrollbar-track: #313244;
+}
+
+/* Light Theme */
+.os-window[data-theme="light"] {
+    --bg: #ffffff;
+    --fg: #212529;
+    --selection-bg: #d4d4d4;
+    --cursor-color: #000000;
+    --black: #343a40;
+    --red: #dc3545;
+    --green: #28a745;
+    --yellow: #ffc107;
+    --blue: #007bff;
+    --magenta: #e83e8c;
+    --cyan: #17a2b8;
+    --white: #f8f9fa;
+    --bright-black: #6c757d;
+    --bright-red: #dc3545;
+    --bright-green: #28a745;
+    --bright-yellow: #ffc107;
+    --bright-blue: #007bff;
+    --bright-magenta: #e83e8c;
+    --bright-cyan: #17a2b8;
+    --bright-white: #ffffff;
+    --title-bar-bg: #f8f9fa;
+    --title-bar-fg: #495057;
+    --border-color: #dee2e6;
+    --input-line-border: #ced4da;
+    --scrollbar-thumb: #adb5bd;
+    --scrollbar-track: #e9ecef;
+}
+
+/* Solarized Dark Theme */
+.os-window[data-theme="solarized"] {
+    --bg: #002b36;
+    --fg: #839496;
+    --selection-bg: #073642;
+    --cursor-color: #839496;
+    --black: #073642;
+    --red: #dc322f;
+    --green: #859900;
+    --yellow: #b58900;
+    --blue: #268bd2;
+    --magenta: #d33682;
+    --cyan: #2aa198;
+    --white: #eee8d5;
+    --bright-black: #586e75;
+    --bright-red: #cb4b16;
+    --bright-green: #586e75;
+    --bright-yellow: #657b83;
+    --bright-blue: #839496;
+    --bright-magenta: #6c71c4;
+    --bright-cyan: #93a1a1;
+    --bright-white: #fdf6e3;
+    --title-bar-bg: #073642;
+    --title-bar-fg: #93a1a1;
+    --border-color: #586e75;
+    --input-line-border: #586e75;
+    --scrollbar-thumb: #586e75;
+    --scrollbar-track: #002b36;
+}
+
+/* Gruvbox Dark Theme */
+.os-window[data-theme="gruvbox"] {
+    --bg: #282828;
+    --fg: #ebdbb2;
+    --selection-bg: #3c3836;
+    --cursor-color: #ebdbb2;
+    --black: #282828;
+    --red: #cc241d;
+    --green: #98971a;
+    --yellow: #d79921;
+    --blue: #458588;
+    --magenta: #b16286;
+    --cyan: #689d6a;
+    --white: #a89984;
+    --bright-black: #928374;
+    --bright-red: #fb4934;
+    --bright-green: #b8bb26;
+    --bright-yellow: #fabd2f;
+    --bright-blue: #83a598;
+    --bright-magenta: #d3869b;
+    --bright-cyan: #8ec07c;
+    --bright-white: #ebdbb2;
+    --title-bar-bg: #1d2021;
+    --title-bar-fg: #ebdbb2;
+    --border-color: #3c3836;
+    --input-line-border: #3c3836;
+    --scrollbar-thumb: #504945;
+    --scrollbar-track: #282828;
+}
