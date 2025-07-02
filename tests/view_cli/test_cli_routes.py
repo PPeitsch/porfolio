@@ -83,13 +83,16 @@ def test_cli_commands_with_empty_data(
     """Test commands' behavior with empty or missing data fields."""
     empty_cv: Dict[str, Any] = {"name": "No Name", "skills": []}
     empty_projects: Tuple[List[Any], Dict[Any, Any]] = ([], {})
+    # Provide enough side effects for all calls within this test function
     mock_get_cached_data.side_effect = [
         empty_cv,
         empty_projects,
         empty_cv,
         empty_projects,
         empty_cv,
+        empty_projects,
         empty_cv,
+        empty_projects,
     ]
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
@@ -124,6 +127,7 @@ def test_cli_internal_server_error(
     mock_handlers: MagicMock, client: FlaskClient, app: Any
 ) -> None:
     """Test the generic exception handler in the CLI API route."""
+    # Force an exception inside a mocked handler
     mock_handler = MagicMock(side_effect=TypeError("Forced test error"))
     mock_handlers.get.return_value = mock_handler
     token = generate_test_token(app)
