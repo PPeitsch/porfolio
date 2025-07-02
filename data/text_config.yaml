@@ -35,20 +35,31 @@ cli:
      - { command: "date", description: "Display the current date and time", group: "system" }
      - { command: "echo <text>", description: "Display a line of text", group: "system" }
      - { command: "uname -a", description: "Print simulated system information", group: "system" }
-     - { command: "neofetch", description: "Show a visual summary of the portfolio", group: "system" }
+     - { command: "neofetch", description: "Show a visual summary of the profile", group: "system" }
      - { command: "exit / close", description: "Close the terminal window", group: "system" }
 
  # Manual pages for the 'man' command
  manuals:
-   man:
+   whoami:
      - "NAME"
-     - "    man - display the manual page for a command"
-     - "SYNOPSIS"
-     - "    man [command]"
+     - "    whoami - display summary about the portfolio owner"
      - "DESCRIPTION"
-     - "    Displays detailed information about a given command, including its purpose, usage, and examples."
-     - "EXAMPLE"
-     - "    > man show"
+     - "    Shows the name, title, and a professional summary."
+   skills:
+     - "NAME"
+     - "    skills - list technical skills"
+     - "DESCRIPTION"
+     - "    Displays a comma-separated list of all technical skills."
+   contact:
+     - "NAME"
+     - "    contact - show contact information"
+     - "DESCRIPTION"
+     - "    Provides contact details, including email and social media links."
+   links:
+     - "NAME"
+     - "    links - show social and repository links"
+     - "DESCRIPTION"
+     - "    A quick way to see all social and repository links like GitHub and LinkedIn."
    ls:
      - "NAME"
      - "    ls - list directory contents (in this case, projects)"
@@ -56,31 +67,80 @@ cli:
      - "    ls projects"
      - "DESCRIPTION"
      - "    Lists all available projects with their unique ID and title."
-     - "    The project ID is used with the 'show' command to get more details."
+     - "    The project ID is used with 'show' or 'open' commands."
+   filter:
+     - "NAME"
+     - "    filter - filter projects by a specific criterion"
+     - "SYNOPSIS"
+     - "    filter --tech <technology>"
+     - "DESCRIPTION"
+     - "    Filters the project list to show only those that use a specific technology. The search is case-insensitive."
      - "EXAMPLE"
-     - "    > ls projects"
+     - "    > filter --tech python"
    show:
      - "NAME"
-     - "    show - display detailed information about a specific item"
+     - "    show - display detailed information about a specific project"
      - "SYNOPSIS"
      - "    show <project_id>"
      - "DESCRIPTION"
      - "    Retrieves and displays all available details for a specific project, identified by its ID."
-     - "    This includes a full description, technologies used, and all external links (live, code, etc.)."
-     - "EXAMPLE"
-     - "    > show portfolio"
+   open:
+     - "NAME"
+     - "    open - open a project's live URL in a new browser tab"
+     - "SYNOPSIS"
+     - "    open <project_id>"
+     - "DESCRIPTION"
+     - "    If the specified project has a live URL, this command will open it in a new tab."
+   man:
+     - "NAME"
+     - "    man - display the manual page for a command"
+     - "SYNOPSIS"
+     - "    man <command>"
+     - "DESCRIPTION"
+     - "    Displays detailed information about a given command."
+   theme:
+     - "NAME"
+     - "    theme - change the terminal color scheme"
+     - "SYNOPSIS"
+     - "    theme <theme_name>"
+     - "DESCRIPTION"
+     - "    Switches the terminal's color scheme. Use 'theme' without arguments to see available themes."
+     - "AVAILABLE THEMES"
+     - "    default, light, dracula, solarized"
+   clear:
+     - "NAME"
+     - "    clear - clear the terminal screen"
+     - "DESCRIPTION"
+     - "    Clears all previous output from the terminal. Shortcut: Ctrl+L."
+   exit:
+     - "NAME"
+     - "    exit / close - close the terminal window"
+     - "DESCRIPTION"
+     - "    Closes the terminal window and returns to the main view selector."
+   neofetch:
+     - "NAME"
+     - "    neofetch - show a visual summary of the profile"
+     - "DESCRIPTION"
+     - "    Displays a 'neofetch'-style summary with an ASCII logo and key profile information."
+   uname:
+     - "NAME"
+     - "    uname - print system information"
+     - "SYNOPSIS"
+     - "    uname -a"
+     - "DESCRIPTION"
+     - "    Prints simulated system information for the web-based OS."
 
  # Configuration for the CLI prompt.
  prompt:
    template: "{user}@{host}:~ $"
    user: "developer"
-   host: "portfolio"
+   host: "flaskos"
 
  # Templates for the `neofetch` command.
  neofetch:
-   host_template: "{name}'s Portfolio"
-   os_name: "FlaskOS Portfolio"
+   host_template: "{name}'s Dev Environment"
+   os_name: "FlaskOS 1.0"
    shell_name: "Web-CLI"
 
  # Templates for the `uname -a` command.
- uname: "FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like"
+ uname: "FlaskOS 1.0 Kernel v4.2 web-based x86_64"

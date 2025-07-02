@@ -1,4 +1,5 @@
 import logging
+import re
 import textwrap
 from typing import Any, Dict, List, Tuple
 
@@ -54,11 +55,17 @@ def _handle_help(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str],
         for item in help_config.get("items", [])
         if item.get("group") == "portfolio"
     ]
+    # Remove arguments like '<...>' for alignment calculation
+    get_cmd_base = lambda c: re.sub(r"\s<.*>", "", c["command"])
     max_cmd_len = (
-        max(len(c["command"]) for c in portfolio_commands) if portfolio_commands else 0
+        max(len(get_cmd_base(c)) for c in portfolio_commands)
+        if portfolio_commands
+        else 0
     )
     for cmd in portfolio_commands:
-        output.append(f"  {cmd['command'].ljust(max_cmd_len)} - {cmd['description']}")
+        output.append(
+            f"  {cmd['command'].ljust(max_cmd_len + (len(cmd['command']) - len(get_cmd_base(cmd))))} - {cmd['description']}"
+        )
 
     output.append("")
     output.append(help_config.get("system_header", "System Commands:"))
@@ -67,10 +74,12 @@ def _handle_help(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str],
         item for item in help_config.get("items", []) if item.get("group") == "system"
     ]
     max_cmd_len = (
-        max(len(c["command"]) for c in system_commands) if system_commands else 0
+        max(len(get_cmd_base(c)) for c in system_commands) if system_commands else 0
     )
     for cmd in system_commands:
-        output.append(f"  {cmd['command'].ljust(max_cmd_len)} - {cmd['description']}")
+        output.append(
+            f"  {cmd['command'].ljust(max_cmd_len + (len(cmd['command']) - len(get_cmd_base(cmd))))} - {cmd['description']}"
+        )
     return output, None
 
 
@@ -291,7 +300,7 @@ def _handle_links(cv_data: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], No
 
 def _handle_uname(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
     uname_text = text_config.get("cli", {}).get(
-        "uname", "FlaskOS 1.0 Portfolio x86_64 GNU/Linux-like"
+        "uname", "FlaskOS 1.0 Kernel v4.2 web-based x86_64"
     )
     return [uname_text], None
 
@@ -308,20 +317,20 @@ def _handle_neofetch(
     skill_count = len(cv_data.get("skills", []))
 
     neofetch_config = text_config.get("cli", {}).get("neofetch", {})
-    host_template = neofetch_config.get("host_template", "{name}'s Portfolio")
+    host_template = neofetch_config.get("host_template", "{name}'s Dev Environment")
 
     logo = []
     try:
-        logo_path = _get_data_filepath("logo/neofetch_logo_bear.txt")
+        logo_path = _get_data_filepath("logo/neofetch_logo_flask.txt")
         with open(logo_path, "r", encoding="utf-8") as f:
             logo = [line.rstrip() for line in f.readlines()]
     except FileNotFoundError:
         logo = ["(Logo not found)"]
 
     info = [
-        f"{name}@{cv_data.get('website', 'localhost')}",
+        f"{name}@{text_config.get('cli', {}).get('prompt', {}).get('host', 'flaskos')}",
         "-----------------------",
-        f"OS: {neofetch_config.get('os_name', 'FlaskOS Portfolio')}",
+        f"OS: {neofetch_config.get('os_name', 'FlaskOS 1.0')}",
         f"Host: {host_template.format(name=name)}",
         f"Title: {title}",
         f"Projects: {project_count}",
@@ -346,7 +355,12 @@ def _handle_man(
 ) -> Tuple[List[str] | None, str | None]:
     if not args:
         return None, "[ERROR] Usage: man <command>. Please specify a command."
+
     command_name = args[0].lower()
+    # Handle multi-word commands for man pages, e.g., 'exit / close' -> 'exit'
+    if command_name == "exit" or command_name == "close":
+        command_name = "exit"
+
     manuals = text_config.get("cli", {}).get("manuals", {})
     manual_text = manuals.get(command_name)
     if not manual_text:
@@ -387,6 +401,10 @@ def handle_command_api(command_line):
             jsonify({"output": [], "error": "[ERROR] Failed to load backend data."}),
             500,
         )
+
+    # Sanitize to prevent Werkzeug 404 on trailing slash
+    if command_line.endswith("/"):
+        command_line = command_line[:-1]
 
     parts = command_line.lower().strip().split()
     command = parts[0] if parts else ""

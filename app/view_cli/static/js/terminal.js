@@ -33,6 +33,7 @@ window.initializeCliView = function(callbacks) {
   let historyIndex = -1;
   let isFetching = false;
   const TOKEN_KEY = 'app_access_token';
+  const THEME_KEY = 'cli_theme';
   const availableCommands = [
       'help', 'whoami', 'skills', 'contact', 'links', 'ls', 'filter', 'show', 'open',
       'man', 'theme', 'maximize', 'minimize', 'restore', 'win-reset', 'clear', 'date', 'echo',
@@ -83,6 +84,11 @@ window.initializeCliView = function(callbacks) {
   }
 
   async function processCommand(commandLine) {
+      if (!commandLine && authState === 'authenticated') {
+          writeOutput(promptSpan.textContent + " ");
+          return;
+      }
+
       if (authState === 'awaiting_password') {
           const code = commandLine.trim();
           if (!code) return;
@@ -119,7 +125,6 @@ window.initializeCliView = function(callbacks) {
           return;
       }
 
-      // --- Authenticated command processing ---
       writeOutput(promptSpan.textContent + " " + commandLine, "echo-command");
       if (commandLine) { commandHistory.push(commandLine); }
       historyIndex = commandHistory.length;
@@ -133,6 +138,7 @@ window.initializeCliView = function(callbacks) {
               const themeName = (args[0] || 'default').toLowerCase();
               if (availableThemes.includes(themeName)) {
                   cliWindow.dataset.theme = themeName === 'default' ? '' : themeName;
+                  localStorage.setItem(THEME_KEY, themeName);
                   writeOutput(`Theme set to '${themeName}'.`, 'info-message');
               } else {
                   writeOutput(`Error: Theme '${themeName}' not found. Available themes: ${availableThemes.join(', ')}`, 'error-message');
@@ -272,13 +278,18 @@ window.initializeCliView = function(callbacks) {
 
   outputDiv.addEventListener("click", (event) => { if (event.target.tagName !== "A") { inputElem.focus(); } });
 
-  // --- Initial Setup ---
   function initializeTerminal() {
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'default';
+      if (availableThemes.includes(savedTheme)) {
+          cliWindow.dataset.theme = savedTheme === 'default' ? '' : savedTheme;
+      }
+
       const token = sessionStorage.getItem(TOKEN_KEY);
       if (token) {
           authState = 'authenticated';
           showAuthenticatedPrompt();
-          // We don't have prompt config here yet, will be updated on first command.
+          // Fetch initial prompt config silently
+          processCommand('help'); // A simple command to get latest config
       } else {
           authState = 'awaiting_password';
           showLoginPrompt();
