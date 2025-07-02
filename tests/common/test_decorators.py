@@ -66,20 +66,15 @@ def test_token_required_generic_decode_error(mock_decode, client, app):
     assert "Token processing error" in response.get_json()["error"]
 
 
-def test_token_required_no_secret_key(client, app):
+@patch("app.common.decorators.current_app")
+def test_token_required_no_secret_key(mock_current_app, client, app):
     """Test protected route when server has no SECRET_KEY configured."""
-    # 1. Generate a token with the existing valid key
-    token = generate_test_token(app)
-
-    # 2. Then, remove the key from the app's config
-    original_key = app.config.pop("SECRET_KEY")
-
-    # 3. Make the request. The decorator will fail when it tries to find the key.
+    # Simulate the config having no secret key when the decorator accesses it
+    mock_current_app.config.get.return_value = None
+    token = generate_test_token(app)  # Generate token with the real app
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.get("/protected", headers=headers)
 
-    # 4. Restore the key for subsequent tests
-    app.config["SECRET_KEY"] = original_key
+    response = client.get("/protected", headers=headers)
 
     assert response.status_code == 500
     assert "Server configuration error" in response.get_json()["error"]
