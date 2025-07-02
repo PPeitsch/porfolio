@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 import jwt
 import pytest
@@ -62,24 +63,39 @@ def test_verify_access_code_missing_code_key(client):
     assert response_data["error"] == "Access code is required."
 
 
-def test_verify_access_code_server_config_error(client, app):
+def test_verify_access_code_server_config_error(app):
     """
     Test 503 error when server keys are not configured.
     """
     # Create a temporary app with a modified config for this specific test
     app.config["SECRET_KEY"] = None
-    payload = {"code": "any-code"}
+    payload = {"code": app.config["RECRUITER_ACCESS_CODE"]}
 
     # Use the test_client from the modified app instance
-    response = app.test_client().post(
+    with app.test_client() as client:
+        response = client.post(
+            "/auth/verify", data=json.dumps(payload), content_type="application/json"
+        )
+    response_data = response.get_json()
+
+    assert response.status_code == 503
+    assert "Authentication system is not configured" in response_data["error"]
+
+
+@patch("app.auth.routes.jwt.encode")
+def test_verify_access_code_jwt_exception(mock_jwt_encode, client, app):
+    """Test the exception handler for JWT generation errors."""
+    mock_jwt_encode.side_effect = Exception("JWT generation failed")
+    access_code = app.config["RECRUITER_ACCESS_CODE"]
+    payload = {"code": access_code}
+
+    response = client.post(
         "/auth/verify", data=json.dumps(payload), content_type="application/json"
     )
     response_data = response.get_json()
 
-    # The test fixture will re-create the app for subsequent tests,
-    # so we don't need to restore the key manually.
-    assert response.status_code == 503
-    assert "Authentication system is not configured" in response_data["error"]
+    assert response.status_code == 500
+    assert "Could not generate access token" in response_data["error"]
 
 
 def test_verify_access_code_unsupported_media_type(client):
