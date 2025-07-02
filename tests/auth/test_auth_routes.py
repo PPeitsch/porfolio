@@ -1,5 +1,4 @@
 import json
-from unittest.mock import patch
 
 import jwt
 import pytest
@@ -63,19 +62,20 @@ def test_verify_access_code_missing_code_key(client):
     assert response_data["error"] == "Access code is required."
 
 
-@patch("app.auth.routes.current_app")
-def test_verify_access_code_server_config_error(mock_current_app, client):
+def test_verify_access_code_server_config_error(client, app):
     """
     Test 503 error when server keys are not configured.
     """
-    # Mock the app config to simulate a missing key within the route's context
-    mock_current_app.config = {"RECRUITER_ACCESS_CODE": None, "SECRET_KEY": None}
-    payload = {"code": "any-code"}
+    with app.app_context():
+        original_key = app.config.pop("SECRET_KEY", None)
+        payload = {"code": "any-code"}
 
-    response = client.post(
-        "/auth/verify", data=json.dumps(payload), content_type="application/json"
-    )
-    response_data = response.get_json()
+        response = client.post(
+            "/auth/verify", data=json.dumps(payload), content_type="application/json"
+        )
+        response_data = response.get_json()
+
+        app.config["SECRET_KEY"] = original_key
 
     assert response.status_code == 503
     assert "Authentication system is not configured" in response_data["error"]
@@ -85,6 +85,5 @@ def test_verify_access_code_unsupported_media_type(client):
     """
     Test that a request with an incorrect content type returns a 415 status.
     """
-    # This test doesn't need to be concerned with logic, just the content type
     response = client.post("/auth/verify", data="not json", content_type="text/plain")
     assert response.status_code == 415
