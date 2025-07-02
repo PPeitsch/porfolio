@@ -111,6 +111,17 @@ def test_load_projects_data_caching(mock_load_yaml, app):
 
 
 @patch("app.common.utils.load_yaml_data")
+def test_load_projects_data_dict_repopulation(mock_load_yaml, app):
+    """Test repopulating projects_dict when it's missing."""
+    with app.app_context():
+        g.projects_data = MOCK_PROJECTS_DATA
+        g.pop("projects_dict", None)  # Ensure dict is not present
+        _, projects_dict = load_projects_data()
+        assert "proj1" in projects_dict
+        assert projects_dict["proj1"]["title"] == "Project One"
+
+
+@patch("app.common.utils.load_yaml_data")
 def test_load_text_config_caching(mock_load_yaml, app):
     """Test that text config data is loaded once and cached in 'g'."""
     mock_load_yaml.return_value = {"key": "value"}

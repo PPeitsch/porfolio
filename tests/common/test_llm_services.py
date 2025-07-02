@@ -92,6 +92,34 @@ def test_anthropic_service_api_error(MockAnthropic, app):
     assert "Sorry" in response and "(Anthropic)" in response
 
 
+@patch("app.common.llm_services.anthropic.Anthropic")
+def test_anthropic_service_unexpected_response(MockAnthropic, app):
+    """Test AnthropicService with an unexpected response structure."""
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(type="unexpected_type")]
+    mock_response.stop_reason = "end_turn"
+    mock_client.messages.create.return_value = mock_response
+    MockAnthropic.return_value = mock_client
+
+    with app.app_context():
+        service = AnthropicService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
+    assert response == ""  # Should return empty string if no text content
+
+
+@patch("app.common.llm_services.anthropic.Anthropic")
+def test_anthropic_service_general_exception(MockAnthropic, app):
+    """Test AnthropicService with a generic exception."""
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = Exception("Generic Error")
+    MockAnthropic.return_value = mock_client
+    with app.app_context():
+        service = AnthropicService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
+    assert "An unexpected error occurred" in response
+
+
 @patch("app.common.llm_services.openai.OpenAI")
 def test_openai_service_success(MockOpenAI, app):
     """Test OpenAIService successful text response."""
@@ -144,6 +172,33 @@ def test_openai_service_api_error(MockOpenAI, app):
         response = service.get_chat_response(messages=[], system_prompt="")
 
     assert "Sorry" in response and "(OpenAI)" in response
+
+
+@patch("app.common.llm_services.openai.OpenAI")
+def test_openai_service_general_exception(MockOpenAI, app):
+    """Test OpenAIService with a generic exception."""
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = Exception("Generic Error")
+    MockOpenAI.return_value = mock_client
+    with app.app_context():
+        service = OpenAIService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
+    assert "An unexpected error occurred" in response
+
+
+@patch("app.common.llm_services.openai.OpenAI")
+def test_openai_service_no_content(MockOpenAI, app):
+    """Test OpenAIService when the response message has no content."""
+    mock_client = MagicMock()
+    mock_message = MagicMock(content=None, tool_calls=None)
+    mock_choice = MagicMock(message=mock_message)
+    mock_response = MagicMock(choices=[mock_choice])
+    mock_client.chat.completions.create.return_value = mock_response
+    MockOpenAI.return_value = mock_client
+    with app.app_context():
+        service = OpenAIService(api_key="fake_key")
+        response = service.get_chat_response(messages=[], system_prompt="")
+    assert response == ""
 
 
 @patch("app.common.llm_services.genai.Client")
