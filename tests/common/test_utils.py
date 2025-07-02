@@ -1,3 +1,4 @@
+import os
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -21,8 +22,9 @@ from app.common.utils import (
 def test_get_data_filepath_standalone():
     """Test filepath generation when running as a standalone script."""
     path = _get_data_filepath("test.txt")
-    assert "data/test.txt" in path.replace("\\", "/")
-    assert path.endswith("data/test.txt")
+    # Use os.path.join to create a platform-agnostic path fragment to check for
+    expected_fragment = os.path.join("data", "test.txt")
+    assert expected_fragment in path
 
 
 @patch("builtins.open")
@@ -80,12 +82,20 @@ MOCK_PROJECTS_DATA = [{"id": "proj1", "title": "Project One"}]
 @patch("app.common.utils.load_yaml_data")
 def test_load_cv_data_caching(mock_load_yaml, app):
     """Test that CV data is loaded once and then cached in 'g'."""
-    mock_load_yaml.return_value = MOCK_CV_DATA
+    mock_load_yaml.return_value = MOCK_CV_DATA.copy()
     with app.app_context():
+        # Clear g to ensure a fresh load
+        app.g.pop("cv_data", None)
         data1 = load_cv_data()
         data2 = load_cv_data()
-    assert data1 == MOCK_CV_DATA
-    assert data2 == MOCK_CV_DATA
+
+    # The function adds default keys if they're missing
+    expected_data = MOCK_CV_DATA.copy()
+    expected_data.setdefault("title", "Default Title")
+    expected_data.setdefault("social_links", {})
+
+    assert data1 == expected_data
+    assert data2 == expected_data
     mock_load_yaml.assert_called_once()
 
 
@@ -94,6 +104,8 @@ def test_load_projects_data_caching(mock_load_yaml, app):
     """Test that projects data is loaded once and cached in 'g'."""
     mock_load_yaml.return_value = MOCK_PROJECTS_DATA
     with app.app_context():
+        app.g.pop("projects_data", None)
+        app.g.pop("projects_dict", None)
         list1, dict1 = load_projects_data()
         list2, dict2 = load_projects_data()
     assert list1 == MOCK_PROJECTS_DATA
@@ -105,6 +117,7 @@ def test_load_text_config_caching(mock_load_yaml, app):
     """Test that text config data is loaded once and cached in 'g'."""
     mock_load_yaml.return_value = {"key": "value"}
     with app.app_context():
+        app.g.pop("text_config", None)
         data1 = load_text_config()
         data2 = load_text_config()
     assert data1 == {"key": "value"}

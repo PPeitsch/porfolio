@@ -80,9 +80,9 @@ def test_anthropic_service_tool_use(MockAnthropic, app):
 def test_anthropic_service_api_error(MockAnthropic, app):
     """Test AnthropicService API error handling."""
     mock_client = MagicMock()
-    # Raise the actual AnthropicAPIError
+    # The AnthropicAPIError requires a 'body' argument.
     mock_client.messages.create.side_effect = AnthropicAPIError(
-        "Anthropic error", request=Request("POST", "http://test")
+        "Anthropic error", request=Request("POST", "http://test"), body=None
     )
     MockAnthropic.return_value = mock_client
 
