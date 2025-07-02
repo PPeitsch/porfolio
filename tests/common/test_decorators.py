@@ -66,15 +66,28 @@ def test_token_required_generic_decode_error(mock_decode, client, app):
     assert "Token processing error" in response.get_json()["error"]
 
 
-@patch("app.common.decorators.current_app")
-def test_token_required_no_secret_key(mock_current_app, client, app):
+def test_token_required_no_secret_key(app):
     """Test protected route when server has no SECRET_KEY configured."""
-    # Simulate the config having no secret key when the decorator accesses it
-    mock_current_app.config.get.return_value = None
-    token = generate_test_token(app)  # Generate token with the real app
-    headers = {"Authorization": f"Bearer {token}"}
+    # Generate a token with a temporary key, as the app's key will be removed
+    temp_key = app.config["SECRET_KEY"]
+    payload = {
+        "sub": "test_access",
+        "iat": datetime.datetime.now(datetime.timezone.utc),
+        "exp": datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(minutes=15),
+    }
+    token = jwt.encode(payload, temp_key, algorithm="HS256")
 
-    response = client.get("/protected", headers=headers)
+    # Set the app's key to None to simulate the configuration error
+    app.config["SECRET_KEY"] = None
+
+    # Create a test client from this specific app state
+    with app.test_client() as client:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = client.get("/protected", headers=headers)
+
+    # Restore the key to not affect other tests
+    app.config["SECRET_KEY"] = temp_key
 
     assert response.status_code == 500
     assert "Server configuration error" in response.get_json()["error"]
