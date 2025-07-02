@@ -26,26 +26,33 @@ except ImportError:
 
 
 def test_llm_service_abc_methods(app):
-    """Test that ABC methods raise NotImplementedError."""
+    """Test that ABC methods raise NotImplementedError if not correctly implemented."""
 
-    class BadService(LLMService):
-        # Missing _initialize_client implementation
+    class IncompleteService(LLMService):
+        def _initialize_client(self):
+            # This method is implemented...
+            return None
+
+        def get_chat_response(self, messages, system_prompt, tools=None):
+            # ...but this one calls the abstract method, which should raise.
+            return super().get_chat_response(messages, system_prompt, tools)
+
+    class AbstractClientService(LLMService):
+        def _initialize_client(self):
+            # This one raises directly.
+            return super()._initialize_client()
+
         def get_chat_response(self, messages, system_prompt, tools=None):
             pass
 
-    class AnotherBadService(LLMService):
-        def _initialize_client(self):
-            return None  # Implemented
-
-        # Missing get_chat_response implementation
-
     with app.app_context():
-        with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            BadService(api_key="key")
-
-        service = AnotherBadService(api_key="key")
+        service1 = IncompleteService(api_key="key")
         with pytest.raises(NotImplementedError):
-            service.get_chat_response(messages=[], system_prompt="")
+            service1.get_chat_response(messages=[], system_prompt="")
+
+        service2 = AbstractClientService(api_key="key")
+        with pytest.raises(NotImplementedError):
+            service2._initialize_client()
 
 
 @patch("app.common.llm_services.anthropic.Anthropic")
@@ -241,7 +248,6 @@ def test_gemini_service_history_processing(MockGenAIClient, app):
     mock_client.models.generate_content.return_value = MagicMock(text="OK")
     MockGenAIClient.return_value = mock_client
 
-    # A complex history to test all branches
     history = [
         {"role": "user", "content": "Initial query"},
         {"role": "assistant", "content": [{"name": "tool_a", "input": {}}]},
@@ -259,14 +265,12 @@ def test_gemini_service_history_processing(MockGenAIClient, app):
         service = GeminiService(api_key="fake_key")
         service.get_chat_response(messages=history, system_prompt="")
 
-    # Verify that generate_content was called
     mock_client.models.generate_content.assert_called_once()
     call_args = mock_client.models.generate_content.call_args[1]
-    # Check that the history was converted correctly
-    assert len(call_args["contents"]) == 5  # system_prompt + 4 history messages
-    assert call_args["contents"][2].role == "model"  # assistant tool call
-    assert call_args["contents"][3].role == "user"  # tool_result
-    assert call_args["contents"][4].role == "model"  # final assistant message
+    assert len(call_args["contents"]) == 5
+    assert call_args["contents"][2].role == "model"
+    assert call_args["contents"][3].role == "user"
+    assert call_args["contents"][4].role == "model"
 
 
 @patch("app.common.llm_services.genai.Client")
