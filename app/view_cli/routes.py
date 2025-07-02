@@ -253,6 +253,30 @@ def _handle_show(
     return output, None
 
 
+def _handle_open(
+    args: List[str], projects_dict: Dict[str, Any], **kwargs: Any
+) -> Tuple[List[str] | None, str | None, Dict[str, Any] | None]:
+    if not args:
+        return None, "[ERROR] Usage: open <project_id>", None
+    project_id = args[0]
+    project = projects_dict.get(project_id)
+
+    if not project:
+        return None, f"[ERROR] Project '{project_id}' not found.", None
+
+    url = project.get("live_url")
+    if not url:
+        return (
+            None,
+            f"[INFO] Project '{project_id}' does not have a live URL to open.",
+            None,
+        )
+
+    action_payload = {"action": "open_url", "url": url}
+    output = [f"Attempting to open {url} in a new tab..."]
+    return output, None, action_payload
+
+
 def _handle_links(cv_data: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
     output = ["[INFO] Social & Repo Links:"]
     social_links = cv_data.get("social_links", {})
@@ -340,6 +364,7 @@ COMMAND_HANDLERS = {
     "ls": _handle_ls,
     "filter": _handle_filter,
     "show": _handle_show,
+    "open": _handle_open,
     "links": _handle_links,
     "uname": _handle_uname,
     "neofetch": _handle_neofetch,
@@ -367,11 +392,10 @@ def handle_command_api(command_line):
     command = parts[0] if parts else ""
     args = parts[1:]
 
-    output, error = [], None
+    output, error, action = [], None, None
     terminal_width = 80
 
     try:
-        # Check if command needs special argument handling (e.g., uname -a)
         if command == "uname" and args == ["-a"]:
             handler = COMMAND_HANDLERS.get("uname")
         else:
@@ -386,9 +410,16 @@ def handle_command_api(command_line):
                 "args": args,
                 "terminal_width": terminal_width,
             }
-            output, error = handler(**context)
+            handler_result = handler(**context)
+
+            # Unpack result based on its length for backward compatibility
+            if len(handler_result) == 3:
+                output, error, action = handler_result
+            else:
+                output, error = handler_result
+
         elif command == "":
-            pass  # No command, no output
+            pass
         else:
             error = f"[ERROR] Command not found: '{command}'. Type 'help'."
 
@@ -399,4 +430,8 @@ def handle_command_api(command_line):
         )
         error = "[ERROR] Internal server error occurred. Please check server logs."
 
-    return jsonify({"output": output or [], "error": error, "command": command})
+    response_data = {"output": output or [], "error": error, "command": command}
+    if action:
+        response_data.update(action)
+
+    return jsonify(response_data)

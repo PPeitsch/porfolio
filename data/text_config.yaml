@@ -1,6 +1,7 @@
 # Text templates for various parts of the application
 # Placeholders like {name} will be replaced with data from cv.yaml
 
+
 # Descriptions for the tools used by the AI assistant.
 llm_tool_descriptions:
  get_professional_summary: "Retrieves the professional summary or overview of {name}. Use this to answer general questions about their background and focus."
@@ -23,6 +24,7 @@ cli:
      - { command: "ls projects", description: "List available projects", group: "portfolio" }
      - { command: "filter --tech <name>", description: "Filter projects by technology", group: "portfolio" }
      - { command: "show <project>", description: "Show details for a specific project", group: "portfolio" }
+     - { command: "open <project>", description: "Open a project's live URL in a new tab", group: "portfolio" }
      - { command: "man <command>", description: "Display the manual page for a command", group: "system" }
      - { command: "maximize", description: "Maximize the terminal window", group: "system" }
      - { command: "minimize", description: "Minimize the terminal window", group: "system" }
