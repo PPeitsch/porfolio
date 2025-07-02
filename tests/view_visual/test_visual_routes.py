@@ -24,17 +24,14 @@ def test_get_projects_for_visual_success(mock_load_projects, client):
     Test that the /visual/api/projects endpoint returns correctly
     formatted and simplified project data.
     """
-    # Act
     response = client.get("/visual/api/projects")
     response_data = response.get_json()
 
-    # Assert
     assert response.status_code == 200
     assert isinstance(response_data, list)
     assert len(response_data) == 1
 
     project = response_data[0]
-    # Check that keys are correct for the visual view
     expected_keys = [
         "id",
         "title",
@@ -50,13 +47,12 @@ def test_get_projects_for_visual_success(mock_load_projects, client):
     for key in expected_keys:
         assert key in project
 
-    # Check data transformation
     assert project["id"] == "proj1"
     assert project["title"] == "Project One"
     assert project["image_url"] == "/shell-static/images/projects/proj1.png"
     assert project["short_desc"].endswith("...")
-    assert len(project["short_desc"]) <= 103  # 100 chars + "..."
-    assert len(project["technologies"]) == 4  # Should be truncated to 4
+    assert len(project["short_desc"]) <= 103
+    assert len(project["technologies"]) == 4
 
 
 @patch("app.view_visual.routes.load_projects_data", return_value=(None, None))
@@ -64,10 +60,16 @@ def test_get_projects_for_visual_failure(mock_load_projects, client):
     """
     Test the endpoint's failure case when project data cannot be loaded.
     """
-    # Act
     response = client.get("/visual/api/projects")
     response_data = response.get_json()
 
-    # Assert
     assert response.status_code == 500
     assert "error" in response_data
+
+
+def test_visual_static_file_not_found(client):
+    """
+    Test that requesting a non-existent static file returns a 404 error.
+    """
+    response = client.get("/visual/static/nonexistentfile.css")
+    assert response.status_code == 404
