@@ -21,6 +21,7 @@ cli:
      - { command: "contact", description: "Show contact information", group: "portfolio" }
      - { command: "links", description: "Show social and repository links", group: "portfolio" }
      - { command: "ls projects", description: "List available projects", group: "portfolio" }
+     - { command: "filter --tech <name>", description: "Filter projects by technology", group: "portfolio" }
      - { command: "show <project>", description: "Show details for a specific project", group: "portfolio" }
      - { command: "man <command>", description: "Display the manual page for a command", group: "system" }
      - { command: "maximize", description: "Maximize the terminal window", group: "system" }

@@ -43,6 +43,7 @@ def get_cached_data(data_type="cv"):
 
 # --- Command Handler Functions ---
 
+
 def _handle_help(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
     output = []
     help_config = text_config.get("cli", {}).get("commands", {})
@@ -151,6 +152,43 @@ def _handle_ls(
             output.append("  (Error formatting project list)")
     else:
         output.append("  (Project data could not be loaded)")
+    return output, None
+
+
+def _handle_filter(
+    args: List[str], projects_data: List[Dict[str, Any]], **kwargs: Any
+) -> Tuple[List[str] | None, str | None]:
+    if len(args) < 2 or args[0] != "--tech":
+        return (
+            None,
+            "[ERROR] Usage: filter --tech <technology>. Example: filter --tech python",
+        )
+
+    tech_to_filter = args[1].lower()
+    filtered_projects = [
+        p
+        for p in projects_data
+        if tech_to_filter in [tech.lower() for tech in p.get("technologies", [])]
+    ]
+
+    if not filtered_projects:
+        output = [f"[INFO] No projects found with technology: '{tech_to_filter}'"]
+        return output, None
+
+    output = [f"[INFO] Projects using '{tech_to_filter.capitalize()}':"]
+    try:
+        max_id_len = max(len(p.get("id", "")) for p in filtered_projects)
+        max_id_len = max(max_id_len, 4)
+        output.append(f"  {'ID'.ljust(max_id_len)}  | Title")
+        output.append(f"  {'-' * max_id_len}  + {'-' * 40}")
+        for p in filtered_projects:
+            proj_id = p.get("id", "N/A")
+            proj_title = p.get("title", "N/A")
+            output.append(f"  {proj_id.ljust(max_id_len)}  | {proj_title}")
+    except Exception as e:
+        logger.error(f"Error formatting filtered projects: {e}")
+        output.append("  (Error formatting project list)")
+
     return output, None
 
 
@@ -300,6 +338,7 @@ COMMAND_HANDLERS = {
     "skills": _handle_skills,
     "contact": _handle_contact,
     "ls": _handle_ls,
+    "filter": _handle_filter,
     "show": _handle_show,
     "links": _handle_links,
     "uname": _handle_uname,
