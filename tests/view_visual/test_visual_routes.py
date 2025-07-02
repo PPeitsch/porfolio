@@ -14,7 +14,18 @@ MOCK_PROJECTS = [
         "technologies": ["Python", "Flask", "Docker", "Pytest", "React"],
         "live_url": "http://example.com/live",
         "github_url": "http://github.com/proj1",
-    }
+    },
+    {
+        "id": "proj2",
+        "title": "Project Two",
+        "image": None,
+        "short_description": "Short desc.",
+        "description": "",
+        "type": "library",
+        "technologies": [],
+        "pypi_url": "http://pypi.org/p2",
+        "docs_url": "http://docs.p2.com",
+    },
 ]
 
 
@@ -29,9 +40,10 @@ def test_get_projects_for_visual_success(mock_load_projects, client):
 
     assert response.status_code == 200
     assert isinstance(response_data, list)
-    assert len(response_data) == 1
+    assert len(response_data) == 2
 
-    project = response_data[0]
+    # Test first project with full data
+    project1 = response_data[0]
     expected_keys = [
         "id",
         "title",
@@ -45,18 +57,23 @@ def test_get_projects_for_visual_success(mock_load_projects, client):
         "technologies",
     ]
     for key in expected_keys:
-        assert key in project
+        assert key in project1
 
-    assert project["id"] == "proj1"
-    assert project["title"] == "Project One"
-    assert project["image_url"] == "/shell-static/images/projects/proj1.png"
-    assert project["short_desc"].endswith("...")
-    assert len(project["short_desc"]) <= 103
-    assert len(project["technologies"]) == 4
+    assert project1["id"] == "proj1"
+    assert project1["title"] == "Project One"
+    assert project1["image_url"] == "/shell-static/images/projects/proj1.png"
+    assert project1["short_desc"].endswith("...")
+    assert len(project1["short_desc"]) <= 103
+    assert len(project1["technologies"]) == 4
+
+    # Test second project with missing/alternative data
+    project2 = response_data[1]
+    assert project2["image_url"] == "/shell-static/images/placeholder.svg"
+    assert project2["short_desc"] == "Short desc."
 
 
 @patch("app.view_visual.routes.load_projects_data", return_value=(None, None))
-def test_get_projects_for_visual_failure(mock_load_projects, client):
+def test_get_projects_for_visual_load_failure(mock_load_projects, client):
     """
     Test the endpoint's failure case when project data cannot be loaded.
     """
@@ -67,9 +84,17 @@ def test_get_projects_for_visual_failure(mock_load_projects, client):
     assert "error" in response_data
 
 
-def test_visual_static_file_not_found(client):
+@patch("app.view_visual.routes.send_from_directory")
+def test_visual_static_file_not_found(mock_send, client):
     """
-    Test that requesting a non-existent static file returns a 404 error.
+    Test the except block for the static file route by simulating a
+    FileNotFoundError from send_from_directory.
     """
-    response = client.get("/visual/static/nonexistentfile.css")
+    # Configure the mock to raise the specific error we want to catch
+    mock_send.side_effect = FileNotFoundError
+
+    # Make a request to any file; the mock will ensure the error is raised
+    response = client.get("/visual/static/anyfile.css")
+
+    # The abort(404) will be triggered by our exception handler
     assert response.status_code == 404
