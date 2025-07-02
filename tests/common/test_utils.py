@@ -1,7 +1,6 @@
 import os
 from unittest.mock import mock_open, patch
 
-import pytest
 import yaml
 from flask import g
 
@@ -93,7 +92,7 @@ def test_load_cv_data_caching(mock_load_yaml, app):
     expected_data.setdefault("social_links", {})
 
     assert data1 == expected_data
-    assert data2 == expected_data
+    assert data2 == data1  # Assert that the cached object is returned
     mock_load_yaml.assert_called_once()
 
 
@@ -107,6 +106,7 @@ def test_load_projects_data_caching(mock_load_yaml, app):
         list1, dict1 = load_projects_data()
         list2, dict2 = load_projects_data()
     assert list1 == MOCK_PROJECTS_DATA
+    assert list1 is list2  # Assert that the cached object is returned
     mock_load_yaml.assert_called_once()
 
 
@@ -117,7 +117,8 @@ def test_load_text_config_caching(mock_load_yaml, app):
     with app.app_context():
         g.pop("text_config", None)
         data1 = load_text_config()
-        data2 = load_text_config()
+        # Call again to test caching
+        load_text_config()
     assert data1 == {"key": "value"}
     mock_load_yaml.assert_called_once()
 
