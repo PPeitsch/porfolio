@@ -30,29 +30,27 @@ def test_llm_service_abc_methods(app):
 
     class IncompleteService(LLMService):
         def _initialize_client(self):
-            # This method is implemented...
             return None
 
         def get_chat_response(self, messages, system_prompt, tools=None):
-            # ...but this one calls the abstract method, which should raise.
             return super().get_chat_response(messages, system_prompt, tools)
 
     class AbstractClientService(LLMService):
         def _initialize_client(self):
-            # This one raises directly.
             return super()._initialize_client()
 
         def get_chat_response(self, messages, system_prompt, tools=None):
             pass
 
     with app.app_context():
+        # Test calling an unimplemented method on an instance
         service1 = IncompleteService(api_key="key")
         with pytest.raises(NotImplementedError):
             service1.get_chat_response(messages=[], system_prompt="")
 
-        service2 = AbstractClientService(api_key="key")
+        # Test that instantiation fails if a method directly raises
         with pytest.raises(NotImplementedError):
-            service2._initialize_client()
+            AbstractClientService(api_key="key")
 
 
 @patch("app.common.llm_services.anthropic.Anthropic")
@@ -121,7 +119,7 @@ def test_anthropic_service_unexpected_response(MockAnthropic, app):
     with app.app_context():
         service = AnthropicService(api_key="fake_key")
         response = service.get_chat_response(messages=[], system_prompt="")
-    assert response == ""  # Should return empty string if no text content
+    assert response == ""
 
 
 @patch("app.common.llm_services.anthropic.Anthropic")
