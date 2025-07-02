@@ -106,7 +106,7 @@ cli:
      - "DESCRIPTION"
      - "    Switches the terminal's color scheme. Use 'theme' without arguments to see available themes."
      - "AVAILABLE THEMES"
-     - "    default, light, dracula, solarized"
+     - "    default, dracula, light, solarized, gruvbox"
    clear:
      - "NAME"
      - "    clear - clear the terminal screen"
@@ -129,6 +129,38 @@ cli:
      - "    uname -a"
      - "DESCRIPTION"
      - "    Prints simulated system information for the web-based OS."
+   date:
+     - "NAME"
+     - "    date - display the current date and time"
+     - "DESCRIPTION"
+     - "    Shows the client's current date, time, and timezone information."
+   echo:
+     - "NAME"
+     - "    echo - display a line of text"
+     - "SYNOPSIS"
+     - "    echo [text...]"
+     - "DESCRIPTION"
+     - "    Prints the specified text back to the terminal."
+   win-reset:
+     - "NAME"
+     - "    win-reset - reset window to default size and position"
+     - "DESCRIPTION"
+     - "    Resets the terminal window to its original centered position and default dimensions."
+   maximize:
+     - "NAME"
+     - "    maximize - maximize the window"
+     - "DESCRIPTION"
+     - "    Toggles the window between its normal and maximized state."
+   minimize:
+     - "NAME"
+     - "    minimize - minimize the window"
+     - "DESCRIPTION"
+     - "    Toggles the window between its normal and minimized state."
+   restore:
+     - "NAME"
+     - "    restore - restore the window"
+     - "DESCRIPTION"
+     - "    Restores a window from its minimized or maximized state to its previous dimensions."
 
  # Configuration for the CLI prompt.
  prompt:

@@ -39,7 +39,7 @@ window.initializeCliView = function(callbacks) {
       'man', 'theme', 'maximize', 'minimize', 'restore', 'win-reset', 'clear', 'date', 'echo',
       'uname', 'neofetch', 'exit', 'close'
   ];
-  const availableThemes = ['default', 'light', 'dracula', 'solarized'];
+  const availableThemes = ['default', 'dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
 
   function writeOutput(text, className = null) {
       const line = document.createElement("div");
@@ -84,7 +84,7 @@ window.initializeCliView = function(callbacks) {
   }
 
   async function processCommand(commandLine) {
-      if (!commandLine && authState === 'authenticated') {
+      if (!commandLine.trim() && authState === 'authenticated') {
           writeOutput(promptSpan.textContent + " ");
           return;
       }
@@ -135,13 +135,13 @@ window.initializeCliView = function(callbacks) {
 
       const localCommands = {
           'theme': (args) => {
-              const themeName = (args[0] || 'default').toLowerCase();
+              const themeName = (args[0] || 'dracula').toLowerCase();
               if (availableThemes.includes(themeName)) {
-                  cliWindow.dataset.theme = themeName === 'default' ? '' : themeName;
+                  cliWindow.dataset.theme = themeName === 'default' ? 'dracula' : themeName;
                   localStorage.setItem(THEME_KEY, themeName);
                   writeOutput(`Theme set to '${themeName}'.`, 'info-message');
               } else {
-                  writeOutput(`Error: Theme '${themeName}' not found. Available themes: ${availableThemes.join(', ')}`, 'error-message');
+                  writeOutput(`Error: Theme '${themeName}' not found. Available: ${availableThemes.join(', ')}`, 'error-message');
               }
           },
           'maximize': windowControls.maximize,
@@ -241,7 +241,7 @@ window.initializeCliView = function(callbacks) {
   inputElem.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
           event.preventDefault();
-          const commandLine = inputElem.value.trim();
+          const commandLine = inputElem.value;
           inputElem.value = "";
           processCommand(commandLine);
       } else if (event.key === "ArrowUp") {
@@ -279,17 +279,18 @@ window.initializeCliView = function(callbacks) {
   outputDiv.addEventListener("click", (event) => { if (event.target.tagName !== "A") { inputElem.focus(); } });
 
   function initializeTerminal() {
-      const savedTheme = localStorage.getItem(THEME_KEY) || 'default';
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'dracula';
       if (availableThemes.includes(savedTheme)) {
-          cliWindow.dataset.theme = savedTheme === 'default' ? '' : savedTheme;
+          cliWindow.dataset.theme = savedTheme === 'default' ? 'dracula' : savedTheme;
       }
 
       const token = sessionStorage.getItem(TOKEN_KEY);
       if (token) {
           authState = 'authenticated';
-          showAuthenticatedPrompt();
-          // Fetch initial prompt config silently
-          processCommand('help'); // A simple command to get latest config
+          // Run a harmless command to get latest prompt config on load
+          processCommand('help');
+          // Clear the output from the initial help command
+          setTimeout(() => { clearScreen(); showAuthenticatedPrompt(); }, 100);
       } else {
           authState = 'awaiting_password';
           showLoginPrompt();

@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             viewContainer.innerHTML = await response.text();
 
-            const themesCssId = 'cli-themes-css';
+            const themesCssId = 'shared-themes-css';
             const viewSpecificCssId = 'cli-view-css';
             const viewSpecificJsId = 'cli-view-js';
             const sharedWindowCssId = 'shared-window-css';
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
             loadCSS(_app_urls.cli_css, viewSpecificCssId);
-            loadCSS(_app_urls.cli_themes_css, themesCssId); // Load the new themes css
+            loadCSS(_app_urls.shared_themes_css, themesCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.cli_js, viewSpecificJsId, () => {
                     window.initializeCliView({onClose: showSelector});
@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             viewContainer.innerHTML = await response.text();
 
+            const themesCssId = 'shared-themes-css';
             const viewSpecificCssId = 'recruiter-view-css';
             const viewSpecificJsId = 'recruiter-view-js';
             const sharedWindowCssId = 'shared-window-css';
@@ -119,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
             loadCSS(_app_urls.recruiter_css, viewSpecificCssId);
+            loadCSS(_app_urls.shared_themes_css, themesCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, () => {
                     window.initializeRecruiterView({onClose: showSelector});
@@ -130,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.cleanupRecruiterView && typeof window.cleanupRecruiterView === 'function') {
                     window.cleanupRecruiterView();
                 }
-                cleanupResources([viewSpecificCssId, viewSpecificJsId, sharedWindowCssId, sharedWindowJsId]);
+                cleanupResources([viewSpecificCssId, viewSpecificJsId, sharedWindowCssId, sharedWindowJsId, themesCssId]);
             };
         } catch (error) {
             console.error("Error loading Recruiter view:", error);
@@ -236,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         viewContainer.classList.remove('visible-view');
         viewContainer.classList.add('hidden-view');
-        viewDock.classList.remove('visible'); // Hide the dock
+        viewDock.classList.remove('visible');
 
         if (currentCleanup) {
             currentCleanup();

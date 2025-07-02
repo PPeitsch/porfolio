@@ -1,8 +1,9 @@
-/* Styles specific to the Recruiter Chat content */
+/* --- Chat Content Styles --- */
 
-#chat-content {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #cad3f5; /* Catppuccin Macchiato Text */
+.window-content {
+    /* Use CSS variables for theming */
+    background-color: var(--bg, #1e1e2e);
+    color: var(--fg, #cad3f5);
 }
 
 #chat-messages {
@@ -11,27 +12,25 @@
     padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     scrollbar-width: thin;
-    scrollbar-color: #585b70 #313244;
+    /* Use CSS variables for theming */
+    scrollbar-color: var(--scrollbar-thumb, #585b70) var(--scrollbar-track, #313244);
 }
-#chat-messages::-webkit-scrollbar {
-    width: 8px;
-}
-#chat-messages::-webkit-scrollbar-track {
-    background: #313244;
-}
+#chat-messages::-webkit-scrollbar { width: 8px; }
+#chat-messages::-webkit-scrollbar-track { background: var(--scrollbar-track, #313244); }
 #chat-messages::-webkit-scrollbar-thumb {
-    background-color: #585b70;
+    background-color: var(--scrollbar-thumb, #585b70);
     border-radius: 4px;
-    border: 2px solid #313244;
+    border: 2px solid var(--scrollbar-track, #313244);
 }
 
 .chat-bubble {
-    padding: 0.6rem 1rem;
-    border-radius: 1rem;
     max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 1.25rem;
     line-height: 1.5;
+    word-wrap: break-word;
     opacity: 0;
     transform: translateY(10px);
     animation: fadeUpBubble 0.3s ease-out forwards;
@@ -42,15 +41,17 @@
 }
 
 .chat-bubble.user {
-    background-color: #89b4fa; /* Catppuccin Macchiato Blue */
+    /* Use CSS variables for theming */
+    background-color: var(--blue, #89b4fa);
     color: #1e1e2e;
     border-bottom-right-radius: 0.25rem;
     align-self: flex-end;
 }
 
 .chat-bubble.bot {
-    background-color: #363a4f; /* Catppuccin Macchiato Surface1 */
-    color: #cad3f5;
+    /* Use CSS variables for theming */
+    background-color: var(--bright-black, #363a4f);
+    color: var(--fg, #cad3f5);
     border-bottom-left-radius: 0.25rem;
     align-self: flex-start;
 }
@@ -64,7 +65,7 @@
 .typing-dot {
     width: 8px;
     height: 8px;
-    background-color: #939ab7;
+    background-color: var(--bright-black, #939ab7);
     border-radius: 50%;
     animation: bounce 1.4s infinite ease-in-out both;
 }
@@ -76,70 +77,63 @@
     40% { transform: scale(1.0); }
 }
 
-#chat-input-container {
+
+/* Input Area */
+.chat-input-area {
+    display: flex;
     padding: 0.75rem;
-    border-top: 1px solid #494d64; /* Catppuccin Macchiato Overlay0 */
-    background-color: #1e1e2e;
-    flex-shrink: 0;
+    /* Use CSS variables for theming */
+    border-top: 1px solid var(--border-color, #494d64);
+    background-color: var(--bg, #181926);
 }
-
-#chat-form {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-#chat-input {
+.chat-input {
     flex-grow: 1;
-    padding: 0.5rem 1rem;
-    border: 1px solid #494d64;
-    border-radius: 9999px;
-    background-color: #363a4f;
-    color: #cad3f5;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-#chat-input:focus {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-color, #494d64);
+    border-radius: 20px;
+    /* Use CSS variables for theming */
+    background-color: var(--bright-black, #363a4f);
+    color: var(--fg, #cad3f5);
     outline: none;
-    border-color: #89b4fa;
-    box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.3);
+    transition: border-color 0.2s;
 }
-#chat-input::placeholder {
-    color: #939ab7;
+.chat-input:focus {
+    border-color: var(--blue, #89b4fa);
+}
+.chat-input.password-mask {
+    -webkit-text-security: disc;
+    text-security: disc;
 }
 
-#chat-send-button {
-    flex-shrink: 0;
-    width: 2.25rem;
-    height: 2.25rem;
+.chat-send-button {
+    margin-left: 0.75rem;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background-color: #89b4fa;
-    color: #1e1e2e;
     border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s, transform 0.1s;
+    /* Use CSS variables for theming */
+    background-color: var(--blue, #89b4fa);
+    color: #1e1e2e;
+    font-size: 1rem;
     cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
 }
-#chat-send-button:hover {
-    background-color: #a6e3a1; /* Catppuccin Green for hover */
+.chat-send-button:hover {
+    background-color: var(--bright-blue, #89b4fa);
 }
-#chat-send-button:active {
-    transform: scale(0.9);
-}
-#chat-send-button:disabled {
-    background-color: #5b6078;
-    color: #939ab7;
+.chat-send-button:disabled {
+    background-color: var(--bright-black, #5b6078);
     cursor: not-allowed;
+    transform: none;
 }
-#chat-send-button i {
-    font-size: 0.9rem;
+.chat-send-button:active:not(:disabled) {
+    transform: scale(0.9);
 }
 
 /* Markdown formatting inside bubbles */
 .chat-bubble.bot strong {
     font-weight: 600;
-    color: #f5e0dc; /* Catppuccin Peach */
+    color: var(--magenta, #f5e0dc);
 }
 .chat-bubble.bot ul, .chat-bubble.bot ol {
     padding-left: 1.25rem;
@@ -148,4 +142,30 @@
 }
 .chat-bubble.bot li {
     margin-bottom: 0.25rem;
+}
+
+/* Theme Switcher FAB */
+.theme-fab {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    /* Use CSS variables for theming */
+    background-color: var(--title-bar-bg, #363a4f);
+    color: var(--title-bar-fg, #cad3f5);
+    border: 1px solid var(--border-color, #494d64);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: background-color 0.2s, transform 0.2s ease-out;
+}
+.theme-fab:hover {
+    transform: scale(1.1);
+    background-color: var(--bright-black, #5b6078);
 }
