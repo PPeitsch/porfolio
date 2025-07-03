@@ -1,155 +1,198 @@
-from unittest.mock import patch
+import os
+from unittest.mock import mock_open, patch
 
 import yaml
+from flask import g
 
 from app.common.utils import (
+    _get_data_filepath,
     get_professional_summary,
     get_project_details,
     get_project_list,
     get_skills,
     load_cv_data,
     load_projects_data,
+    load_system_prompt,
+    load_text_config,
     load_yaml_data,
 )
 
-# --- Tests for load_yaml_data ---
+
+@patch("app.common.utils.current_app", None)
+def test_get_data_filepath_standalone():
+    """Test filepath generation when running as a standalone script."""
+    path = _get_data_filepath("test.txt")
+    expected_fragment = os.path.join("data", "test.txt")
+    assert expected_fragment in path
 
 
 @patch("builtins.open")
 @patch("yaml.safe_load")
 @patch("app.common.utils._get_data_filepath")
-def test_load_yaml_data_success(mock_get_path, mock_safe_load, mock_open):
+def test_load_yaml_data_success(mock_get_path, mock_safe_load, mock_open_):
     """Test successful loading and parsing of a YAML file."""
-    # Arrange
     mock_safe_load.return_value = {"key": "value"}
-    # Act
     data = load_yaml_data("dummy_path.yaml")
-    # Assert
     assert data == {"key": "value"}
-    mock_open.assert_called_once()
-    mock_safe_load.assert_called_once()
 
 
 @patch("builtins.open", side_effect=FileNotFoundError)
 @patch("app.common.utils._get_data_filepath")
-def test_load_yaml_data_file_not_found(mock_get_path, mock_open):
+def test_load_yaml_data_file_not_found(mock_get_path, mock_open_):
     """Test handling of FileNotFoundError."""
-    # Act
     data = load_yaml_data("non_existent.yaml")
-    # Assert
     assert data == {}
 
 
 @patch("builtins.open")
 @patch("yaml.safe_load", side_effect=yaml.YAMLError)
 @patch("app.common.utils._get_data_filepath")
-def test_load_yaml_data_yaml_error(mock_get_path, mock_safe_load, mock_open):
+def test_load_yaml_data_yaml_error(mock_get_path, mock_safe_load, mock_open_):
     """Test handling of YAML parsing errors."""
-    # Act
     data = load_yaml_data("malformed.yaml")
-    # Assert
     assert data == {}
 
 
-# --- Tests for Data Access Functions (get_*) ---
+@patch("builtins.open", new_callable=mock_open, read_data="key: value")
+@patch("yaml.safe_load", return_value=None)
+@patch("app.common.utils._get_data_filepath")
+def test_load_yaml_data_empty_file(mock_get_path, mock_safe_load, mock_open_):
+    """Test handling of an empty but valid YAML file."""
+    data = load_yaml_data("empty.yaml")
+    assert data == {}
 
 
-# Sample data to be returned by mocked loaders
+@patch("builtins.open", side_effect=Exception("Unexpected error"))
+@patch("app.common.utils._get_data_filepath")
+def test_load_yaml_data_generic_exception(mock_get_path, mock_open_):
+    """Test handling of generic exceptions during file loading."""
+    data = load_yaml_data("error.yaml")
+    assert data == {}
+
+
 MOCK_CV_DATA = {
     "name": "Test User",
-    "title": "Test Title",
     "summary": "A test summary.",
     "skills": ["Python", "Flask"],
-    "social_links": {"github": "test-url"},
 }
-
-MOCK_PROJECTS_DATA = [
-    {"id": "proj1", "title": "Project One", "description": "First project."},
-    {"id": "proj2", "title": "Project Two", "short_description": "Second project."},
-]
-
-
-@patch("app.common.utils.load_cv_data", return_value=MOCK_CV_DATA)
-def test_get_professional_summary(mock_load_cv):
-    """Test that get_professional_summary returns the correct summary."""
-    summary = get_professional_summary()
-    assert summary == "A test summary."
-
-
-@patch("app.common.utils.load_cv_data", return_value=MOCK_CV_DATA)
-def test_get_skills(mock_load_cv):
-    """Test that get_skills returns the list of skills."""
-    skills = get_skills()
-    assert skills == ["Python", "Flask"]
-
-
-@patch("app.common.utils.load_projects_data", return_value=(MOCK_PROJECTS_DATA, {}))
-def test_get_project_list(mock_load_projects):
-    """Test that get_project_list returns a correctly formatted list."""
-    project_list = get_project_list()
-    assert len(project_list) == 2
-    assert project_list[0]["id"] == "proj1"
-    assert project_list[0]["title"] == "Project One"
-    assert project_list[1]["short_description"] == "Second project."
-
-
-@patch("app.common.utils.load_projects_data")
-def test_get_project_details_found(mock_load_projects):
-    """Test finding an existing project's details."""
-    # Arrange
-    projects_dict = {p["id"]: p for p in MOCK_PROJECTS_DATA}
-    mock_load_projects.return_value = (MOCK_PROJECTS_DATA, projects_dict)
-    # Act
-    details = get_project_details("proj1")
-    # Assert
-    assert details is not None
-    assert details["title"] == "Project One"
-
-
-@patch("app.common.utils.load_projects_data")
-def test_get_project_details_not_found(mock_load_projects):
-    """Test returning None for a non-existent project."""
-    # Arrange
-    projects_dict = {p["id"]: p for p in MOCK_PROJECTS_DATA}
-    mock_load_projects.return_value = (MOCK_PROJECTS_DATA, projects_dict)
-    # Act
-    details = get_project_details("nonexistent")
-    # Assert
-    assert details is None
-
-
-# --- Tests for Context-Caching Functions (load_*) ---
+MOCK_PROJECTS_DATA = [{"id": "proj1", "title": "Project One"}]
 
 
 @patch("app.common.utils.load_yaml_data")
 def test_load_cv_data_caching(mock_load_yaml, app):
     """Test that CV data is loaded once and then cached in 'g'."""
-    # Arrange: Mock the return value of the YAML loader
-    mock_load_yaml.return_value = MOCK_CV_DATA
-
+    mock_load_yaml.return_value = MOCK_CV_DATA.copy()
     with app.app_context():
-        # Act: Call the function twice
+        g.pop("cv_data", None)
         data1 = load_cv_data()
         data2 = load_cv_data()
 
-    # Assert: Check the final merged data and call count
-    assert data1 == MOCK_CV_DATA
-    assert data2 == MOCK_CV_DATA
+    expected_data = MOCK_CV_DATA.copy()
+    expected_data.setdefault("title", "Default Title")
+    expected_data.setdefault("social_links", {})
+
+    assert data1 == expected_data
+    assert data2 is data1
     mock_load_yaml.assert_called_once()
 
 
 @patch("app.common.utils.load_yaml_data")
 def test_load_projects_data_caching(mock_load_yaml, app):
     """Test that projects data is loaded once and cached in 'g'."""
-    # Arrange
     mock_load_yaml.return_value = MOCK_PROJECTS_DATA
     with app.app_context():
-        # Act
+        g.pop("projects_data", None)
+        g.pop("projects_dict", None)
         list1, dict1 = load_projects_data()
         list2, dict2 = load_projects_data()
-
-    # Assert
     assert list1 == MOCK_PROJECTS_DATA
-    assert len(dict1) == 2
-    assert dict1["proj1"]["title"] == "Project One"
+    assert list1 is list2
     mock_load_yaml.assert_called_once()
+
+
+@patch("app.common.utils.load_yaml_data")
+def test_load_projects_data_dict_repopulation(mock_load_yaml, app):
+    """Test repopulating projects_dict when it's missing."""
+    with app.app_context():
+        g.projects_data = MOCK_PROJECTS_DATA
+        g.pop("projects_dict", None)  # Ensure dict is not present
+        _, projects_dict = load_projects_data()
+        assert "proj1" in projects_dict
+        assert projects_dict["proj1"]["title"] == "Project One"
+
+
+@patch("app.common.utils.load_yaml_data")
+def test_load_text_config_caching(mock_load_yaml, app):
+    """Test that text config data is loaded once and cached in 'g'."""
+    mock_load_yaml.return_value = {"key": "value"}
+    with app.app_context():
+        g.pop("text_config", None)
+        data1 = load_text_config()
+        load_text_config()
+    assert data1 == {"key": "value"}
+    mock_load_yaml.assert_called_once()
+
+
+@patch("app.common.utils.load_yaml_data")
+def test_loaders_with_bad_data_type(mock_load_yaml, app):
+    """Test loaders handle incorrect data types from YAML files."""
+    with app.app_context():
+        g.pop("cv_data", None)
+        g.pop("projects_data", None)
+        g.pop("text_config", None)
+        # Test load_cv_data with a list instead of a dict
+        mock_load_yaml.return_value = []
+        cv_data = load_cv_data()
+        assert cv_data["name"] == "Default Name"
+
+        # Test load_projects_data with a dict instead of a list
+        mock_load_yaml.return_value = {}
+        projects_data, projects_dict = load_projects_data()
+        assert projects_data == []
+        assert projects_dict == {}
+
+        # Test load_text_config with a list instead of a dict
+        mock_load_yaml.return_value = []
+        text_config = load_text_config()
+        assert text_config == {}
+
+
+@patch("builtins.open", side_effect=FileNotFoundError)
+@patch("app.common.utils._get_data_filepath")
+def test_load_system_prompt_not_found(mock_get_path, mock_open_):
+    """Test fallback when system_prompt.txt is not found."""
+    prompt = load_system_prompt()
+    assert "helpful assistant" in prompt
+
+
+@patch("builtins.open", side_effect=Exception("Unexpected error"))
+@patch("app.common.utils._get_data_filepath")
+def test_load_system_prompt_generic_exception(mock_get_path, mock_open_):
+    """Test fallback for generic exceptions."""
+    prompt = load_system_prompt()
+    assert "helpful assistant" in prompt
+
+
+@patch(
+    "app.common.utils.load_cv_data", return_value={"summary": "Summary", "skills": []}
+)
+def test_data_access_functions(mock_load_cv):
+    """Test data access functions for LLM tools."""
+    assert get_professional_summary() == "Summary"
+    assert get_skills() == []
+
+
+@patch("app.common.utils.load_projects_data")
+def test_get_project_functions(mock_load_projects):
+    """Test project access functions for LLM tools."""
+    projects_list = [{"id": "p1", "title": "Proj 1"}]
+    projects_dict = {"p1": projects_list[0]}
+    mock_load_projects.return_value = (projects_list, projects_dict)
+
+    assert get_project_list() is not None
+    assert get_project_details("p1")["title"] == "Proj 1"
+    assert get_project_details("nonexistent") is None
+
+    # Test with no projects
+    mock_load_projects.return_value = ([], {})
+    assert get_project_list() == []

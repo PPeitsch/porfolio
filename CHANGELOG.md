@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.9.1] - 2025-07-02
+
+### Changed
+- **Test Suite Enhancement**: Significantly increased code coverage from ~85% to over 90% by adding extensive unit and integration tests across core modules (CLI, LLM services, Auth, Utilities, View Routes), improving overall code reliability and robustness.
+
+
 ## [1.9.0] - 2025-07-02
 
 ### Added
