@@ -1,6 +1,6 @@
 import logging
 
-from flask import Blueprint, render_template
+from flask import Blueprint, current_app, render_template
 
 from app.common.utils import load_cv_data
 
@@ -20,15 +20,23 @@ def selector():
     """Serves the initial view selector page.
 
     This is the main entry point of the application. It loads necessary CV
-    data to display on the selector screen and renders the main selector
-    template.
+    data and configuration flags to display on the selector screen and
+    renders the main selector template.
 
     Returns:
         Response: The rendered selector.html template.
     """
     logger.info("Serving view selector page.")
     cv_data = load_cv_data()
-    return render_template("selector.html", cv=cv_data)
+    banner_enabled = current_app.config.get("BANNER_ENABLED", False)
+    banner_message = current_app.config.get("BANNER_MESSAGE", "")
+
+    return render_template(
+        "selector.html",
+        cv=cv_data,
+        banner_enabled=banner_enabled,
+        banner_message=banner_message,
+    )
 
 
 @shell_bp.route("/view/<view_name>")
