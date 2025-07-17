@@ -19,7 +19,8 @@ class Config:
         "t",
     )
     BANNER_MESSAGE = os.environ.get(
-        "BANNER_MESSAGE", "This website is under active configuration."
+        "BANNER_MESSAGE",
+        "Please note: This site is under active configuration. Final updates are planned by July 21st.",
     )
 
     # LLM Provider Configuration
