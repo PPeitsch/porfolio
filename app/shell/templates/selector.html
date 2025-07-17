@@ -71,6 +71,14 @@
         </button>
     </div>
 
+    <!-- ===== Floating Configuration Banner ===== -->
+    {% if banner_enabled %}
+    <div class="floating-banner">
+        <i class="fas fa-info-circle mr-2"></i>
+        <span>{{ banner_message }}</span>
+    </div>
+    {% endif %}
+
 
     <!-- ===== Scripts ===== -->
     <script>
