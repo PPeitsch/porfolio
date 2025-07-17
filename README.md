@@ -53,6 +53,7 @@ An interactive, multi-view portfolio website built with Python, Flask, and vanil
 *   **🔧 Highly Configurable:**
     *   Dynamic content (CV, projects, text templates) is loaded from simple `.yaml` and `.txt` files, making updates easy and code-free.
     *   LLM provider (Anthropic, OpenAI, Gemini) and specific models can be configured entirely through environment variables.
+    *   UI feature flags (like the 'under configuration' widget) can be toggled via the `.env` file.
 *   **✅ Quality Assured:** Enforces a high standard of code quality through a robust CI/CD pipeline and pre-commit hooks. Includes automated formatting (Black, isort), linting (Flake8), static type checking (MyPy), security scanning (Bandit), and a comprehensive test suite with over 80% coverage.
 
 ### 🔐 Authentication in Action

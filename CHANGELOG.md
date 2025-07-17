@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.9.2] - 2025-07-16
+
+### Added
+- **Configurable Status Widget**: Implemented a floating UI widget, controlled by environment variables (`BANNER_ENABLED`, `BANNER_MESSAGE`), to display a persistent status message (e.g., "under active configuration"). This helps manage user expectations during development or maintenance periods.
+
+### Changed
+- The status widget was redesigned from a simple banner to a more discreet gear icon with a persistent, styled tooltip for better UI integration and clarity.
+
+
 ## [1.9.1] - 2025-07-02
 
 ### Changed

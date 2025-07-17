@@ -12,6 +12,20 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-should-be-changed"
     RECRUITER_ACCESS_CODE = os.environ.get("RECRUITER_ACCESS_CODE") or "default-code"
 
+    # UI Feature Flags
+    BANNER_ENABLED = os.environ.get("BANNER_ENABLED", "false").lower() in (
+        "true",
+        "1",
+        "t",
+    )
+    BANNER_MESSAGE = os.environ.get(
+        "BANNER_MESSAGE",
+        (
+            "Please note: This site is under active configuration. "
+            "Final updates are planned by July 21st."
+        ),
+    )
+
     # LLM Provider Configuration
     # Determines which LLM service to use ('anthropic', 'openai', 'gemini')
     LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic").lower()

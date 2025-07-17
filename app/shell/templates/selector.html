@@ -71,6 +71,16 @@
         </button>
     </div>
 
+    <!-- ===== Floating Configuration Widget ===== -->
+    {% if banner_enabled %}
+    <div class="config-widget-wrapper">
+        <div class="config-tooltip">{{ banner_message }}</div>
+        <div class="config-widget-icon">
+            <i class="fas fa-cog"></i>
+        </div>
+    </div>
+    {% endif %}
+
 
     <!-- ===== Scripts ===== -->
     <script>
