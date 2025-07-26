@@ -19,11 +19,11 @@ anyio==4.9.0
     #   google-genai
     #   httpx
     #   openai
-authlib==1.6.0
+authlib==1.6.1
     # via
     #   -c constraints.txt
     #   safety
-bandit==1.8.3
+bandit==1.8.6
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -43,7 +43,7 @@ cachetools==5.5.2
     # via
     #   -c constraints.txt
     #   google-auth
-certifi==2025.6.15
+certifi==2025.7.14
     # via
     #   -c constraints.txt
     #   httpcore
@@ -61,7 +61,7 @@ charset-normalizer==3.4.2
     # via
     #   -c constraints.txt
     #   requests
-click==8.1.8
+click==8.2.1
     # via
     #   -c constraints.txt
     #   black
@@ -70,15 +70,15 @@ click==8.1.8
     #   pip-tools
     #   safety
     #   typer
-coverage[toml]==7.9.1
+coverage[toml]==7.10.0
     # via
     #   -c constraints.txt
     #   pytest-cov
-cryptography==45.0.4
+cryptography==45.0.5
     # via
     #   -c constraints.txt
     #   authlib
-distlib==0.3.9
+distlib==0.4.0
     # via
     #   -c constraints.txt
     #   virtualenv
@@ -98,7 +98,7 @@ filelock==3.16.1
     #   huggingface-hub
     #   safety
     #   virtualenv
-flake8==7.2.0
+flake8==7.3.0
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -106,7 +106,7 @@ flask==3.1.1
     # via
     #   -c constraints.txt
     #   -r /home/pablo/projects/porfolio/requirements.in
-fsspec==2025.5.1
+fsspec==2025.7.0
     # via
     #   -c constraints.txt
     #   huggingface-hub
@@ -137,7 +137,7 @@ httpx==0.28.1
     #   google-genai
     #   openai
     #   safety
-huggingface-hub==0.33.0
+huggingface-hub==0.34.1
     # via
     #   -c constraints.txt
     #   tokenizers
@@ -199,7 +199,7 @@ mdurl==0.1.2
     # via
     #   -c constraints.txt
     #   markdown-it-py
-mypy==1.16.1
+mypy==1.17.0
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -216,7 +216,7 @@ nodeenv==1.9.1
     # via
     #   -c constraints.txt
     #   pre-commit
-openai==1.88.0
+openai==1.97.1
     # via
     #   -c constraints.txt
     #   -r /home/pablo/projects/porfolio/requirements.in
@@ -269,7 +269,7 @@ pyasn1-modules==0.4.2
     # via
     #   -c constraints.txt
     #   google-auth
-pycodestyle==2.13.0
+pycodestyle==2.14.0
     # via
     #   -c constraints.txt
     #   flake8
@@ -289,11 +289,11 @@ pydantic-core==2.23.4
     # via
     #   -c constraints.txt
     #   pydantic
-pyflakes==3.3.2
+pyflakes==3.4.0
     # via
     #   -c constraints.txt
     #   flake8
-pygments==2.19.1
+pygments==2.19.2
     # via
     #   -c constraints.txt
     #   pytest
@@ -307,7 +307,7 @@ pyproject-hooks==1.2.0
     #   -c constraints.txt
     #   build
     #   pip-tools
-pytest==8.4.0
+pytest==8.4.1
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -316,7 +316,7 @@ pytest-cov==5.0.0
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
-python-dotenv==1.1.0
+python-dotenv==1.1.1
     # via
     #   -c constraints.txt
     #   -r /home/pablo/projects/porfolio/requirements.in
@@ -337,7 +337,7 @@ requests==2.32.4
     #   google-genai
     #   huggingface-hub
     #   safety
-rich==14.0.0
+rich==14.1.0
     # via
     #   -c constraints.txt
     #   bandit
@@ -355,7 +355,7 @@ ruamel-yaml-clib==0.2.12
     # via
     #   -c constraints.txt
     #   ruamel-yaml
-safety==3.5.2
+safety==3.6.0
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -382,7 +382,7 @@ tenacity==8.5.0
     #   -c constraints.txt
     #   google-genai
     #   safety
-tokenizers==0.21.1
+tokenizers==0.21.2
     # via
     #   -c constraints.txt
     #   anthropic
@@ -404,7 +404,7 @@ types-pyyaml==6.0.12.20250516
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   -c constraints.txt
     #   anthropic
@@ -418,15 +418,16 @@ typing-extensions==4.14.0
     #   safety
     #   safety-schemas
     #   typer
-urllib3==2.4.0
+urllib3==2.5.0
     # via
     #   -c constraints.txt
+    #   -r /home/pablo/projects/porfolio/requirements.in
     #   requests
-virtualenv==20.31.2
+virtualenv==20.32.0
     # via
     #   -c constraints.txt
     #   pre-commit
-websockets==14.2
+websockets==15.0.1
     # via
     #   -c constraints.txt
     #   google-genai

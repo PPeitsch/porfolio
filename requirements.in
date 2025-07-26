@@ -7,3 +7,6 @@ openai>=1.0,<2.0
 google-genai==1.22.0
 # Werkzeug is usually installed by Flask, but pin if needed
 Werkzeug>=3.0
+
+# Force patched version of transitive dependency to resolve security vulnerability
+urllib3>=2.5.0
