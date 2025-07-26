@@ -7,11 +7,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const cliOption = document.getElementById('select-cli');
     const recruiterOption = document.getElementById('select-recruiter');
     const visualOption = document.getElementById('select-visual');
+    const themeSwitcher = document.getElementById('dock-theme-switcher');
 
     // --- State Variables ---
     let currentView = null;
     let currentCleanup = null;
     let isTransitioning = false;
+
+    // --- Theme Management ---
+    const THEME_KEY = 'cli_theme';
+    const availableThemes = ['dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
+    let currentThemeIndex = 0;
+
+    function applyTheme(themeName) {
+        const themeIndex = availableThemes.indexOf(themeName);
+        currentThemeIndex = themeIndex !== -1 ? themeIndex : 0;
+        const activeTheme = availableThemes[currentThemeIndex];
+
+        // Apply to any open OS-style window
+        document.querySelectorAll('.os-window').forEach(win => {
+            win.dataset.theme = activeTheme;
+        });
+
+        localStorage.setItem(THEME_KEY, activeTheme);
+        console.log(`Global theme applied: ${activeTheme}`);
+    }
+
+    function cycleTheme() {
+        currentThemeIndex = (currentThemeIndex + 1) % availableThemes.length;
+        const nextTheme = availableThemes[currentThemeIndex];
+        applyTheme(nextTheme);
+    }
+
 
     // --- Helper Functions ---
     function loadCSS(href, id) {
@@ -92,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.cli_js, viewSpecificJsId, () => {
                     window.initializeCliView({onClose: showSelector});
+                    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula'); // Re-apply theme on new window
                 });
             });
 
@@ -124,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, () => {
                     window.initializeRecruiterView({onClose: showSelector});
+                    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula'); // Re-apply theme on new window
                 });
             });
 
@@ -266,12 +295,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cliOption) cliOption.addEventListener('click', () => showView('Developer'));
     if (recruiterOption) recruiterOption.addEventListener('click', () => showView('Recruiter'));
     if (visualOption) visualOption.addEventListener('click', () => showView('Visual'));
+    if (themeSwitcher) themeSwitcher.addEventListener('click', cycleTheme);
+
 
     // --- Dock Event Listeners ---
     if (viewDock) {
         viewDock.addEventListener('click', (event) => {
             const dockItem = event.target.closest('.dock-item');
-            if (dockItem) {
+            if (dockItem && dockItem.id !== 'dock-theme-switcher' && !dockItem.closest('.group')) {
                 const viewName = dockItem.dataset.view;
                 if (viewName === 'Home') {
                     showSelector();
@@ -287,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectorContainer.classList.remove('hidden-view');
     viewContainer.classList.add('hidden-view');
     viewContainer.classList.remove('visible-view');
+    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula');
 
     console.log("Selector view initialized with transitions and ready.");
 });
