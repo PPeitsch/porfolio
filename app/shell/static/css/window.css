@@ -28,7 +28,7 @@
 
 .os-window.maximized {
     width: 100% !important;
-    height: 100% !important;
+    height: calc(100% - 80px) !important; /* Adjust height to leave space for the dock */
     top: 0 !important;
     left: 0 !important;
     max-width: none;
