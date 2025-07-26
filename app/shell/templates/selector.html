@@ -56,6 +56,7 @@
 
     <!-- ===== View Navigation Dock ===== -->
     <div id="view-dock" class="view-dock">
+        <!-- View Controls -->
         <button id="dock-home" class="dock-item" data-view="Home" aria-label="Go to Home Selector">
             <i class="fas fa-th-large"></i>
         </button>
@@ -69,17 +70,23 @@
         <button id="dock-visual" class="dock-item" data-view="Visual" aria-label="Open Visual View">
             <i class="fas fa-eye"></i>
         </button>
-    </div>
 
-    <!-- ===== Floating Configuration Widget ===== -->
-    {% if banner_enabled %}
-    <div class="config-widget-wrapper">
-        <div class="config-tooltip">{{ banner_message }}</div>
-        <div class="config-widget-icon">
-            <i class="fas fa-cog"></i>
+        <!-- Utility Controls -->
+        <div class="dock-separator"></div>
+        <button id="dock-theme-switcher" class="dock-item" data-view="Theme" aria-label="Switch Theme">
+            <i class="fas fa-palette"></i>
+        </button>
+        {% if banner_enabled %}
+        <div class="relative group">
+            <button id="dock-info" class="dock-item" data-view="Info" aria-label="Show Info">
+                <i class="fas fa-cog"></i>
+            </button>
+            <div class="config-tooltip group-hover:opacity-100 group-hover:visible">
+                {{ banner_message }}
+            </div>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
 
 
     <!-- ===== Scripts ===== -->

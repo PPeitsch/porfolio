@@ -27,7 +27,7 @@ cachetools==5.5.2
     # via
     #   -c constraints.txt
     #   google-auth
-certifi==2025.6.15
+certifi==2025.7.14
     # via
     #   -c constraints.txt
     #   httpcore
@@ -37,7 +37,7 @@ charset-normalizer==3.4.2
     # via
     #   -c constraints.txt
     #   requests
-click==8.1.8
+click==8.2.1
     # via
     #   -c constraints.txt
     #   flask
@@ -54,7 +54,7 @@ flask==3.1.1
     # via
     #   -c constraints.txt
     #   -r requirements.in
-fsspec==2025.5.1
+fsspec==2025.7.0
     # via
     #   -c constraints.txt
     #   huggingface-hub
@@ -84,7 +84,7 @@ httpx==0.28.1
     #   anthropic
     #   google-genai
     #   openai
-huggingface-hub==0.33.0
+huggingface-hub==0.34.1
     # via
     #   -c constraints.txt
     #   tokenizers
@@ -113,7 +113,7 @@ markupsafe==3.0.2
     #   flask
     #   jinja2
     #   werkzeug
-openai==1.88.0
+openai==1.97.1
     # via
     #   -c constraints.txt
     #   -r requirements.in
@@ -144,7 +144,7 @@ pyjwt==2.10.1
     # via
     #   -c constraints.txt
     #   -r requirements.in
-python-dotenv==1.1.0
+python-dotenv==1.1.1
     # via
     #   -c constraints.txt
     #   -r requirements.in
@@ -172,7 +172,7 @@ tenacity==8.5.0
     # via
     #   -c constraints.txt
     #   google-genai
-tokenizers==0.21.1
+tokenizers==0.21.2
     # via
     #   -c constraints.txt
     #   anthropic
@@ -181,7 +181,7 @@ tqdm==4.67.1
     #   -c constraints.txt
     #   huggingface-hub
     #   openai
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   -c constraints.txt
     #   anthropic
@@ -191,11 +191,12 @@ typing-extensions==4.14.0
     #   openai
     #   pydantic
     #   pydantic-core
-urllib3==2.4.0
+urllib3==2.5.0
     # via
     #   -c constraints.txt
+    #   -r requirements.in
     #   requests
-websockets==14.2
+websockets==15.0.1
     # via
     #   -c constraints.txt
     #   google-genai

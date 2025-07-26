@@ -19,9 +19,8 @@ window.initializeRecruiterView = function (callbacks) {
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('chat-send-button');
-    const themeSwitcher = document.getElementById('theme-switcher-fab');
 
-    if (!chatMessages || !chatForm || !chatInput || !sendButton || !themeSwitcher) {
+    if (!chatMessages || !chatForm || !chatInput || !sendButton) {
         console.error("One or more Chat UI content elements are missing!");
         return;
     }
@@ -31,20 +30,9 @@ window.initializeRecruiterView = function (callbacks) {
     const TOKEN_KEY = 'app_access_token';
     const THEME_KEY = 'cli_theme';
     let conversationHistory = [];
-    const availableThemes = ['dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
-    let currentThemeIndex = 0;
 
     function applyTheme(themeName) {
         chatWindow.dataset.theme = themeName;
-        localStorage.setItem(THEME_KEY, themeName);
-        currentThemeIndex = availableThemes.indexOf(themeName);
-        if (currentThemeIndex === -1) currentThemeIndex = 0;
-    }
-
-    function cycleTheme() {
-        currentThemeIndex = (currentThemeIndex + 1) % availableThemes.length;
-        const nextTheme = availableThemes[currentThemeIndex];
-        applyTheme(nextTheme);
     }
 
     function parseMarkdown(text) {
@@ -211,7 +199,6 @@ window.initializeRecruiterView = function (callbacks) {
     }
 
     chatForm.addEventListener('submit', handleFormSubmit);
-    themeSwitcher.addEventListener('click', cycleTheme);
     initializeChat();
 
     console.log("Recruiter (Chat) View Specifics Initialized with History.");
@@ -219,6 +206,5 @@ window.initializeRecruiterView = function (callbacks) {
     window.cleanupRecruiterView = () => {
         console.log("Running cleanup for Recruiter Chat view...");
         chatForm.removeEventListener('submit', handleFormSubmit);
-        themeSwitcher.removeEventListener('click', cycleTheme);
     };
 }
