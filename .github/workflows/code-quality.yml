@@ -50,4 +50,4 @@ jobs:
         run: bandit -r . --exclude ./venv,./.venv -c pyproject.toml
 
       - name: Run Safety (Dependency Check)
-        run: safety check --full-report
+        run: safety scan --output=screen
