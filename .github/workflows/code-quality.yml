@@ -49,5 +49,7 @@ jobs:
       - name: Run Bandit (SAST)
         run: bandit -r . --exclude ./venv,./.venv -c pyproject.toml
 
-      - name: Run Safety (Dependency Check)
-        run: safety scan --output=screen
+      - name: Run Safety CLI Action
+        uses: pyupio/safety-action@v1
+        with:
+          api-key: ${{ secrets.SAFETY_API_KEY }}
