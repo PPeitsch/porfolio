@@ -143,29 +143,3 @@
 .chat-bubble.bot li {
     margin-bottom: 0.25rem;
 }
-
-/* Theme Switcher FAB */
-.theme-fab {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    /* Use CSS variables for theming */
-    background-color: var(--title-bar-bg, #363a4f);
-    color: var(--title-bar-fg, #cad3f5);
-    border: 1px solid var(--border-color, #494d64);
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-    z-index: 10;
-    transition: background-color 0.2s, transform 0.2s ease-out;
-}
-.theme-fab:hover {
-    transform: scale(1.1);
-    background-color: var(--bright-black, #5b6078);
-}

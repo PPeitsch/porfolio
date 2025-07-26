@@ -163,14 +163,29 @@ body {
 }
 
 /* --- Floating Configuration Widget Styles --- */
-.config-widget-wrapper {
-    position: fixed;
-    bottom: 85px;
-    right: 20px;
-    z-index: 1010;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.config-tooltip {
+    position: absolute;
+    bottom: 110%; /* Position above the icon */
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 14px;
+    background-color: rgba(30, 30, 46, 0.85); /* Darker background for contrast */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 8px;
+    color: #cad3f5; /* Lighter text for dark background */
+    font-size: 13px;
+    font-weight: 500;
+    width: 240px; /* Give it a fixed width */
+    text-align: center;
+    line-height: 1.4;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none;
+    z-index: 1011;
 }
 
 .config-widget-icon {
