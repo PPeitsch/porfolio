@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Your fixed bugs here.
 
+## [1.9.4] - 2025-08-12
+
+### Added
+- **Favicon**: Added a site favicon to improve browser branding and resolve `404` errors for `/favicon.ico`.
+
 
 ## [1.9.3] - 2025-07-26
 
