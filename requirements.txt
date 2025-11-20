@@ -156,6 +156,7 @@ pyyaml==6.0.2
 requests==2.32.4
     # via
     #   -c constraints.txt
+    #   -r requirements.in
     #   google-genai
     #   huggingface-hub
 rsa==4.9.1
