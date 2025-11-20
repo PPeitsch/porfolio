@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Your fixed bugs here.
 
+
+## [1.9.5] - 2025-11-19
+
+### Fixed
+- **AI Data Sharing**: Corrected an issue where the AI assistant would incorrectly refuse to provide raw structured data (e.g., JSON) when explicitly requested. The system prompt was updated to permit this behavior. (Closes #69)
+
+### Changed
+- **LLM Tool Robustness**: The `get_project_details` tool was refactored to return a structured error message instead of `None` for invalid project IDs, improving the AI's ability to handle user errors gracefully.
+
+
 ## [1.9.4] - 2025-08-12
 
 ### Added
