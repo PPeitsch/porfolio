@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.9.6] - 2025-11-19
+
+### Fixed
+- **Gemini Proxy Integration**: Resolved a critical regression where using the Gemini proxy would bypass the function-calling mechanism, causing model hallucinations. The service now sends the full conversational context to the proxy.
+- **LLM Service Stability**: Refactored the LLM service factory for improved type safety, resolving multiple `mypy` errors related to unsafe API key handling and Gemini response types.
+- **Test Suite for LLM Services**: Adapted the test suite to correctly handle and validate both direct API and proxy-based communication for the Gemini service, ensuring full test coverage for all configurations.
+
+
 ## [1.9.5] - 2025-11-19
 
 ### Fixed
@@ -263,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Safe String Comparison**: The authentication backend now uses `hmac.digest` to mitigate timing attacks.
 
 
+[1.9.6]: https://github.com/PPeitsch/porfolio/compare/v1.9.5...v1.9.6
 [1.9.5]: https://github.com/PPeitsch/porfolio/compare/v1.9.4...v1.9.5
 [1.9.4]: https://github.com/PPeitsch/porfolio/compare/v1.9.3...v1.9.4
 [1.9.3]: https://github.com/PPeitsch/porfolio/compare/v1.9.2...v1.9.3

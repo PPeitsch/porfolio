@@ -1,10 +1,11 @@
 import abc
 import json
 import logging
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import anthropic
 import openai
+import requests
 from flask import current_app
 from google import genai
 from google.genai import types
@@ -158,13 +159,23 @@ class OpenAIService(LLMService):
 
 class GeminiService(LLMService):
     """
-    LLM Service implementation for Google's Gemini models, based on the `genai`
-    library.
+    LLM Service implementation for Google's Gemini models.
+
+    Supports direct API calls via the `genai` library and can route requests
+    through a configurable HTTP proxy for environments where direct access
+    is restricted.
     """
 
-    def _initialize_client(self) -> genai.Client:
-        logger.info("Initializing Google Gemini client (genai library).")
-        return genai.Client(api_key=self.api_key)
+    def _initialize_client(self) -> Optional[genai.Client]:
+        # Defer client initialization to the chat response method, as it's not
+        # needed if we are using the proxy.
+        if not current_app.config.get("GEMINI_PROXY_URL"):
+            logger.info("Initializing Google Gemini client (genai library).")
+            return genai.Client(api_key=self.api_key)
+        logger.info(
+            "Google Gemini client configured to use proxy. Skipping genai init."
+        )
+        return None
 
     def get_chat_response(
         self,
@@ -172,6 +183,41 @@ class GeminiService(LLMService):
         system_prompt: str,
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Union[str, List[Dict[str, Any]]]:
+        proxy_url = current_app.config.get("GEMINI_PROXY_URL")
+
+        if proxy_url:
+            # --- Proxy Logic ---
+            logger.info(f"Routing Gemini request through proxy: {proxy_url}")
+            payload = {
+                "messages": messages,
+                "system_prompt": system_prompt,
+                "tools": tools,
+            }
+            try:
+                response = requests.post(proxy_url, json=payload, timeout=120)
+                response.raise_for_status()  # Raise an exception for bad status codes
+                # Cast the JSON response to the expected type to satisfy mypy
+                result = cast(
+                    Union[str, List[Dict[str, Any]]],
+                    response.json().get("reply", "Error: No reply from proxy."),
+                )
+                return result
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Gemini proxy request failed: {e}")
+                return (
+                    "Sorry, there was an error communicating with the AI service proxy."
+                )
+            except Exception as e:
+                logger.error(f"An unexpected error occurred with Gemini proxy: {e}")
+                return (
+                    "An unexpected error occurred while processing your proxy request."
+                )
+
+        # --- Direct API Logic (genai library) ---
+        if not self.client:
+            logger.error("Gemini client is not initialized for direct API call.")
+            return "Error: Gemini client is not configured."
+
         gemini_tools = None
         if tools:
             function_declarations = [
@@ -184,7 +230,6 @@ class GeminiService(LLMService):
             ]
             gemini_tools = [types.Tool(function_declarations=function_declarations)]
 
-        # For this library version, the system prompt must be the first user message.
         gemini_history = [
             types.Content(role="user", parts=[types.Part(text=system_prompt)])
         ]
@@ -233,6 +278,11 @@ class GeminiService(LLMService):
                 config=config,
             )
 
+            # Type guard to ensure response has the expected structure
+            if not isinstance(response, types.GenerateContentResponse):
+                logger.error(f"Unexpected response type from Gemini: {type(response)}")
+                return "An unexpected error occurred with the AI service."
+
             if not response.candidates:
                 logger.error("No response candidates received from Gemini.")
                 return "An error occurred while communicating with the AI service."
@@ -253,12 +303,8 @@ class GeminiService(LLMService):
                     )
 
             if has_function_call:
-                logger.info(
-                    f"Gemini requested tool calls: {[tc['name'] for tc in tool_calls]}"
-                )
                 return tool_calls
 
-            logger.info("Gemini returned a text response.")
             return str(response.text).strip()
 
         except Exception as e:
@@ -269,35 +315,32 @@ class GeminiService(LLMService):
 def get_llm_service() -> Optional[LLMService]:
     """
     Factory function to get the configured LLM service instance.
+    Uses a map for cleaner, more scalable provider selection.
     """
-    provider = current_app.config.get("LLM_PROVIDER")
-    service_class: Optional[Type[LLMService]] = None
-    api_key: Optional[str] = None
+    provider = current_app.config.get("LLM_PROVIDER", "").lower()
 
-    if provider == "anthropic":
-        api_key = current_app.config.get("ANTHROPIC_API_KEY")
-        service_class = AnthropicService
-    elif provider == "openai":
-        api_key = current_app.config.get("OPENAI_API_KEY")
-        service_class = OpenAIService
-    elif provider == "gemini":
-        api_key = current_app.config.get("GEMINI_API_KEY")
-        service_class = GeminiService
-    else:
-        logger.error(f"Unsupported LLM_PROVIDER configured: '{provider}'")
+    service_map: Dict[str, Tuple[Type[LLMService], str]] = {
+        "anthropic": (AnthropicService, "ANTHROPIC_API_KEY"),
+        "openai": (OpenAIService, "OPENAI_API_KEY"),
+        "gemini": (GeminiService, "GEMINI_API_KEY"),
+    }
+
+    if provider not in service_map:
+        logger.error(f"Unsupported or missing LLM_PROVIDER configured: '{provider}'")
         return None
 
-    if not service_class:
-        return None
+    service_class, api_key_name = service_map[provider]
+    api_key = current_app.config.get(api_key_name)
 
     if not api_key:
         logger.error(
             f"LLM_PROVIDER is set to '{provider}', but the corresponding API key "
-            f"({provider.upper()}_API_KEY) is missing."
+            f"'{api_key_name}' is missing."
         )
         return None
 
     try:
+        # At this point, api_key is guaranteed to be a str, satisfying mypy.
         return service_class(api_key=api_key)
     except Exception as e:
         logger.error(f"Failed to instantiate LLM service for '{provider}': {e}")
