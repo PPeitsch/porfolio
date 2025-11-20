@@ -188,10 +188,15 @@ class GeminiService(LLMService):
         if proxy_url:
             # --- Proxy Logic ---
             logger.info(f"Routing Gemini request through proxy: {proxy_url}")
+
+            # Retrieve the configured model name, defaulting to a stable version
+            model_name = current_app.config.get("GEMINI_MODEL", "gemini-2.0-flash")
+
             payload = {
                 "messages": messages,
                 "system_prompt": system_prompt,
                 "tools": tools,
+                "model": model_name,  # Pass the specific model to the proxy
             }
             try:
                 response = requests.post(proxy_url, json=payload, timeout=120)
