@@ -63,7 +63,10 @@ def get_tool_definitions(owner_name: str) -> List[Dict[str, Any]]:
             "name": "get_project_details",
             "description": descriptions.get(
                 "get_project_details",
-                "Retrieve detailed information for a specific project.",
+                (
+                    "Retrieve detailed information for a specific project. "
+                    "If the project ID is not found, it returns an error message."
+                ),
             ).format(name=owner_name),
             "input_schema": {
                 "type": "object",

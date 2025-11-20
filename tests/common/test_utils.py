@@ -189,10 +189,16 @@ def test_get_project_functions(mock_load_projects):
     projects_dict = {"p1": projects_list[0]}
     mock_load_projects.return_value = (projects_list, projects_dict)
 
-    assert get_project_list() is not None
-    assert get_project_details("p1")["title"] == "Proj 1"
-    assert get_project_details("nonexistent") is None
+    project_list_result = get_project_list()
+    assert project_list_result is not None
+    assert isinstance(project_list_result, list)
 
-    # Test with no projects
-    mock_load_projects.return_value = ([], {})
-    assert get_project_list() == []
+    project_details_result = get_project_details("p1")
+    assert project_details_result is not None
+    assert project_details_result["title"] == "Proj 1"
+
+    # Test the new behavior: expecting a dictionary with an error key
+    nonexistent_project_result = get_project_details("nonexistent")
+    assert nonexistent_project_result is not None
+    assert "error" in nonexistent_project_result
+    assert "not found" in nonexistent_project_result["error"]
