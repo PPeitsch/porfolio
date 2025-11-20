@@ -157,15 +157,20 @@ def get_project_list() -> List[Dict[str, str]]:
     return project_summaries
 
 
-def get_project_details(project_id: str) -> Optional[Dict[str, Any]]:
+def get_project_details(project_id: str) -> Dict[str, Any]:
     """
     Retrieves detailed information for a specific project by its ID.
-    Returns None if the project is not found.
+    Returns a dictionary with an error message if the project is not found.
     """
     _, projects_dict = load_projects_data()
     project = projects_dict.get(project_id)
+
+    if project is None:
+        # Return a structured error message if the project is not found
+        return {"error": f"Project with ID '{project_id}' not found."}
+
     # Cast the result to the expected return type for mypy
-    return cast(Optional[Dict[str, Any]], project)
+    return cast(Dict[str, Any], project)
 
 
 def load_system_prompt() -> str:
