@@ -15,10 +15,11 @@ window.initializeRecruiterView = function (callbacks) {
         onClose: callbacks.onClose,
     });
 
-    const chatMessages = document.getElementById('chat-messages');
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    const sendButton = document.getElementById('chat-send-button');
+    // Scoped querySelector to avoid race conditions with the main document
+    const chatMessages = chatWindow.querySelector('#chat-messages');
+    const chatForm = chatWindow.querySelector('#chat-form');
+    const chatInput = chatWindow.querySelector('#chat-input');
+    const sendButton = chatWindow.querySelector('#chat-send-button');
 
     if (!chatMessages || !chatForm || !chatInput || !sendButton) {
         console.error("One or more Chat UI content elements are missing!");
@@ -80,7 +81,7 @@ window.initializeRecruiterView = function (callbacks) {
                 body: JSON.stringify({code: code}),
             });
 
-            document.getElementById('typing-indicator')?.remove();
+            chatWindow.querySelector('#typing-indicator')?.remove();
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -113,7 +114,7 @@ window.initializeRecruiterView = function (callbacks) {
 
         const token = sessionStorage.getItem(TOKEN_KEY);
         if (!token) {
-            document.getElementById('typing-indicator')?.remove();
+            chatWindow.querySelector('#typing-indicator')?.remove();
             addMessage("Your session has expired. Please re-enter the access code.", 'bot');
             chatState = 'awaiting_code';
             chatInput.classList.add('password-mask');
@@ -136,7 +137,7 @@ window.initializeRecruiterView = function (callbacks) {
                 }),
             });
 
-            document.getElementById('typing-indicator')?.remove();
+            chatWindow.querySelector('#typing-indicator')?.remove();
 
             if (response.status === 401) {
                 sessionStorage.removeItem(TOKEN_KEY);
@@ -154,7 +155,7 @@ window.initializeRecruiterView = function (callbacks) {
             conversationHistory = data.history || [];
 
         } catch (error) {
-            document.getElementById('typing-indicator')?.remove();
+            chatWindow.querySelector('#typing-indicator')?.remove();
             addMessage(`Sorry, an error occurred: ${error.message}`, 'bot');
             conversationHistory.pop();
         } finally {
@@ -207,4 +208,4 @@ window.initializeRecruiterView = function (callbacks) {
         console.log("Running cleanup for Recruiter Chat view...");
         chatForm.removeEventListener('submit', handleFormSubmit);
     };
-}
+};
