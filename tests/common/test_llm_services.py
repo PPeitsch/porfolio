@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from anthropic import APIError as AnthropicAPIError
+from google.genai import types
 from httpx import Request
 from openai import APIError
 from requests.exceptions import RequestException
@@ -225,7 +226,7 @@ skip_if_proxy = pytest.mark.skipif(
 def test_gemini_service_direct_api_success(MockGenAIClient, app):
     """Test GeminiService direct API successful text response."""
     mock_client = MagicMock()
-    mock_response = MagicMock()
+    mock_response = MagicMock(spec=types.GenerateContentResponse)
     mock_response.text = "Hello Gemini"
     mock_response.candidates = [
         MagicMock(content=MagicMock(parts=[MagicMock(function_call=None)]))
@@ -245,9 +246,10 @@ def test_gemini_service_direct_api_success(MockGenAIClient, app):
 def test_gemini_service_direct_api_history_processing(MockGenAIClient, app):
     """Test GeminiService direct API history processing for different message types."""
     mock_client = MagicMock()
-    mock_client.models.generate_content.return_value = MagicMock(
-        text="OK", candidates=[]
-    )
+    mock_response = MagicMock(spec=types.GenerateContentResponse)
+    mock_response.text = "OK"
+    mock_response.candidates = []
+    mock_client.models.generate_content.return_value = mock_response
     MockGenAIClient.return_value = mock_client
 
     history = [
