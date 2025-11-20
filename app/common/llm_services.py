@@ -172,7 +172,9 @@ class GeminiService(LLMService):
         if not current_app.config.get("GEMINI_PROXY_URL"):
             logger.info("Initializing Google Gemini client (genai library).")
             return genai.Client(api_key=self.api_key)
-        logger.info("Google Gemini client configured to use proxy. Skipping genai init.")
+        logger.info(
+            "Google Gemini client configured to use proxy. Skipping genai init."
+        )
         return None
 
     def get_chat_response(
@@ -202,10 +204,14 @@ class GeminiService(LLMService):
                 return result
             except requests.exceptions.RequestException as e:
                 logger.error(f"Gemini proxy request failed: {e}")
-                return "Sorry, there was an error communicating with the AI service proxy."
+                return (
+                    "Sorry, there was an error communicating with the AI service proxy."
+                )
             except Exception as e:
                 logger.error(f"An unexpected error occurred with Gemini proxy: {e}")
-                return "An unexpected error occurred while processing your request via proxy."
+                return (
+                    "An unexpected error occurred while processing your proxy request."
+                )
 
         # --- Direct API Logic (genai library) ---
         if not self.client:
@@ -271,6 +277,11 @@ class GeminiService(LLMService):
                 contents=gemini_history,
                 config=config,
             )
+
+            # Type guard to ensure response has the expected structure
+            if not isinstance(response, types.GenerateContentResponse):
+                logger.error(f"Unexpected response type from Gemini: {type(response)}")
+                return "An unexpected error occurred with the AI service."
 
             if not response.candidates:
                 logger.error("No response candidates received from Gemini.")
