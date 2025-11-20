@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Your fixed bugs here.
 
 
+## [1.9.7] - 2025-08-25
+
+### Fixed
+- **Chat View Initialization**: Resolved a race condition in the Recruiter (AI Chat) view where the JavaScript would execute before the HTML partial was fully rendered, causing the chat interface to fail to load. Element selection is now scoped to the window component to ensure reliability.
+
+
 ## [1.9.6] - 2025-11-19
 
 ### Fixed
@@ -271,6 +277,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Safe String Comparison**: The authentication backend now uses `hmac.digest` to mitigate timing attacks.
 
 
+[1.9.7]: https://github.com/PPeitsch/porfolio/compare/v1.9.6...v1.9.7
 [1.9.6]: https://github.com/PPeitsch/porfolio/compare/v1.9.5...v1.9.6
 [1.9.5]: https://github.com/PPeitsch/porfolio/compare/v1.9.4...v1.9.5
 [1.9.4]: https://github.com/PPeitsch/porfolio/compare/v1.9.3...v1.9.4
