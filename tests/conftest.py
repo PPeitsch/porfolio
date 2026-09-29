@@ -15,7 +15,7 @@ def app():
             # Add any other test-specific configurations here
             # For example, a test database or dummy API keys
             "RECRUITER_ACCESS_CODE": "test-code",
-            "SECRET_KEY": "test-secret-key",
+            "SECRET_KEY": "test-secret-key-at-least-32-bytes-long",
         }
     )
 
