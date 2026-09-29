@@ -12,6 +12,13 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-should-be-changed"
     RECRUITER_ACCESS_CODE = os.environ.get("RECRUITER_ACCESS_CODE") or "default-code"
 
+    # Portfolio content (CV, projects, prompt, texts, project images).
+    # A relative PORTFOLIO_DATA_DIR is resolved from the project root.
+    DATA_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        os.environ.get("PORTFOLIO_DATA_DIR", "data"),
+    )
+
     # UI Feature Flags
     BANNER_ENABLED = os.environ.get("BANNER_ENABLED", "false").lower() in (
         "true",
@@ -35,7 +42,11 @@ class Config:
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
     GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
+    # Optional HTTP proxy for Gemini (e.g. a Cloud Run service that holds the
+    # key). When set, Gemini requests go through it instead of the genai client.
+    GEMINI_PROXY_URL = os.environ.get("GEMINI_PROXY_URL")
+
     # LLM Model Name Configuration
-    ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-3-haiku-20240307")
+    ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
     OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
     GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
