@@ -8,7 +8,7 @@ annotated-types==0.7.0
     # via pydantic
 anthropic==0.29.0
     # via -r requirements.in
-anyio==4.9.0
+anyio==4.14.2
     # via
     #   anthropic
     #   google-genai
@@ -59,14 +59,14 @@ dparse==0.6.4
     # via
     #   safety
     #   safety-schemas
-filelock==3.16.1
+filelock==3.32.7
     # via
     #   huggingface-hub
     #   safety
     #   virtualenv
 flake8==7.3.0
     # via -r requirements-dev.in
-flask==3.1.1
+flask==3.1.3
     # via -r requirements.in
 fsspec==2025.7.0
     # via huggingface-hub
@@ -90,7 +90,7 @@ huggingface-hub==0.34.1
     # via tokenizers
 identify==2.6.12
     # via pre-commit
-idna==3.10
+idna==3.20
     # via
     #   anyio
     #   httpx
@@ -163,7 +163,7 @@ pre-commit==3.8.0
     # via -r requirements-dev.in
 psutil==6.1.1
     # via safety
-pyasn1==0.6.1
+pyasn1==0.6.4
     # via
     #   pyasn1-modules
     #   rsa
@@ -188,7 +188,7 @@ pygments==2.19.2
     # via
     #   pytest
     #   rich
-pyjwt==2.10.1
+pyjwt==2.15.1
     # via -r requirements.in
 pyproject-hooks==1.2.0
     # via
@@ -200,7 +200,7 @@ pytest==8.4.1
     #   pytest-cov
 pytest-cov==5.0.0
     # via -r requirements-dev.in
-python-dotenv==1.1.1
+python-dotenv==1.2.3
     # via -r requirements.in
 pyyaml==6.0.2
     # via
@@ -210,7 +210,7 @@ pyyaml==6.0.2
     #   pre-commit
 regex==2024.11.6
     # via nltk
-requests==2.32.4
+requests==2.34.2
     # via
     #   -r requirements.in
     #   google-genai
@@ -228,7 +228,7 @@ ruamel-yaml==0.18.14
     #   safety-schemas
 ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
-safety==3.6.0
+safety==3.6.1
     # via -r requirements-dev.in
 safety-schemas==0.0.14
     # via safety
@@ -237,7 +237,6 @@ shellingham==1.5.4
 sniffio==1.3.1
     # via
     #   anthropic
-    #   anyio
     #   openai
 stevedore==5.4.1
     # via bandit
@@ -273,7 +272,7 @@ typing-extensions==4.14.1
     #   safety
     #   safety-schemas
     #   typer
-urllib3==2.5.0
+urllib3==2.8.0
     # via
     #   -r requirements.in
     #   requests
@@ -282,7 +281,7 @@ virtualenv==20.32.0
     # via pre-commit
 websockets==15.0.1
     # via google-genai
-werkzeug==3.1.3
+werkzeug==3.1.9
     # via
     #   -r requirements.in
     #   flask
