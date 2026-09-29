@@ -10,7 +10,7 @@ set -e
 PYTHON_EXEC="python3.12"
 PIP_COMPILE_EXEC="$PYTHON_EXEC -m piptools compile"
 
-echo "🐍 Using Python executable: $($PYTHON_EXEC --version)"
+echo "Using Python executable: $($PYTHON_EXEC --version)"
 echo "---"
 
 # Step 1: Generate a unified constraints file from all inputs.
@@ -41,4 +41,4 @@ $PIP_COMPILE_EXEC \
     requirements-dev.in
 
 echo "---"
-echo "✅ Dependency files updated successfully!"
+echo "OK: Dependency files updated successfully!"

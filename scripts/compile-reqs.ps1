@@ -3,7 +3,7 @@
 # It ensures that production and development requirements are consistent
 # by using a unified constraints file.
 #
-Write-Host "🐍 Using Python executable: $(python --version)"
+Write-Host "Using Python executable: $(python --version)"
 Write-Host "---"
 
 # Step 1: Generate a unified constraints file from all inputs.
@@ -19,4 +19,4 @@ Write-Host "3/3: Compiling development requirements (requirements-dev.txt)..."
 python -m piptools compile --resolver=backtracking --quiet -o requirements-dev.txt --constraint=constraints.txt requirements-dev.in
 
 Write-Host "---"
-Write-Host "✅ Dependency files updated successfully!"
+Write-Host "OK: Dependency files updated successfully!"

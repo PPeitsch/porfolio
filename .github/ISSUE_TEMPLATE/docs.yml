@@ -1,4 +1,4 @@
-name: 📖 Documentation Issue
+name: Documentation Issue
 description: Report an issue or suggest an improvement for the documentation.
 title: "[DOCS] <A brief, descriptive title>"
 labels: ["documentation", "needs-triage"]
