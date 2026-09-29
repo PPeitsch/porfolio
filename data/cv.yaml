@@ -1,32 +1,23 @@
- # Replace with your original data
-name: Pablo Peitsch
-title: Python Developer & System Professional
-email: "pablo.peitsch@gmail.com"
-linkedin: "https://www.linkedin.com/in/pablo-peitsch/"
-github: "https://github.com/PPeitsch"
-website: "https://ppeitsch.com.ar"
+# Example content. Replace it with your own data, or point PORTFOLIO_DATA_DIR
+# at a folder with your own cv.yaml, projects.yaml, text_config.yaml,
+# system_prompt.txt, logo/ and images/.
+name: Alex Example
+title: Python Developer
+email: "alex@example.com"
+website: "https://example.com"
 summary: |
-  Highly motivated and skilled Python Developer with experience in building web applications,
-  automation tools, libraries and data connectors. Passionate about clean code, efficient solutions,
-  and leveraging technology to solve real-world problems. Proven ability to work
-  with Flask, FastAPI, databases, and cloud technologies.
+  Python developer who builds web applications, automation tools and data
+  connectors. Enjoys clean code, well-tested libraries and small tools that
+  remove manual work.
 skills:
   - Python
   - Flask
   - FastAPI
-  - SQLAlchemy
   - PostgreSQL
-  - n8n
-  - API Development
   - Docker
   - Git
-  - Linux
-  - HTML
-  - CSS (Tailwind)
   - JavaScript
-  - Pre-commit
   - Pytest
-  - MyPy
 social_links:
-  github: "https://github.com/PPeitsch"
-  linkedin: "https://www.linkedin.com/in/pablo-peitsch/"
+  github: "https://github.com/example"
+  linkedin: "https://www.linkedin.com/in/example/"

@@ -56,6 +56,18 @@
     align-self: flex-start;
 }
 
+.chat-bubble a {
+    color: inherit;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.chat-bubble ul,
+.chat-bubble ol {
+    margin: 0.25rem 0;
+    padding-left: 1.25rem;
+}
+
 .chat-bubble.bot.typing {
     display: flex;
     align-items: center;

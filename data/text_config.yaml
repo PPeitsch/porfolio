@@ -2,6 +2,11 @@
 # Placeholders like {name} will be replaced with data from cv.yaml
 
 
+# Text for the Recruiter (AI chat) view. {name} comes from cv.yaml.
+recruiter:
+ # Shown before the access code is entered. A blank line starts a new paragraph.
+ welcome: "Hello! I'm {name}'s AI assistant. To ensure privacy and prevent API abuse, this chat requires an access code.\n\nPlease enter the code provided in the resume to continue."
+
 # Descriptions for the tools used by the AI assistant.
 llm_tool_descriptions:
  get_professional_summary: "Retrieves the professional summary or overview of {name}. Use this to answer general questions about their background and focus."
@@ -11,6 +16,8 @@ llm_tool_descriptions:
 
 # Text templates for the Command-Line Interface (CLI) view.
 cli:
+ # Shown after the CLI access code is accepted. {name} comes from cv.yaml.
+ welcome: "Welcome to {name}'s CLI portfolio!"
  # The `help` command will be dynamically generated from this list.
  # The 'command' key must match the logic in the handle_command_api function.
  commands:

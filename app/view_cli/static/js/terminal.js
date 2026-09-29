@@ -77,7 +77,7 @@ window.initializeCliView = function(callbacks) {
       updatePrompt();
       inputElem.classList.remove('password-mask');
       clearScreen();
-      writeOutput("Welcome to the PPeitsch CLI Portfolio!");
+      writeOutput(cliWindow.dataset.welcome || "Welcome to the CLI portfolio!");
       writeOutput("Type 'help' for a list of available commands.");
       writeOutput("Type 'theme light' or 'theme gruvbox' to change the look.");
       writeOutput("");
