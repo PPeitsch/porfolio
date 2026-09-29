@@ -12,6 +12,13 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-should-be-changed"
     RECRUITER_ACCESS_CODE = os.environ.get("RECRUITER_ACCESS_CODE") or "default-code"
 
+    # Portfolio content (CV, projects, prompt, texts, project images).
+    # A relative PORTFOLIO_DATA_DIR is resolved from the project root.
+    DATA_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        os.environ.get("PORTFOLIO_DATA_DIR", "data"),
+    )
+
     # UI Feature Flags
     BANNER_ENABLED = os.environ.get("BANNER_ENABLED", "false").lower() in (
         "true",

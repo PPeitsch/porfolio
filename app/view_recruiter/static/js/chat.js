@@ -193,7 +193,8 @@ window.initializeRecruiterView = function (callbacks) {
         } else {
             chatState = 'awaiting_code';
             chatInput.classList.add('password-mask');
-            const welcomeMessage = "Hello! I'm Pablo's AI assistant. To ensure privacy and prevent API abuse, this chat requires an access code.\n\nPlease enter the code provided in the resume to continue.";
+            const welcomeMessage = chatWindow.dataset.welcome
+                || "Hello! This chat requires an access code. Please enter it to continue.";
             addMessage(welcomeMessage, 'bot');
             setInputState(true, 'Enter access code...');
         }

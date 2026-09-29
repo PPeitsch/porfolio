@@ -1,5 +1,26 @@
-- id: placeholder_project
-  title: Placeholder Project Title
+# Example projects. Each entry is shown in the three views and is available
+# to the AI assistant. `image` is a file in the images/ folder of the content
+# directory; `live_url`, `github_url`, `pypi_url` and `docs_url` are optional.
+- id: portfolio-cli
+  title: "Terminal Portfolio"
   type: webapp
-  description: Replace with project description.
-  technologies: [Tech 1, Tech 2]
+  image: "cli-view.png"
+  short_description: "A draggable, themeable terminal that answers questions about its owner."
+  description: "The developer view of this portfolio: a simulated terminal with commands to list projects, filter them by technology, show contact details and change the color theme."
+  technologies: ["Python", "Flask", "JavaScript"]
+  github_url: "https://github.com/example/portfolio"
+- id: portfolio-assistant
+  title: "Recruiter Assistant"
+  type: webapp
+  image: "recruiter-view.png"
+  short_description: "An AI chat that answers questions about skills and projects using function calling."
+  description: "A chat assistant backed by Anthropic, OpenAI or Gemini. It reads the portfolio data through tools instead of a long prompt, so answers stay up to date with the YAML files."
+  technologies: ["Python", "Flask", "LLM APIs"]
+  live_url: "https://example.com/assistant"
+- id: portfolio-gallery
+  title: "Project Gallery"
+  type: webapp
+  image: "visual-view.png"
+  short_description: "A visual overview of projects with links to demos and repositories."
+  description: "The visual view of this portfolio: one card per project with its image, main technologies and links."
+  technologies: ["JavaScript", "CSS"]

@@ -1,7 +1,7 @@
 import logging
 import os
 
-from flask import abort, jsonify, send_from_directory
+from flask import abort, current_app, jsonify, send_from_directory
 
 from app.common.utils import load_projects_data
 
@@ -58,8 +58,15 @@ def get_projects_for_visual():
         placeholder_image_url = "/shell-static/images/placeholder.svg"
         image_url = placeholder_image_url
         if image_filename:
-            # Assumes images are central in shell/static/images/projects/
-            image_url = f"/shell-static/images/projects/{image_filename}"
+            # Images live in <DATA_DIR>/images; the bundled shell static folder
+            # is kept as a fallback for images added there before.
+            content_image = os.path.join(
+                current_app.config.get("DATA_DIR", ""), "images", image_filename
+            )
+            if os.path.isfile(content_image):
+                image_url = f"/content/images/{image_filename}"
+            else:
+                image_url = f"/shell-static/images/projects/{image_filename}"
 
         description = p.get(
             "short_description", p.get("description", "No description available.")
