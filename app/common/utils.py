@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 def _get_data_filepath(filename):
     """Constructs the full, absolute path to a data file.
 
-    Handles running both within a Flask application context and in standalone scripts.
+    Inside the app, files are read from the configured DATA_DIR
+    (PORTFOLIO_DATA_DIR); standalone scripts read from the project's data/.
 
     Args:
         filename (str): The name of the data file (e.g., 'cv.yaml').
@@ -19,18 +20,17 @@ def _get_data_filepath(filename):
     Returns:
         str: The absolute path to the data file.
     """
+    if current_app and current_app.config.get("DATA_DIR"):
+        return os.path.join(current_app.config["DATA_DIR"], filename)
     if current_app:
         # The 'instance_path' is outside the 'app' package, in the project root.
-        # We go one level up from the instance path to get to the project root.
         project_root = os.path.dirname(current_app.instance_path)
-        base_path = project_root
     else:
         # For standalone scripts, go up from app/common/
-        base_path = os.path.dirname(
+        project_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
-    filepath = os.path.join(base_path, "data", filename)
-    return filepath
+    return os.path.join(project_root, "data", filename)
 
 
 def load_yaml_data(filename):
@@ -190,6 +190,13 @@ def load_system_prompt() -> str:
     except Exception as e:
         logger.error(f"An unexpected error occurred loading {filepath}: {e}")
         return "You are a helpful assistant."
+
+
+def get_welcome_message(view: str) -> str:
+    """Returns a view's welcome text from text_config.yaml with {name} filled in."""
+    template = load_text_config().get(view, {}).get("welcome", "")
+    name = load_cv_data().get("name", "")
+    return cast(str, template).replace("{name}", name)
 
 
 def load_text_config():

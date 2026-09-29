@@ -1,8 +1,9 @@
 import logging
+import os
 
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, abort, current_app, render_template, send_from_directory
 
-from app.common.utils import load_cv_data
+from app.common.utils import get_welcome_message, load_cv_data
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,9 @@ def get_view_partial(view_name):
 
     if template_name:
         try:
-            return render_template(template_name)
+            return render_template(
+                template_name, welcome=get_welcome_message(view_name)
+            )
         except Exception as e:
             logger.error(
                 f"Error rendering template {template_name} for view {view_name}: {e}"
@@ -82,3 +85,19 @@ def get_view_partial(view_name):
             f'Error: View "{view_name}" not found.</p></div>'
         )
         return error_html, 404
+
+
+@shell_bp.route("/content/images/<path:filename>")
+def content_image(filename):
+    """Serves a project image from the images/ folder of the content directory.
+
+    Args:
+        filename (str): The image path relative to <DATA_DIR>/images.
+
+    Returns:
+        Response: The image file, or 404 if it does not exist.
+    """
+    images_dir = os.path.join(current_app.config["DATA_DIR"], "images")
+    if not os.path.isfile(os.path.join(images_dir, filename)):
+        abort(404)
+    return send_from_directory(images_dir, filename)
