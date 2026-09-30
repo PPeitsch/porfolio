@@ -213,6 +213,7 @@ def test_openai_service_no_content(MockOpenAI, app):
 
 # --- Gemini Service Tests ---
 
+
 @pytest.fixture(autouse=True)
 def no_gemini_proxy(app, monkeypatch):
     """Start every test without a Gemini proxy, whatever the local .env says.
