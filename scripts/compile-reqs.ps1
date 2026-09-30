@@ -3,6 +3,7 @@
 # It ensures that production and development requirements are consistent
 # by using a unified constraints file.
 #
+# Run it with the lowest supported Python (3.10, see the CI matrix) so the pins install on all of them.
 Write-Host "Using Python executable: $(python --version)"
 Write-Host "---"
 
