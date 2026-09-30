@@ -1,9 +1,27 @@
 import logging
 import os
 
-from flask import Blueprint, abort, current_app, render_template, send_from_directory
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    make_response,
+    redirect,
+    render_template,
+    send_from_directory,
+    url_for,
+)
 from jinja2 import TemplateError
+from markupsafe import escape
 
+from app.common.i18n import (
+    LANG_COOKIE,
+    get_languages,
+    get_locale,
+    get_ui_texts,
+    language_name,
+    t,
+)
 from app.common.utils import get_welcome_message, load_cv_data
 
 logger = logging.getLogger(__name__)
@@ -15,6 +33,40 @@ shell_bp = Blueprint(
     static_folder="static",
     static_url_path="/shell-static",
 )
+
+
+# The language chosen with the switcher is remembered for a year.
+LANG_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
+
+
+@shell_bp.app_context_processor
+def inject_language():
+    """Makes the language and the interface texts available to every template."""
+    return {
+        "lang": get_locale(),
+        "languages": [(code, language_name(code)) for code in get_languages()],
+        "ui_texts": get_ui_texts(),
+        "t": t,
+    }
+
+
+@shell_bp.route("/lang/<code>")
+def set_language(code):
+    """Remembers the visitor's language in a cookie and goes back home.
+
+    Args:
+        code (str): A language code from LANGUAGES, e.g. 'es'.
+
+    Returns:
+        Response: A redirect to the selector, or 404 for an unknown language.
+    """
+    if code not in get_languages():
+        abort(404)
+    response = make_response(redirect(url_for("shell.selector")))
+    response.set_cookie(
+        LANG_COOKIE, code, max_age=LANG_COOKIE_MAX_AGE, samesite="Lax", httponly=True
+    )
+    return response
 
 
 @shell_bp.route("/")
@@ -76,14 +128,14 @@ def get_view_partial(view_name):
             )
             error_html = (
                 '<div class="p-8 text-center"><p class="text-red-500">'
-                "Error rendering view template.</p></div>"
+                f"{escape(t('view.render_error'))}</p></div>"
             )
             return error_html, 500
     else:
         logger.warning(f"Partial requested for unknown view: {view_name}")
         error_html = (
             '<div class="p-8 text-center"><p class="text-red-500">'
-            f'Error: View "{view_name}" not found.</p></div>'
+            f'Error: View "{escape(view_name)}" not found.</p></div>'
         )
         return error_html, 404
 

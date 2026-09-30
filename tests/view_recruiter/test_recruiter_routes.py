@@ -4,14 +4,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.common.exceptions import DataFileError, LLMConfigurationError, LLMServiceError
+from app.common.i18n import UI_DEFAULTS
 from app.common.llm_services import ChatResponse, ToolCall
-from app.view_recruiter.routes import (
-    EMPTY_REPLY,
-    MAX_HISTORY_MESSAGES,
-    TOO_MANY_TOOL_ROUNDS_REPLY,
-    UNAVAILABLE_REPLY,
-    _clean_history,
-)
+from app.view_recruiter.routes import MAX_HISTORY_MESSAGES, _clean_history
 from tests.helpers import generate_test_token
 
 
@@ -181,14 +176,14 @@ def test_chat_stops_after_max_tool_rounds(llm, post_chat, app):
         app.config["LLM_MAX_TOOL_ROUNDS"] = 5
 
     assert response.status_code == 200
-    assert response.get_json()["reply"] == TOO_MANY_TOOL_ROUNDS_REPLY
+    assert response.get_json()["reply"] == UI_DEFAULTS["chat.reply_too_many_rounds"]
     assert llm.get_chat_response.call_count == 3
 
 
 def test_chat_empty_reply_gets_a_fallback(llm, post_chat):
     llm.get_chat_response.return_value = text("   ")
 
-    assert post_chat().get_json()["reply"] == EMPTY_REPLY
+    assert post_chat().get_json()["reply"] == UI_DEFAULTS["chat.reply_empty"]
 
 
 def test_chat_provider_error_returns_502(llm, post_chat):
@@ -197,7 +192,7 @@ def test_chat_provider_error_returns_502(llm, post_chat):
     response = post_chat()
 
     assert response.status_code == 502
-    assert response.get_json()["reply"] == UNAVAILABLE_REPLY
+    assert response.get_json()["reply"] == UI_DEFAULTS["chat.reply_unavailable"]
 
 
 def test_chat_history_is_cleaned_before_reaching_the_model(llm, post_chat):

@@ -19,6 +19,16 @@ class Config:
         os.environ.get("PORTFOLIO_DATA_DIR", "data"),
     )
 
+    # Languages the site is offered in, the first being the fallback. Texts in
+    # the data files can give one translation per language; see README.
+    LANGUAGES = [
+        code.strip().lower()
+        for code in os.environ.get("PORTFOLIO_LANGUAGES", "en,es").split(",")
+        if code.strip()
+    ] or ["en"]
+    # Used when the browser asks for none of LANGUAGES.
+    DEFAULT_LANGUAGE = os.environ.get("PORTFOLIO_DEFAULT_LANGUAGE", LANGUAGES[0])
+
     # UI Feature Flags
     BANNER_ENABLED = os.environ.get("BANNER_ENABLED", "false").lower() in (
         "true",

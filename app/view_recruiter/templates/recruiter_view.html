@@ -7,7 +7,7 @@
         <div id="chat-title-bar" class="title-bar">
             <div class="title-text">
                 <i class="fas fa-robot"></i>
-                <span>Recruiter Assistant</span>
+                <span>{{ t('chat.window_title') }}</span>
             </div>
             <div class="window-controls">
                 <span id="chat-minimize" class="control-btn minimize"></span>
@@ -22,7 +22,7 @@
                 <!-- Messages will be injected here by JS -->
             </div>
             <form id="chat-form" class="chat-input-area">
-                <input type="text" id="chat-input" class="chat-input" placeholder="Loading..." autocomplete="off" disabled>
+                <input type="text" id="chat-input" class="chat-input" placeholder="{{ t('chat.loading') }}" autocomplete="off" disabled>
                 <button type="submit" id="chat-send-button" class="chat-send-button" disabled>
                     <i class="fas fa-paper-plane"></i>
                 </button>

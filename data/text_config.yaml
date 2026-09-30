@@ -1,13 +1,19 @@
-# Text templates for various parts of the application
-# Placeholders like {name} will be replaced with data from cv.yaml
+# Text templates for various parts of the application.
+# Placeholders like {name} are replaced with data from cv.yaml.
+#
+# Any text can be a plain string, shown in every language, or one translation
+# per language code: { en: "...", es: "..." }. See PORTFOLIO_LANGUAGES.
 
 
 # Text for the Recruiter (AI chat) view. {name} comes from cv.yaml.
 recruiter:
  # Shown before the access code is entered. A blank line starts a new paragraph.
- welcome: "Hello! I'm {name}'s AI assistant. To ensure privacy and prevent API abuse, this chat requires an access code.\n\nPlease enter the code provided in the resume to continue."
+ welcome:
+   en: "Hello! I'm {name}'s AI assistant. To ensure privacy and prevent API abuse, this chat requires an access code.\n\nPlease enter the code provided in the resume to continue."
+   es: "¡Hola! Soy el asistente de IA de {name}. Para cuidar la privacidad y evitar el abuso de la API, este chat requiere un código de acceso.\n\nEl código está en el CV."
 
-# Descriptions for the tools used by the AI assistant.
+# Descriptions for the tools used by the AI assistant. They are instructions
+# for the model, so one language is enough.
 llm_tool_descriptions:
  get_professional_summary: "Retrieves the professional summary or overview of {name}. Use this to answer general questions about their background and focus."
  get_skills: "Retrieves a list of {name}'s technical skills. Use this to answer questions about their expertise in specific technologies, languages, or frameworks."
@@ -17,157 +23,298 @@ llm_tool_descriptions:
 # Text templates for the Command-Line Interface (CLI) view.
 cli:
  # Shown after the CLI access code is accepted. {name} comes from cv.yaml.
- welcome: "Welcome to {name}'s CLI portfolio!"
+ welcome: { en: "Welcome to {name}'s CLI portfolio!", es: "¡Bienvenido al portfolio en terminal de {name}!" }
  # The `help` command will be dynamically generated from this list.
  # The 'command' key must match the logic in the handle_command_api function.
  commands:
-   portfolio_header: "[INFO] Portfolio Commands:"
-   system_header: "[INFO] Window & System Commands:"
+   portfolio_header: { en: "[INFO] Portfolio Commands:", es: "[INFO] Comandos del portfolio:" }
+   system_header: { en: "[INFO] Window & System Commands:", es: "[INFO] Comandos de ventana y sistema:" }
    items:
-     - { command: "whoami", description: "Display summary about me", group: "portfolio" }
-     - { command: "skills", description: "List my technical skills", group: "portfolio" }
-     - { command: "contact", description: "Show contact information", group: "portfolio" }
-     - { command: "links", description: "Show social and repository links", group: "portfolio" }
-     - { command: "ls projects", description: "List available projects", group: "portfolio" }
-     - { command: "filter --tech <name>", description: "Filter projects by technology", group: "portfolio" }
-     - { command: "show <project>", description: "Show details for a specific project", group: "portfolio" }
-     - { command: "open <project>", description: "Open a project's live URL in a new tab", group: "portfolio" }
-     - { command: "man <command>", description: "Display the manual page for a command", group: "system" }
-     - { command: "theme <name>", description: "Change the terminal color scheme (e.g., light, dracula)", group: "system" }
-     - { command: "maximize", description: "Maximize the terminal window", group: "system" }
-     - { command: "minimize", description: "Minimize the terminal window", group: "system" }
-     - { command: "restore", description: "Restore window from min/max state", group: "system" }
-     - { command: "win-reset", description: "Reset window to default size and position", group: "system" }
-     - { command: "clear", description: "Clear the terminal screen", group: "system" }
-     - { command: "date", description: "Display the current date and time", group: "system" }
-     - { command: "echo <text>", description: "Display a line of text", group: "system" }
-     - { command: "uname -a", description: "Print simulated system information", group: "system" }
-     - { command: "neofetch", description: "Show a visual summary of the profile", group: "system" }
-     - { command: "exit / close", description: "Close the terminal window", group: "system" }
+     - { command: "whoami", description: { en: "Display summary about me", es: "Mostrar un resumen sobre mí" }, group: "portfolio" }
+     - { command: "skills", description: { en: "List my technical skills", es: "Listar mis habilidades técnicas" }, group: "portfolio" }
+     - { command: "contact", description: { en: "Show contact information", es: "Mostrar los datos de contacto" }, group: "portfolio" }
+     - { command: "links", description: { en: "Show social and repository links", es: "Mostrar redes y repositorios" }, group: "portfolio" }
+     - { command: "ls projects", description: { en: "List available projects", es: "Listar los proyectos" }, group: "portfolio" }
+     - { command: "filter --tech <name>", description: { en: "Filter projects by technology", es: "Filtrar proyectos por tecnología" }, group: "portfolio" }
+     - { command: "show <project>", description: { en: "Show details for a specific project", es: "Mostrar el detalle de un proyecto" }, group: "portfolio" }
+     - { command: "open <project>", description: { en: "Open a project's live URL in a new tab", es: "Abrir la URL de un proyecto en otra pestaña" }, group: "portfolio" }
+     - { command: "man <command>", description: { en: "Display the manual page for a command", es: "Mostrar el manual de un comando" }, group: "system" }
+     - { command: "theme <name>", description: { en: "Change the terminal color scheme (e.g., light, dracula)", es: "Cambiar los colores de la terminal (p. ej., light, dracula)" }, group: "system" }
+     - { command: "maximize", description: { en: "Maximize the terminal window", es: "Maximizar la ventana" }, group: "system" }
+     - { command: "minimize", description: { en: "Minimize the terminal window", es: "Minimizar la ventana" }, group: "system" }
+     - { command: "restore", description: { en: "Restore window from min/max state", es: "Restaurar la ventana" }, group: "system" }
+     - { command: "win-reset", description: { en: "Reset window to default size and position", es: "Volver la ventana a su tamaño y posición iniciales" }, group: "system" }
+     - { command: "clear", description: { en: "Clear the terminal screen", es: "Limpiar la pantalla" }, group: "system" }
+     - { command: "date", description: { en: "Display the current date and time", es: "Mostrar la fecha y la hora" }, group: "system" }
+     - { command: "echo <text>", description: { en: "Display a line of text", es: "Mostrar una línea de texto" }, group: "system" }
+     - { command: "uname -a", description: { en: "Print simulated system information", es: "Mostrar información (simulada) del sistema" }, group: "system" }
+     - { command: "neofetch", description: { en: "Show a visual summary of the profile", es: "Mostrar un resumen visual del perfil" }, group: "system" }
+     - { command: "exit / close", description: { en: "Close the terminal window", es: "Cerrar la ventana" }, group: "system" }
 
  # Manual pages for the 'man' command
  manuals:
    whoami:
-     - "NAME"
-     - "    whoami - display summary about the portfolio owner"
-     - "DESCRIPTION"
-     - "    Shows the name, title, and a professional summary."
+     en:
+       - "NAME"
+       - "    whoami - display summary about the portfolio owner"
+       - "DESCRIPTION"
+       - "    Shows the name, title, and a professional summary."
+     es:
+       - "NOMBRE"
+       - "    whoami - muestra un resumen sobre el dueño del portfolio"
+       - "DESCRIPCIÓN"
+       - "    Muestra el nombre, el título y un resumen profesional."
    skills:
-     - "NAME"
-     - "    skills - list technical skills"
-     - "DESCRIPTION"
-     - "    Displays a comma-separated list of all technical skills."
+     en:
+       - "NAME"
+       - "    skills - list technical skills"
+       - "DESCRIPTION"
+       - "    Displays a comma-separated list of all technical skills."
+     es:
+       - "NOMBRE"
+       - "    skills - lista las habilidades técnicas"
+       - "DESCRIPCIÓN"
+       - "    Muestra todas las habilidades técnicas, separadas por comas."
    contact:
-     - "NAME"
-     - "    contact - show contact information"
-     - "DESCRIPTION"
-     - "    Provides contact details, including email and social media links."
+     en:
+       - "NAME"
+       - "    contact - show contact information"
+       - "DESCRIPTION"
+       - "    Provides contact details, including email and social media links."
+     es:
+       - "NOMBRE"
+       - "    contact - muestra los datos de contacto"
+       - "DESCRIPCIÓN"
+       - "    Muestra los datos de contacto, con el email y las redes."
    links:
-     - "NAME"
-     - "    links - show social and repository links"
-     - "DESCRIPTION"
-     - "    A quick way to see all social and repository links like GitHub and LinkedIn."
+     en:
+       - "NAME"
+       - "    links - show social and repository links"
+       - "DESCRIPTION"
+       - "    A quick way to see all social and repository links like GitHub and LinkedIn."
+     es:
+       - "NOMBRE"
+       - "    links - muestra redes y repositorios"
+       - "DESCRIPCIÓN"
+       - "    Una forma rápida de ver todos los links, como GitHub y LinkedIn."
    ls:
-     - "NAME"
-     - "    ls - list directory contents (in this case, projects)"
-     - "SYNOPSIS"
-     - "    ls projects"
-     - "DESCRIPTION"
-     - "    Lists all available projects with their unique ID and title."
-     - "    The project ID is used with 'show' or 'open' commands."
+     en:
+       - "NAME"
+       - "    ls - list directory contents (in this case, projects)"
+       - "SYNOPSIS"
+       - "    ls projects"
+       - "DESCRIPTION"
+       - "    Lists all available projects with their unique ID and title."
+       - "    The project ID is used with 'show' or 'open' commands."
+     es:
+       - "NOMBRE"
+       - "    ls - lista el contenido (en este caso, los proyectos)"
+       - "SINOPSIS"
+       - "    ls projects"
+       - "DESCRIPCIÓN"
+       - "    Lista todos los proyectos con su ID y su título."
+       - "    El ID es el que usan los comandos 'show' y 'open'."
    filter:
-     - "NAME"
-     - "    filter - filter projects by a specific criterion"
-     - "SYNOPSIS"
-     - "    filter --tech <technology>"
-     - "DESCRIPTION"
-     - "    Filters the project list to show only those that use a specific technology. The search is case-insensitive."
-     - "EXAMPLE"
-     - "    > filter --tech python"
+     en:
+       - "NAME"
+       - "    filter - filter projects by a specific criterion"
+       - "SYNOPSIS"
+       - "    filter --tech <technology>"
+       - "DESCRIPTION"
+       - "    Filters the project list to show only those that use a specific technology. The search is case-insensitive."
+       - "EXAMPLE"
+       - "    > filter --tech python"
+     es:
+       - "NOMBRE"
+       - "    filter - filtra los proyectos por un criterio"
+       - "SINOPSIS"
+       - "    filter --tech <technology>"
+       - "DESCRIPCIÓN"
+       - "    Muestra solo los proyectos que usan una tecnología. No distingue mayúsculas de minúsculas."
+       - "EJEMPLO"
+       - "    > filter --tech python"
    show:
-     - "NAME"
-     - "    show - display detailed information about a specific project"
-     - "SYNOPSIS"
-     - "    show <project_id>"
-     - "DESCRIPTION"
-     - "    Retrieves and displays all available details for a specific project, identified by its ID."
+     en:
+       - "NAME"
+       - "    show - display detailed information about a specific project"
+       - "SYNOPSIS"
+       - "    show <project_id>"
+       - "DESCRIPTION"
+       - "    Retrieves and displays all available details for a specific project, identified by its ID."
+     es:
+       - "NOMBRE"
+       - "    show - muestra el detalle de un proyecto"
+       - "SINOPSIS"
+       - "    show <project_id>"
+       - "DESCRIPCIÓN"
+       - "    Muestra toda la información de un proyecto, identificado por su ID."
    open:
-     - "NAME"
-     - "    open - open a project's live URL in a new browser tab"
-     - "SYNOPSIS"
-     - "    open <project_id>"
-     - "DESCRIPTION"
-     - "    If the specified project has a live URL, this command will open it in a new tab."
+     en:
+       - "NAME"
+       - "    open - open a project's live URL in a new browser tab"
+       - "SYNOPSIS"
+       - "    open <project_id>"
+       - "DESCRIPTION"
+       - "    If the specified project has a live URL, this command will open it in a new tab."
+     es:
+       - "NOMBRE"
+       - "    open - abre la URL de un proyecto en otra pestaña"
+       - "SINOPSIS"
+       - "    open <project_id>"
+       - "DESCRIPCIÓN"
+       - "    Si el proyecto tiene una URL publicada, la abre en una pestaña nueva."
    man:
-     - "NAME"
-     - "    man - display the manual page for a command"
-     - "SYNOPSIS"
-     - "    man <command>"
-     - "DESCRIPTION"
-     - "    Displays detailed information about a given command."
+     en:
+       - "NAME"
+       - "    man - display the manual page for a command"
+       - "SYNOPSIS"
+       - "    man <command>"
+       - "DESCRIPTION"
+       - "    Displays detailed information about a given command."
+     es:
+       - "NOMBRE"
+       - "    man - muestra el manual de un comando"
+       - "SINOPSIS"
+       - "    man <command>"
+       - "DESCRIPCIÓN"
+       - "    Muestra información detallada sobre un comando."
    theme:
-     - "NAME"
-     - "    theme - change the terminal color scheme"
-     - "SYNOPSIS"
-     - "    theme <theme_name>"
-     - "DESCRIPTION"
-     - "    Switches the terminal's color scheme. Use 'theme' without arguments to see available themes."
-     - "AVAILABLE THEMES"
-     - "    default, dracula, light, solarized, gruvbox"
+     en:
+       - "NAME"
+       - "    theme - change the terminal color scheme"
+       - "SYNOPSIS"
+       - "    theme <theme_name>"
+       - "DESCRIPTION"
+       - "    Switches the terminal's color scheme. Use 'theme' without arguments to see available themes."
+       - "AVAILABLE THEMES"
+       - "    default, dracula, light, solarized, gruvbox"
+     es:
+       - "NOMBRE"
+       - "    theme - cambia los colores de la terminal"
+       - "SINOPSIS"
+       - "    theme <theme_name>"
+       - "DESCRIPCIÓN"
+       - "    Cambia el esquema de colores. 'theme' sin argumentos muestra los temas disponibles."
+       - "TEMAS DISPONIBLES"
+       - "    default, dracula, light, solarized, gruvbox"
    clear:
-     - "NAME"
-     - "    clear - clear the terminal screen"
-     - "DESCRIPTION"
-     - "    Clears all previous output from the terminal. Shortcut: Ctrl+L."
+     en:
+       - "NAME"
+       - "    clear - clear the terminal screen"
+       - "DESCRIPTION"
+       - "    Clears all previous output from the terminal. Shortcut: Ctrl+L."
+     es:
+       - "NOMBRE"
+       - "    clear - limpia la pantalla"
+       - "DESCRIPCIÓN"
+       - "    Borra toda la salida anterior. Atajo: Ctrl+L."
    exit:
-     - "NAME"
-     - "    exit / close - close the terminal window"
-     - "DESCRIPTION"
-     - "    Closes the terminal window and returns to the main view selector."
+     en:
+       - "NAME"
+       - "    exit / close - close the terminal window"
+       - "DESCRIPTION"
+       - "    Closes the terminal window and returns to the main view selector."
+     es:
+       - "NOMBRE"
+       - "    exit / close - cierra la ventana"
+       - "DESCRIPCIÓN"
+       - "    Cierra la terminal y vuelve al selector de vistas."
    neofetch:
-     - "NAME"
-     - "    neofetch - show a visual summary of the profile"
-     - "DESCRIPTION"
-     - "    Displays a 'neofetch'-style summary with an ASCII logo and key profile information."
+     en:
+       - "NAME"
+       - "    neofetch - show a visual summary of the profile"
+       - "DESCRIPTION"
+       - "    Displays a 'neofetch'-style summary with an ASCII logo and key profile information."
+     es:
+       - "NOMBRE"
+       - "    neofetch - muestra un resumen visual del perfil"
+       - "DESCRIPCIÓN"
+       - "    Muestra un resumen al estilo 'neofetch', con un logo ASCII y los datos principales del perfil."
    uname:
-     - "NAME"
-     - "    uname - print system information"
-     - "SYNOPSIS"
-     - "    uname -a"
-     - "DESCRIPTION"
-     - "    Prints simulated system information for the web-based OS."
+     en:
+       - "NAME"
+       - "    uname - print system information"
+       - "SYNOPSIS"
+       - "    uname -a"
+       - "DESCRIPTION"
+       - "    Prints simulated system information for the web-based OS."
+     es:
+       - "NOMBRE"
+       - "    uname - muestra información del sistema"
+       - "SINOPSIS"
+       - "    uname -a"
+       - "DESCRIPCIÓN"
+       - "    Muestra información simulada del sistema operativo web."
    date:
-     - "NAME"
-     - "    date - display the current date and time"
-     - "DESCRIPTION"
-     - "    Shows the client's current date, time, and timezone information."
+     en:
+       - "NAME"
+       - "    date - display the current date and time"
+       - "DESCRIPTION"
+       - "    Shows the client's current date, time, and timezone information."
+     es:
+       - "NOMBRE"
+       - "    date - muestra la fecha y la hora"
+       - "DESCRIPCIÓN"
+       - "    Muestra la fecha, la hora y la zona horaria del navegador."
    echo:
-     - "NAME"
-     - "    echo - display a line of text"
-     - "SYNOPSIS"
-     - "    echo [text...]"
-     - "DESCRIPTION"
-     - "    Prints the specified text back to the terminal."
+     en:
+       - "NAME"
+       - "    echo - display a line of text"
+       - "SYNOPSIS"
+       - "    echo [text...]"
+       - "DESCRIPTION"
+       - "    Prints the specified text back to the terminal."
+     es:
+       - "NOMBRE"
+       - "    echo - muestra una línea de texto"
+       - "SINOPSIS"
+       - "    echo [text...]"
+       - "DESCRIPCIÓN"
+       - "    Repite en la terminal el texto indicado."
    win-reset:
-     - "NAME"
-     - "    win-reset - reset window to default size and position"
-     - "DESCRIPTION"
-     - "    Resets the terminal window to its original centered position and default dimensions."
+     en:
+       - "NAME"
+       - "    win-reset - reset window to default size and position"
+       - "DESCRIPTION"
+       - "    Resets the terminal window to its original centered position and default dimensions."
+     es:
+       - "NOMBRE"
+       - "    win-reset - vuelve la ventana a su tamaño y posición iniciales"
+       - "DESCRIPCIÓN"
+       - "    Vuelve la ventana a su posición centrada y a su tamaño original."
    maximize:
-     - "NAME"
-     - "    maximize - maximize the window"
-     - "DESCRIPTION"
-     - "    Toggles the window between its normal and maximized state."
+     en:
+       - "NAME"
+       - "    maximize - maximize the window"
+       - "DESCRIPTION"
+       - "    Toggles the window between its normal and maximized state."
+     es:
+       - "NOMBRE"
+       - "    maximize - maximiza la ventana"
+       - "DESCRIPCIÓN"
+       - "    Alterna la ventana entre su tamaño normal y maximizado."
    minimize:
-     - "NAME"
-     - "    minimize - minimize the window"
-     - "DESCRIPTION"
-     - "    Toggles the window between its normal and minimized state."
+     en:
+       - "NAME"
+       - "    minimize - minimize the window"
+       - "DESCRIPTION"
+       - "    Toggles the window between its normal and minimized state."
+     es:
+       - "NOMBRE"
+       - "    minimize - minimiza la ventana"
+       - "DESCRIPCIÓN"
+       - "    Alterna la ventana entre su tamaño normal y minimizado."
    restore:
-     - "NAME"
-     - "    restore - restore the window"
-     - "DESCRIPTION"
-     - "    Restores a window from its minimized or maximized state to its previous dimensions."
+     en:
+       - "NAME"
+       - "    restore - restore the window"
+       - "DESCRIPTION"
+       - "    Restores a window from its minimized or maximized state to its previous dimensions."
+     es:
+       - "NOMBRE"
+       - "    restore - restaura la ventana"
+       - "DESCRIPCIÓN"
+       - "    Devuelve la ventana minimizada o maximizada a su tamaño anterior."
 
  # Configuration for the CLI prompt.
  prompt:
@@ -177,9 +324,125 @@ cli:
 
  # Templates for the `neofetch` command.
  neofetch:
-   host_template: "{name}'s Dev Environment"
+   host_template: { en: "{name}'s Dev Environment", es: "Entorno de desarrollo de {name}" }
    os_name: "FlaskOS 1.0"
    shell_name: "Web-CLI"
 
  # Templates for the `uname -a` command.
  uname: "FlaskOS 1.0 Kernel v4.2 web-based x86_64"
+
+# Interface texts: buttons, labels, placeholders and messages of the three
+# views. English is built in (UI_DEFAULTS in app/common/i18n.py, which lists
+# every key); here each key gets its translations. Add `en:` to change an
+# English text, or another language code to translate the site into it.
+ui:
+ selector:
+   page_title: { es: "Elegir la experiencia" }
+   subtitle: { es: "¿Cómo te gustaría recorrer mi portfolio?" }
+   cli_title: { es: "Desarrollo" }
+   cli_desc: { es: "Una terminal interactiva." }
+   recruiter_title: { es: "Selección" }
+   recruiter_desc: { es: "Un asistente de chat con IA." }
+   visual_title: { es: "Visual" }
+   visual_desc: { es: "Un resumen gráfico rápido." }
+ dock:
+   home: { es: "Volver al inicio" }
+   cli: { es: "Abrir la terminal" }
+   recruiter: { es: "Abrir el asistente" }
+   visual: { es: "Abrir la vista visual" }
+   theme: { es: "Cambiar el tema" }
+   info: { es: "Ver información" }
+   language: { es: "Cambiar el idioma" }
+ view:
+   render_error: { es: "No se pudo mostrar la vista." }
+ cli:
+   input_label: { es: "Entrada de comandos" }
+   auth_required: { es: "La terminal requiere un código de acceso." }
+   welcome_fallback: { es: "¡Bienvenido al portfolio en terminal!" }
+   hint_help: { es: "'help' muestra la lista de comandos disponibles." }
+   hint_theme: { es: "'theme light' o 'theme gruvbox' cambian el aspecto." }
+   permission_denied: { es: "Permiso denegado. El código no es válido." }
+   theme_current: { es: "Tema actual: '{theme}'." }
+   theme_available: { es: "Temas disponibles: {themes}" }
+   theme_set: { es: "Tema cambiado a '{theme}'." }
+   theme_not_found: { es: "Error: no existe el tema '{theme}'. Disponibles: {themes}" }
+   no_token: { es: "Error de autenticación: no se encontró la sesión. Hay que recargar la página." }
+   session_expired: { es: "La sesión expiró. Hay que ingresar el código de nuevo." }
+   server_error: { es: "Error del servidor: {error}" }
+ cli_out:
+   name: { es: "Nombre" }
+   title: { es: "Título" }
+   summary: { es: "Resumen" }
+   no_summary: { es: "No hay un resumen disponible." }
+   skills_header: { es: "[INFO] Habilidades técnicas:" }
+   skills_unavailable: { es: "  (No hay datos de habilidades)" }
+   contact_header: { es: "[INFO] Contacto:" }
+   contact_none: { es: "  (No hay datos de contacto)" }
+   ls_usage: { es: "[ERROR] Argumento desconocido para 'ls'. ¿Quisiste decir 'ls projects'?" }
+   ls_header: { es: "[INFO] Proyectos ('show <id>' muestra el detalle):" }
+   table_title: { es: "Título" }
+   projects_unavailable: { es: "  (No se pudieron cargar los proyectos)" }
+   filter_usage: { es: "[ERROR] Uso: filter --tech <tecnología>. Ejemplo: filter --tech python" }
+   filter_none: { es: "[INFO] No hay proyectos con la tecnología '{tech}'" }
+   filter_header: { es: "[INFO] Proyectos que usan '{tech}':" }
+   show_usage: { es: "[ERROR] Uso: show <id_del_proyecto>" }
+   show_not_found: { es: "[ERROR] No existe el proyecto '{id}'. 'ls projects' lista los disponibles." }
+   show_header: { es: "--- Proyecto: {title} ---" }
+   type: { es: "[INFO] Tipo: {type}" }
+   description: { es: "[INFO] Descripción:" }
+   no_description: { es: "(Sin descripción)" }
+   technologies: { es: "[INFO] Tecnologías:" }
+   not_specified: { es: "  (Sin especificar)" }
+   links: { es: "[LINK] Links:" }
+   link_live: { es: "Demo" }
+   link_code: { es: "Repositorio" }
+   link_pypi: { es: "PyPI" }
+   link_docs: { es: "Documentación" }
+   no_links: { es: "  (No hay links externos)" }
+   open_usage: { es: "[ERROR] Uso: open <id_del_proyecto>" }
+   open_not_found: { es: "[ERROR] No existe el proyecto '{id}'." }
+   open_no_url: { es: "[INFO] El proyecto '{id}' no tiene una URL publicada." }
+   opening: { es: "Abriendo {url} en una pestaña nueva..." }
+   links_header: { es: "[INFO] Redes y repositorios:" }
+   links_none: { es: "  (No hay redes configuradas)" }
+   neofetch_title: { es: "Título" }
+   neofetch_projects: { es: "Proyectos" }
+   neofetch_skills: { es: "Habilidades" }
+   logo_not_found: { es: "(No se encontró el logo)" }
+   man_usage: { es: "[ERROR] Uso: man <comando>. Falta indicar el comando." }
+   man_none: { es: "[ERROR] No hay manual para '{command}'." }
+   command_not_found: { es: "[ERROR] Comando no encontrado: '{command}'. 'help' lista los disponibles." }
+   internal_error: { es: "[ERROR] Error interno del servidor. Los detalles quedan en el log." }
+   load_failed: { es: "[ERROR] No se pudieron cargar los datos." }
+ chat:
+   window_title: { es: "Asistente" }
+   loading: { es: "Cargando..." }
+   verifying: { es: "Verificando el código..." }
+   access_granted: { es: "¡Acceso concedido, gracias! ¿En qué puedo ayudar?" }
+   ask_placeholder: { es: "Una pregunta sobre mis habilidades o proyectos..." }
+   ask_another: { es: "Otra pregunta..." }
+   wrong_code: { es: "Ese código no es correcto. Se puede intentar de nuevo." }
+   code_placeholder: { es: "Código de acceso..." }
+   thinking: { es: "Pensando..." }
+   session_expired: { es: "La sesión expiró. Hay que ingresar el código de acceso de nuevo." }
+   unavailable: { es: "El asistente no está disponible en este momento." }
+   error: { es: "Ocurrió un error: {error}" }
+   welcome_back: { es: "¡Hola de nuevo! ¿En qué puedo ayudar?" }
+   welcome_fallback: { es: "¡Hola! Este chat requiere un código de acceso para continuar." }
+   reply_not_configured: { es: "Error: el chat no está bien configurado." }
+   reply_unavailable: { es: "No puedo conectarme con el servicio de IA en este momento. Conviene intentar más tarde." }
+   reply_too_many_rounds: { es: "No pude armar esa respuesta. ¿Podrías reformular la pregunta?" }
+   reply_empty: { es: "No tengo una respuesta para eso." }
+ visual:
+   heading: { es: "Proyectos" }
+   loading: { es: "Cargando proyectos..." }
+   empty: { es: "No hay proyectos para mostrar." }
+   load_error: { es: "No se pudieron cargar los proyectos: {error}" }
+   overlay_live: { es: "Ver el proyecto en vivo" }
+   overlay_source: { es: "Ver el código" }
+   overlay_go: { es: "Ir" }
+   link_live: { es: "En vivo" }
+   link_code: { es: "Código" }
+   untitled: { es: "Proyecto sin título" }
+   no_description: { es: "Sin descripción." }
+   screenshot_alt: { es: "Captura de {title}" }

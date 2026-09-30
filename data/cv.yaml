@@ -1,14 +1,24 @@
 # Example content. Replace it with your own data, or point PORTFOLIO_DATA_DIR
 # at a folder with your own cv.yaml, projects.yaml, text_config.yaml,
 # system_prompt.txt, logo/ and images/.
+#
+# Any text can be a plain string, shown in every language, or one translation
+# per language code (see PORTFOLIO_LANGUAGES), as `title` and `summary` do here.
 name: Alex Example
-title: Python Developer
+title:
+  en: Python Developer
+  es: Desarrollador Python
 email: "alex@example.com"
 website: "https://example.com"
-summary: |
-  Python developer who builds web applications, automation tools and data
-  connectors. Enjoys clean code, well-tested libraries and small tools that
-  remove manual work.
+summary:
+  en: |
+    Python developer who builds web applications, automation tools and data
+    connectors. Enjoys clean code, well-tested libraries and small tools that
+    remove manual work.
+  es: |
+    Desarrollador Python que construye aplicaciones web, herramientas de
+    automatización y conectores de datos. Le gusta el código prolijo, las
+    librerías bien testeadas y las herramientas chicas que eliminan trabajo manual.
 skills:
   - Python
   - Flask

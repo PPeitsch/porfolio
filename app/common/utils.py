@@ -6,6 +6,7 @@ import yaml
 from flask import current_app, g
 
 from app.common.exceptions import DataFileError, DataFileNotFoundError
+from app.common.i18n import localize
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,8 @@ def load_yaml_data(filename):
 def load_cv_data():
     """Loads CV data from cv.yaml, caching it in the application context.
 
+    Bilingual texts are resolved to the language of the current request.
+
     Provides default values if the file is missing or malformed.
 
     Returns:
@@ -109,7 +112,7 @@ def load_cv_data():
     """
     if "cv_data" not in g:
         logger.info("Loading cv.yaml into context g")
-        loaded_data = load_yaml_data("cv.yaml")
+        loaded_data = localize(load_yaml_data("cv.yaml"))
         defaults = {
             "name": "Default Name",
             "title": "Default Title",
@@ -128,6 +131,8 @@ def load_cv_data():
 def load_projects_data():
     """Loads project data from projects.yaml, caching it in the context.
 
+    Bilingual texts are resolved to the language of the current request.
+
     Returns both a list of projects and a dictionary of projects keyed by ID.
 
     Returns:
@@ -136,7 +141,7 @@ def load_projects_data():
     """
     if "projects_data" not in g:
         logger.info("Loading projects.yaml into context g")
-        loaded_data = load_yaml_data("projects.yaml")
+        loaded_data = localize(load_yaml_data("projects.yaml"))
         if isinstance(loaded_data, list):
             g.projects_data = loaded_data
             g.projects_dict = (
@@ -237,11 +242,13 @@ def get_welcome_message(view: str) -> str:
 def load_text_config():
     """Loads text configuration from text_config.yaml, caching it in the context.
 
+    Bilingual texts are resolved to the language of the current request.
+
     Returns:
         dict: A dictionary containing the text configuration.
     """
     if "text_config" not in g:
         logger.info("Loading text_config.yaml into context g")
-        loaded_data = load_yaml_data("text_config.yaml")
+        loaded_data = localize(load_yaml_data("text_config.yaml"))
         g.text_config = loaded_data if isinstance(loaded_data, dict) else {}
     return g.text_config

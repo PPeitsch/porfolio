@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Tuple
 from flask import g, jsonify
 
 from app.common.decorators import token_required
+from app.common.i18n import t
 from app.common.utils import (
     _get_data_filepath,
     load_cv_data,
@@ -95,12 +96,14 @@ def _handle_help(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str],
 def _handle_whoami(
     cv_data: Dict[str, Any], terminal_width: int, **kwargs: Any
 ) -> Tuple[List[str], None]:
+    labels = [t("cli_out.name"), t("cli_out.title")]
+    width = max(len(label) for label in labels) + 4
     output = [
-        f"Name:    {cv_data.get('name', 'N/A')}",
-        f"Title:   {cv_data.get('title', 'N/A')}",
-        "Summary:",
+        f"{(labels[0] + ':').ljust(width)}{cv_data.get('name', 'N/A')}",
+        f"{(labels[1] + ':').ljust(width)}{cv_data.get('title', 'N/A')}",
+        f"{t('cli_out.summary')}:",
     ]
-    summary = cv_data.get("summary", "No summary available.")
+    summary = cv_data.get("summary") or t("cli_out.no_summary")
     wrapped_summary = textwrap.wrap(
         summary, width=terminal_width - 2, subsequent_indent="  "
     )
@@ -111,7 +114,7 @@ def _handle_whoami(
 def _handle_skills(
     cv_data: Dict[str, Any], terminal_width: int, **kwargs: Any
 ) -> Tuple[List[str], None]:
-    output = ["[INFO] Technical Skills:"]
+    output = [t("cli_out.skills_header")]
     skills_list = cv_data.get("skills", [])
     if skills_list:
         skills_line = ", ".join(skills_list)
@@ -123,12 +126,12 @@ def _handle_skills(
         )
         output.extend(wrapped_skills)
     else:
-        output.append("  (Skills data unavailable)")
+        output.append(t("cli_out.skills_unavailable"))
     return output, None
 
 
 def _handle_contact(cv_data: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
-    output = ["[INFO] Contact Information:"]
+    output = [t("cli_out.contact_header")]
     contact_found = False
     if cv_data.get("email"):
         output.append(f"  - Email:    <link>mailto:{cv_data['email']}</link>")
@@ -144,7 +147,7 @@ def _handle_contact(cv_data: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], 
         output.append(f"  - Website:  <link>{cv_data['website']}</link>")
         contact_found = True
     if not contact_found:
-        output.append("  (No contact details available)")
+        output.append(t("cli_out.contact_none"))
     return output, None
 
 
@@ -160,7 +163,10 @@ def _format_project_table(projects: List[Dict[str, Any]]) -> List[str]:
         if isinstance(p, dict)
     ]
     id_width = max([4] + [len(proj_id) for proj_id, _ in rows])
-    table = [f"  {'ID'.ljust(id_width)}  | Title", f"  {'-' * id_width}  + {'-' * 40}"]
+    table = [
+        f"  {'ID'.ljust(id_width)}  | {t('cli_out.table_title')}",
+        f"  {'-' * id_width}  + {'-' * 40}",
+    ]
     table.extend(f"  {proj_id.ljust(id_width)}  | {title}" for proj_id, title in rows)
     return table
 
@@ -169,13 +175,13 @@ def _handle_ls(
     args: List[str], projects_data: List[Dict[str, Any]], **kwargs: Any
 ) -> Tuple[List[str] | None, str | None]:
     if not args or args[0] != "projects":
-        return None, "[ERROR] Unknown argument for 'ls'. Did you mean 'ls projects'?"
+        return None, t("cli_out.ls_usage")
 
-    output = ["[INFO] Projects (use 'show <id>' for details):"]
+    output = [t("cli_out.ls_header")]
     if projects_data:
         output.extend(_format_project_table(projects_data))
     else:
-        output.append("  (Project data could not be loaded)")
+        output.append(t("cli_out.projects_unavailable"))
     return output, None
 
 
@@ -183,10 +189,7 @@ def _handle_filter(
     args: List[str], projects_data: List[Dict[str, Any]], **kwargs: Any
 ) -> Tuple[List[str] | None, str | None]:
     if len(args) < 2 or args[0] != "--tech":
-        return (
-            None,
-            "[ERROR] Usage: filter --tech <technology>. Example: filter --tech python",
-        )
+        return None, t("cli_out.filter_usage")
 
     tech_to_filter = args[1].lower()
     filtered_projects = [
@@ -196,10 +199,10 @@ def _handle_filter(
     ]
 
     if not filtered_projects:
-        output = [f"[INFO] No projects found with technology: '{tech_to_filter}'"]
+        output = [t("cli_out.filter_none", tech=tech_to_filter)]
         return output, None
 
-    output = [f"[INFO] Projects using '{tech_to_filter.capitalize()}':"]
+    output = [t("cli_out.filter_header", tech=tech_to_filter.capitalize())]
     output.extend(_format_project_table(filtered_projects))
 
     return output, None
@@ -212,19 +215,19 @@ def _handle_show(
     **kwargs: Any,
 ) -> Tuple[List[str] | None, str | None]:
     if not args:
-        return None, "[ERROR] Usage: show <project_id>"
+        return None, t("cli_out.show_usage")
     project_id = args[0]
     project = projects_dict.get(project_id)
 
     if not project:
-        return None, f"[ERROR] Project '{project_id}' not found. Use 'ls projects'."
+        return None, t("cli_out.show_not_found", id=project_id)
 
     output = [
-        f"--- Project: {project.get('title', 'N/A')} ---",
-        f"[INFO] Type: {project.get('type', 'N/A').capitalize()}",
-        "[INFO] Description:",
+        t("cli_out.show_header", title=project.get("title", "N/A")),
+        t("cli_out.type", type=str(project.get("type", "N/A")).capitalize()),
+        t("cli_out.description"),
     ]
-    desc = project.get("description", "(No description)")
+    desc = project.get("description") or t("cli_out.no_description")
     output.extend(
         textwrap.wrap(
             desc,
@@ -235,7 +238,7 @@ def _handle_show(
     )
 
     technologies = project.get("technologies")
-    output.append("[INFO] Technologies:")
+    output.append(t("cli_out.technologies"))
     if technologies:
         tech_line = ", ".join(technologies)
         output.extend(
@@ -247,21 +250,23 @@ def _handle_show(
             )
         )
     else:
-        output.append("  (Not specified)")
+        output.append(t("cli_out.not_specified"))
 
-    output.append("[LINK] Links:")
+    output.append(t("cli_out.links"))
     link_found = False
-    for key, name in [
-        ("live_url", "Live Demo"),
-        ("github_url", "Code Repo"),
-        ("pypi_url", "PyPI Page"),
-        ("docs_url", "Docs"),
-    ]:
+    link_names = [
+        ("live_url", t("cli_out.link_live")),
+        ("github_url", t("cli_out.link_code")),
+        ("pypi_url", t("cli_out.link_pypi")),
+        ("docs_url", t("cli_out.link_docs")),
+    ]
+    name_width = max(len(name) for _, name in link_names)
+    for key, name in link_names:
         if url := project.get(key):
-            output.append(f"  - {name:<11}: <link>{url}</link>")
+            output.append(f"  - {name.ljust(name_width)}: <link>{url}</link>")
             link_found = True
     if not link_found:
-        output.append("  (No external links available)")
+        output.append(t("cli_out.no_links"))
 
     return output, None
 
@@ -270,35 +275,35 @@ def _handle_open(
     args: List[str], projects_dict: Dict[str, Any], **kwargs: Any
 ) -> Tuple[List[str] | None, str | None, Dict[str, Any] | None]:
     if not args:
-        return None, "[ERROR] Usage: open <project_id>", None
+        return None, t("cli_out.open_usage"), None
     project_id = args[0]
     project = projects_dict.get(project_id)
 
     if not project:
-        return None, f"[ERROR] Project '{project_id}' not found.", None
+        return None, t("cli_out.open_not_found", id=project_id), None
 
     url = project.get("live_url")
     if not url:
         return (
             None,
-            f"[INFO] Project '{project_id}' does not have a live URL to open.",
+            t("cli_out.open_no_url", id=project_id),
             None,
         )
 
     action_payload = {"action": "open_url", "url": url}
-    output = [f"Attempting to open {url} in a new tab..."]
+    output = [t("cli_out.opening", url=url)]
     return output, None, action_payload
 
 
 def _handle_links(cv_data: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
-    output = ["[INFO] Social & Repo Links:"]
+    output = [t("cli_out.links_header")]
     social_links = cv_data.get("social_links", {})
     if social_links:
         for key, url in social_links.items():
             platform_name = key.replace("_", " ").capitalize()
             output.append(f"  - {platform_name}: <link>{url}</link>")
     else:
-        output.append("  (No social links configured)")
+        output.append(t("cli_out.links_none"))
     return output, None
 
 
@@ -329,16 +334,16 @@ def _handle_neofetch(
         with open(logo_path, "r", encoding="utf-8") as f:
             logo = [line.rstrip() for line in f.readlines()]
     except FileNotFoundError:
-        logo = ["(Logo not found)"]
+        logo = [t("cli_out.logo_not_found")]
 
     info = [
         f"{name}@{text_config.get('cli', {}).get('prompt', {}).get('host', 'flaskos')}",
         "-----------------------",
         f"OS: {neofetch_config.get('os_name', 'FlaskOS 1.0')}",
         f"Host: {host_template.format(name=name)}",
-        f"Title: {title}",
-        f"Projects: {project_count}",
-        f"Skills: {skill_count}",
+        f"{t('cli_out.neofetch_title')}: {title}",
+        f"{t('cli_out.neofetch_projects')}: {project_count}",
+        f"{t('cli_out.neofetch_skills')}: {skill_count}",
         f"Shell: {neofetch_config.get('shell_name', 'Web-CLI')}",
     ]
     max_logo_width = max(len(line) for line in logo) if logo else 0
@@ -358,7 +363,7 @@ def _handle_man(
     args: List[str], text_config: Dict[str, Any], **kwargs: Any
 ) -> Tuple[List[str] | None, str | None]:
     if not args:
-        return None, "[ERROR] Usage: man <command>. Please specify a command."
+        return None, t("cli_out.man_usage")
 
     command_name = args[0].lower()
     if command_name in ("exit", "close"):
@@ -367,7 +372,7 @@ def _handle_man(
     manuals = text_config.get("cli", {}).get("manuals", {})
     manual_text = manuals.get(command_name)
     if not manual_text:
-        return None, f"[ERROR] No manual entry for '{command_name}'."
+        return None, t("cli_out.man_none", command=command_name)
     return manual_text, None
 
 
@@ -401,7 +406,7 @@ def handle_command_api(command_line):
     if not CV_DATA or PROJECTS_DATA is None:
         logger.error("CLI API failed: CV or Projects data not loaded into context.")
         return (
-            jsonify({"output": [], "error": "[ERROR] Failed to load backend data."}),
+            jsonify({"output": [], "error": t("cli_out.load_failed")}),
             500,
         )
 
@@ -442,14 +447,14 @@ def handle_command_api(command_line):
         elif command == "":
             pass
         else:
-            error = f"[ERROR] Command not found: '{command}'. Type 'help'."
+            error = t("cli_out.command_not_found", command=command)
 
     except Exception as e:
         logger.error(
             f"CLI API exception processing command '{command_line}': {e}",
             exc_info=True,
         )
-        error = "[ERROR] Internal server error occurred. Please check server logs."
+        error = t("cli_out.internal_error")
 
     response_data = {"output": output or [], "error": error, "command": command}
     if action:

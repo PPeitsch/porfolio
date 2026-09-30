@@ -70,16 +70,16 @@ window.initializeCliView = function(callbacks) {
       clearScreen();
       promptSpan.textContent = "password:";
       inputElem.classList.add('password-mask');
-      writeOutput("Authentication required for CLI access.");
+      writeOutput(uiText("cli.auth_required"));
   }
 
   function showAuthenticatedPrompt() {
       updatePrompt();
       inputElem.classList.remove('password-mask');
       clearScreen();
-      writeOutput(cliWindow.dataset.welcome || "Welcome to the CLI portfolio!");
-      writeOutput("Type 'help' for a list of available commands.");
-      writeOutput("Type 'theme light' or 'theme gruvbox' to change the look.");
+      writeOutput(cliWindow.dataset.welcome || uiText("cli.welcome_fallback"));
+      writeOutput(uiText("cli.hint_help"));
+      writeOutput(uiText("cli.hint_theme"));
       writeOutput("");
   }
 
@@ -105,7 +105,7 @@ window.initializeCliView = function(callbacks) {
 
               if (!response.ok) {
                   const errorData = await response.json();
-                  throw new Error(errorData.error || 'Invalid code.');
+                  throw new Error(errorData.error || uiText('cli.permission_denied'));
               }
 
               const data = await response.json();
@@ -115,7 +115,7 @@ window.initializeCliView = function(callbacks) {
               showAuthenticatedPrompt();
 
           } catch (error) {
-              writeOutput(`Permission denied, please try again.`, "error-message");
+              writeOutput(uiText("cli.permission_denied"), "error-message");
           } finally {
               isFetching = false;
               inputElem.value = '';
@@ -138,17 +138,17 @@ window.initializeCliView = function(callbacks) {
               const themeName = (args[0] || '').toLowerCase();
               if (!themeName) {
                   const currentTheme = localStorage.getItem(THEME_KEY) || 'dracula';
-                  writeOutput(`Current theme: '${currentTheme}'.`, 'info-message');
-                  writeOutput(`Available themes: ${availableThemes.join(', ')}`);
+                  writeOutput(uiText('cli.theme_current', { theme: currentTheme }), 'info-message');
+                  writeOutput(uiText('cli.theme_available', { themes: availableThemes.join(', ') }));
                   return;
               }
 
               if (availableThemes.includes(themeName)) {
                   cliWindow.dataset.theme = themeName;
                   localStorage.setItem(THEME_KEY, themeName);
-                  writeOutput(`Theme set to '${themeName}'.`, 'info-message');
+                  writeOutput(uiText('cli.theme_set', { theme: themeName }), 'info-message');
               } else {
-                  writeOutput(`Error: Theme '${themeName}' not found. Available: ${availableThemes.join(', ')}`, 'error-message');
+                  writeOutput(uiText('cli.theme_not_found', { theme: themeName, themes: availableThemes.join(', ') }), 'error-message');
               }
           },
           'maximize': windowControls.maximize,
@@ -174,7 +174,7 @@ window.initializeCliView = function(callbacks) {
 
       const token = sessionStorage.getItem(TOKEN_KEY);
       if (!token) {
-          writeOutput("Authentication error: Session token not found. Please refresh.", "error-message");
+          writeOutput(uiText("cli.no_token"), "error-message");
           authState = 'awaiting_password';
           showLoginPrompt();
           isFetching = false;
@@ -190,14 +190,14 @@ window.initializeCliView = function(callbacks) {
           if (response.status === 401) {
                sessionStorage.removeItem(TOKEN_KEY);
                authState = 'awaiting_password';
-               writeOutput("Session expired. Please re-authenticate.", "error-message");
+               writeOutput(uiText("cli.session_expired"), "error-message");
                showLoginPrompt();
                return;
           }
 
           if (!response.ok) {
-              let errorMsg = `Server error: ${response.status}`;
-              try { const errorData = await response.json(); if (errorData && errorData.error) { errorMsg = `Server error: ${errorData.error}`; } } catch (e) {}
+              let errorMsg = uiText('cli.server_error', { error: response.status });
+              try { const errorData = await response.json(); if (errorData && errorData.error) { errorMsg = uiText('cli.server_error', { error: errorData.error }); } } catch (e) {}
               throw new Error(errorMsg);
           }
 

@@ -136,7 +136,7 @@ window.initializeRecruiterView = function (callbacks) {
 
     async function handleCodeSubmission(code) {
         isLoading = true;
-        setInputState(false, 'Verifying code...');
+        setInputState(false, uiText('chat.verifying'));
         addMessage('', 'bot', true);
 
         try {
@@ -150,21 +150,21 @@ window.initializeRecruiterView = function (callbacks) {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Invalid code.');
+                throw new Error(errorData.error || uiText('chat.wrong_code'));
             }
 
             const data = await response.json();
             sessionStorage.setItem(TOKEN_KEY, data.token);
             chatState = 'chatting';
             chatInput.classList.remove('password-mask');
-            const welcomeMsg = "Access granted! Thank you. How can I help you?";
+            const welcomeMsg = uiText('chat.access_granted');
             addMessage(welcomeMsg, 'bot');
             conversationHistory.push({role: 'assistant', content: welcomeMsg});
-            setInputState(true, 'Ask about my skills or projects...');
+            setInputState(true, uiText('chat.ask_placeholder'));
 
         } catch (error) {
-            addMessage(`Sorry, that's not the correct code. Please try again.`, 'bot');
-            setInputState(true, 'Enter access code...');
+            addMessage(uiText('chat.wrong_code'), 'bot');
+            setInputState(true, uiText('chat.code_placeholder'));
         } finally {
             isLoading = false;
         }
@@ -172,7 +172,7 @@ window.initializeRecruiterView = function (callbacks) {
 
     async function handleChatMessage(message) {
         isLoading = true;
-        setInputState(false, 'Thinking...');
+        setInputState(false, uiText('chat.thinking'));
         addMessage(message, 'user');
         conversationHistory.push({role: 'user', content: message});
         addMessage('', 'bot', true);
@@ -180,11 +180,11 @@ window.initializeRecruiterView = function (callbacks) {
         const token = sessionStorage.getItem(TOKEN_KEY);
         if (!token) {
             chatWindow.querySelector('#typing-indicator')?.remove();
-            addMessage("Your session has expired. Please re-enter the access code.", 'bot');
+            addMessage(uiText('chat.session_expired'), 'bot');
             chatState = 'awaiting_code';
             chatInput.classList.add('password-mask');
             conversationHistory = [];
-            setInputState(true, 'Enter access code...');
+            setInputState(true, uiText('chat.code_placeholder'));
             isLoading = false;
             return;
         }
@@ -206,14 +206,14 @@ window.initializeRecruiterView = function (callbacks) {
 
             if (response.status === 401) {
                 sessionStorage.removeItem(TOKEN_KEY);
-                addMessage("Your session has expired. Please enter the access code again.", 'bot');
+                addMessage(uiText('chat.session_expired'), 'bot');
                 chatState = 'awaiting_code';
                 chatInput.classList.add('password-mask');
                 conversationHistory = [];
-                setInputState(true, 'Enter access code...');
+                setInputState(true, uiText('chat.code_placeholder'));
                 return;
             }
-            if (!response.ok) throw new Error('The AI assistant is currently unavailable.');
+            if (!response.ok) throw new Error(uiText('chat.unavailable'));
 
             const data = await response.json();
             addMessage(data.reply, 'bot');
@@ -221,11 +221,11 @@ window.initializeRecruiterView = function (callbacks) {
 
         } catch (error) {
             chatWindow.querySelector('#typing-indicator')?.remove();
-            addMessage(`Sorry, an error occurred: ${error.message}`, 'bot');
+            addMessage(uiText('chat.error', { error: error.message }), 'bot');
             conversationHistory.pop();
         } finally {
             isLoading = false;
-            setInputState(true, 'Ask another question...');
+            setInputState(true, uiText('chat.ask_another'));
         }
     }
 
@@ -251,17 +251,17 @@ window.initializeRecruiterView = function (callbacks) {
         if (token) {
             chatState = 'chatting';
             chatInput.classList.remove('password-mask');
-            const welcomeMsg = "Welcome back! How can I assist you?";
+            const welcomeMsg = uiText('chat.welcome_back');
             addMessage(welcomeMsg, 'bot');
             conversationHistory.push({role: 'assistant', content: welcomeMsg});
-            setInputState(true, 'Ask about my skills or projects...');
+            setInputState(true, uiText('chat.ask_placeholder'));
         } else {
             chatState = 'awaiting_code';
             chatInput.classList.add('password-mask');
             const welcomeMessage = chatWindow.dataset.welcome
-                || "Hello! This chat requires an access code. Please enter it to continue.";
+                || uiText('chat.welcome_fallback');
             addMessage(welcomeMessage, 'bot');
-            setInputState(true, 'Enter access code...');
+            setInputState(true, uiText('chat.code_placeholder'));
         }
     }
 

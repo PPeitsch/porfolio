@@ -7,6 +7,7 @@ from flask import abort, current_app, jsonify, request, send_from_directory
 
 from app.common.decorators import token_required
 from app.common.exceptions import LLMConfigurationError, LLMServiceError, PortfolioError
+from app.common.i18n import get_locale, language_name, t
 from app.common.llm_services import ToolCall, get_llm_service
 from app.common.llm_tools import TOOL_MAP, get_tool_definitions
 from app.common.utils import load_cv_data, load_system_prompt
@@ -30,14 +31,6 @@ def static_files(filename):
 
 # Only this many earlier messages are sent back to the model.
 MAX_HISTORY_MESSAGES = 20
-
-UNAVAILABLE_REPLY = (
-    "Sorry, I'm having trouble connecting to the AI service. Please try again later."
-)
-TOO_MANY_TOOL_ROUNDS_REPLY = (
-    "Sorry, I couldn't put that answer together. Could you rephrase the question?"
-)
-EMPTY_REPLY = "Sorry, I don't have an answer for that."
 
 
 def _clean_history(history: Any) -> List[Dict[str, str]]:
@@ -95,10 +88,13 @@ def handle_chat():
         llm_service = get_llm_service()
     except LLMConfigurationError as e:
         logger.error(f"LLM service could not be initialized: {e}")
-        return jsonify({"reply": "Error: Chatbot not configured correctly."}), 503
+        return jsonify({"reply": t("chat.reply_not_configured")}), 503
 
     owner_name = load_cv_data().get("name", "the portfolio owner")
     system_prompt = load_system_prompt().replace("{name}", owner_name)
+    system_prompt += "\n\n" + t(
+        "chat.language_hint", language=language_name(get_locale())
+    )
     tools = get_tool_definitions(owner_name)
 
     messages: List[Dict[str, Any]] = _clean_history(request.json.get("history")) + [
@@ -113,10 +109,10 @@ def handle_chat():
                 messages=conversation, system_prompt=system_prompt, tools=tools
             )
         except LLMServiceError:
-            return jsonify({"reply": UNAVAILABLE_REPLY}), 502
+            return jsonify({"reply": t("chat.reply_unavailable")}), 502
 
         if not response.tool_calls:
-            reply = response.content.strip() or EMPTY_REPLY
+            reply = response.content.strip() or t("chat.reply_empty")
             return jsonify(
                 {
                     "reply": reply,
@@ -131,10 +127,10 @@ def handle_chat():
             )
 
     logger.warning(f"The model kept asking for tools after {max_rounds} rounds.")
+    reply = t("chat.reply_too_many_rounds")
     return jsonify(
         {
-            "reply": TOO_MANY_TOOL_ROUNDS_REPLY,
-            "history": messages
-            + [{"role": "assistant", "content": TOO_MANY_TOOL_ROUNDS_REPLY}],
+            "reply": reply,
+            "history": messages + [{"role": "assistant", "content": reply}],
         }
     )
