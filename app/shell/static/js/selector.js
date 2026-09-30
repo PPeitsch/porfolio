@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (viewDock) {
         viewDock.addEventListener('click', (event) => {
             const dockItem = event.target.closest('.dock-item');
-            if (dockItem && dockItem.id !== 'dock-theme-switcher' && !dockItem.closest('.group')) {
+            if (dockItem && dockItem.dataset.view && dockItem.id !== 'dock-theme-switcher' && !dockItem.closest('.group')) {
                 const viewName = dockItem.dataset.view;
                 if (viewName === 'Home') {
                     showSelector();
@@ -313,12 +313,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Language switch ---
+    // Changing the language reloads the page; the open view is reopened after it.
+    const RESTORE_VIEW_KEY = 'portfolio-restore-view';
+    document.querySelectorAll('.language-link').forEach(link => {
+        link.addEventListener('click', () => {
+            try {
+                if (currentView) sessionStorage.setItem(RESTORE_VIEW_KEY, currentView);
+            } catch (e) { /* storage unavailable: the page opens on the selector */ }
+        });
+    });
+
     // --- Initial State ---
     selectorContainer.classList.add('visible-view');
     selectorContainer.classList.remove('hidden-view');
     viewContainer.classList.add('hidden-view');
     viewContainer.classList.remove('visible-view');
     applyTheme(localStorage.getItem(THEME_KEY) || 'dracula');
+
+    let viewToRestore = null;
+    try {
+        viewToRestore = sessionStorage.getItem(RESTORE_VIEW_KEY);
+        sessionStorage.removeItem(RESTORE_VIEW_KEY);
+    } catch (e) { /* storage unavailable */ }
+    if (['Developer', 'Recruiter', 'Visual'].includes(viewToRestore)) showView(viewToRestore);
 
     console.log("Selector view initialized with transitions and ready.");
 });

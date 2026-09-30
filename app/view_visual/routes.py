@@ -3,6 +3,7 @@ import os
 
 from flask import abort, current_app, jsonify, send_from_directory
 
+from app.common.i18n import t
 from app.common.utils import load_projects_data
 
 from . import visual_bp
@@ -68,8 +69,10 @@ def get_projects_for_visual():
             else:
                 image_url = f"/shell-static/images/projects/{image_filename}"
 
-        description = p.get(
-            "short_description", p.get("description", "No description available.")
+        description = str(
+            p.get("short_description")
+            or p.get("description")
+            or t("visual.no_description")
         )
         short_desc = (
             (description[:100] + "...") if len(description) > 100 else description
@@ -78,7 +81,7 @@ def get_projects_for_visual():
         simple_projects.append(
             {
                 "id": p.get("id", f"unknown_{len(simple_projects)}"),
-                "title": p.get("title", "Untitled Project"),
+                "title": p.get("title") or t("visual.untitled"),
                 "image_url": image_url,
                 "short_desc": short_desc,
                 "live_url": p.get("live_url"),

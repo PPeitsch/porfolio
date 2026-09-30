@@ -148,6 +148,51 @@ body {
     transform: scale(1.1);
 }
 
+.language-switcher {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    z-index: 900;
+    display: flex;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+#selector-container.hidden-view + .language-switcher {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.language-switcher a,
+.language-switcher span {
+    padding: 4px 8px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+.language-switcher a {
+    color: #6b7280;
+}
+
+.language-switcher a:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #374151;
+}
+
+.language-current {
+    color: #4f46e5;
+    background-color: rgba(79, 70, 229, 0.1);
+}
+
+.dock-language {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+}
+
 .dock-separator {
     width: 1px;
     height: 24px;

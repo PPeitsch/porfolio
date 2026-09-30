@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ cv.get('name', 'Portfolio') }} - Select Your Experience</title>
+    <title>{{ cv.get('name', 'Portfolio') }} - {{ t('selector.page_title') }}</title>
     <!-- Favicon Links -->
     <link rel="icon" href="{{ url_for('shell.static', filename='favicon.svg') }}" type="image/svg+xml">
     <!-- External CSS & Fonts -->
@@ -22,7 +22,7 @@
     <div id="selector-container" class="text-center p-6 md:p-10 max-w-5xl w-full mx-auto visible-view">
         <!-- Header Section -->
         <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{{ cv.get('name', 'Welcome') }}</h1>
-        <p class="text-lg text-gray-600 mb-10 md:mb-16">How would you like to explore my portfolio?</p>
+        <p class="text-lg text-gray-600 mb-10 md:mb-16">{{ t('selector.subtitle') }}</p>
 
         <!-- Options Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
@@ -30,26 +30,40 @@
             <!-- Developer / CLI Option -->
             <div id="select-cli" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
                 <i class="fas fa-terminal fa-3x text-emerald-500 mb-5"></i>
-                <h2 class="text-xl font-semibold text-gray-700 mb-1">Developer</h2>
-                <p class="text-gray-500 text-sm">Interactive CLI experience.</p>
+                <h2 class="text-xl font-semibold text-gray-700 mb-1">{{ t('selector.cli_title') }}</h2>
+                <p class="text-gray-500 text-sm">{{ t('selector.cli_desc') }}</p>
             </div>
 
             <!-- Recruiter / Chat Option -->
             <div id="select-recruiter" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
                 <i class="fas fa-comments fa-3x text-sky-500 mb-5"></i>
-                <h2 class="text-xl font-semibold text-gray-700 mb-1">Recruiter</h2>
-                <p class="text-gray-500 text-sm">AI-powered chat assistant.</p>
+                <h2 class="text-xl font-semibold text-gray-700 mb-1">{{ t('selector.recruiter_title') }}</h2>
+                <p class="text-gray-500 text-sm">{{ t('selector.recruiter_desc') }}</p>
             </div>
 
             <!-- Visual / Simple Option -->
             <div id="select-visual" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
                 <i class="fas fa-eye fa-3x text-indigo-500 mb-5"></i>
-                <h2 class="text-xl font-semibold text-gray-700 mb-1">Visual</h2>
-                <p class="text-gray-500 text-sm">Quick graphical overview.</p>
+                <h2 class="text-xl font-semibold text-gray-700 mb-1">{{ t('selector.visual_title') }}</h2>
+                <p class="text-gray-500 text-sm">{{ t('selector.visual_desc') }}</p>
             </div>
 
         </div> <!-- End Options Grid -->
     </div> <!-- End Main Selector View -->
+
+    {% if languages|length > 1 %}
+    <!-- ===== Language Switcher (only with the selector visible) ===== -->
+    <nav id="language-switcher" class="language-switcher" aria-label="{{ t('dock.language') }}">
+        {% for code, name in languages %}
+        {% if code == lang %}
+        <span class="language-current" aria-current="true" title="{{ name }}">{{ code|upper }}</span>
+        {% else %}
+        <a class="language-link" href="{{ url_for('shell.set_language', code=code) }}" lang="{{ code }}" title="{{ name }}">{{ code|upper }}</a>
+        {% endif %}
+        {% endfor %}
+    </nav>
+    {% endif %}
+
 
 
     <!-- ===== Dynamic View Container ===== -->
@@ -59,28 +73,36 @@
     <!-- ===== View Navigation Dock ===== -->
     <div id="view-dock" class="view-dock">
         <!-- View Controls -->
-        <button id="dock-home" class="dock-item" data-view="Home" aria-label="Go to Home Selector">
+        <button id="dock-home" class="dock-item" data-view="Home" aria-label="{{ t('dock.home') }}">
             <i class="fas fa-th-large"></i>
         </button>
         <div class="dock-separator"></div>
-        <button id="dock-cli" class="dock-item" data-view="Developer" aria-label="Open Developer View">
+        <button id="dock-cli" class="dock-item" data-view="Developer" aria-label="{{ t('dock.cli') }}">
             <i class="fas fa-terminal"></i>
         </button>
-        <button id="dock-recruiter" class="dock-item" data-view="Recruiter" aria-label="Open Recruiter View">
+        <button id="dock-recruiter" class="dock-item" data-view="Recruiter" aria-label="{{ t('dock.recruiter') }}">
             <i class="fas fa-comments"></i>
         </button>
-        <button id="dock-visual" class="dock-item" data-view="Visual" aria-label="Open Visual View">
+        <button id="dock-visual" class="dock-item" data-view="Visual" aria-label="{{ t('dock.visual') }}">
             <i class="fas fa-eye"></i>
         </button>
 
         <!-- Utility Controls -->
         <div class="dock-separator"></div>
-        <button id="dock-theme-switcher" class="dock-item" data-view="Theme" aria-label="Switch Theme">
+        <button id="dock-theme-switcher" class="dock-item" data-view="Theme" aria-label="{{ t('dock.theme') }}">
             <i class="fas fa-palette"></i>
         </button>
+        {% if languages|length > 1 %}
+        {% set codes = languages|map('first')|list %}
+        {% set next_code = codes[(codes.index(lang) + 1) % codes|length] %}
+        <a id="dock-language" class="dock-item dock-language language-link" lang="{{ next_code }}"
+           href="{{ url_for('shell.set_language', code=next_code) }}"
+           aria-label="{{ t('dock.language') }}: {{ dict(languages)[next_code] }}"
+           title="{{ dict(languages)[next_code] }}">{{ lang|upper }}</a>
+        {% endif %}
         {% if banner_enabled %}
         <div class="relative group">
-            <button id="dock-info" class="dock-item" data-view="Info" aria-label="Show Info">
+            <button id="dock-info" class="dock-item" data-view="Info" aria-label="{{ t('dock.info') }}">
                 <i class="fas fa-cog"></i>
             </button>
             <div class="config-tooltip group-hover:opacity-100 group-hover:visible">
@@ -93,6 +115,15 @@
 
     <!-- ===== Scripts ===== -->
     <script>
+        // Interface texts in the visitor's language, read by the view scripts
+        window.PORTFOLIO_TEXT = {{ ui_texts|tojson }};
+        window.uiText = (key, values = {}) => {
+            let text = window.PORTFOLIO_TEXT[key] || key;
+            for (const [name, value] of Object.entries(values)) {
+                text = text.split(`{${name}}`).join(value);
+            }
+            return text;
+        };
         // Pass Flask URLs to a global JS object
         const _app_urls = {
             view_cli: '{{ url_for("shell.get_view_partial", view_name="cli") }}',

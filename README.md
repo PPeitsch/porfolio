@@ -51,6 +51,7 @@ The engine and the content are separate: your CV, projects and texts live in pla
     *   **Visual view:** one card per project, with image, main technologies and links.
 *   **Access code:** the terminal and the chat are protected by a code (JWT-based) to prevent abuse of your LLM API key.
 *   **Content as files:** CV, projects, system prompt, UI texts, ASCII logos and project images, all in one folder you can keep outside the repository.
+*   **Bilingual:** interface and content in English and Spanish (or any languages you configure), chosen from the browser's language or a switcher (see [Languages](#languages)).
 *   **Any LLM provider:** one setting, `LLM_MODEL`, picks provider and model (see [Choosing the Model](#choosing-the-model)).
 *   **Quality checks:** Black, isort, Flake8 and MyPy via pre-commit, Bandit and Safety in CI, and a test suite with coverage reported to Codecov.
 
@@ -83,8 +84,26 @@ All the content is read from one folder: `data/` by default, or the path in `POR
 | `projects.yaml` | A list of projects: `id`, `title`, `type`, `image`, `short_description`, `description`, `technologies` and optional `live_url`, `github_url`, `pypi_url`, `docs_url`. |
 | `images/` | Project images, referenced by file name from the `image` field of each project. |
 | `system_prompt.txt` | The system prompt of the AI chat. `{name}` is replaced with the name in `cv.yaml`. |
-| `text_config.yaml` | UI texts: welcome messages of the terminal and the chat, help and manual pages of the terminal commands, and the tool descriptions the AI chat receives. |
+| `text_config.yaml` | UI texts: welcome messages of the terminal and the chat, help and manual pages of the terminal commands, the tool descriptions the AI chat receives, and the translations of the interface (`ui`). |
 | `logo/` | ASCII logos for the `neofetch` command. |
+
+## Languages
+
+The site is offered in the languages of `PORTFOLIO_LANGUAGES` (default `en,es`). Each visitor gets the language chosen with the switcher (remembered in a cookie), or else the browser's preferred one, or else `PORTFOLIO_DEFAULT_LANGUAGE` (default: the first of the list). With a single language, the switcher is hidden.
+
+Any text in the content files can be a plain string, shown in every language, or one translation per language:
+
+```yaml
+title:
+  en: Python Developer
+  es: Desarrollador Python
+```
+
+A text missing in the visitor's language falls back to the default language, then to any translation given. The example files in `data/` are bilingual.
+
+The interface texts (buttons, placeholders, terminal messages) are built in in English; the `ui` section of `text_config.yaml` holds their translations, e.g. `ui.chat.thinking.es`. `UI_DEFAULTS` in `app/common/i18n.py` lists every key. To add a language, add its code to `PORTFOLIO_LANGUAGES` and its translations to the content files and to `ui`.
+
+The chat is told the visitor's language, and answers in the language of each question.
 
 ## Choosing the Model
 

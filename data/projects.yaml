@@ -1,26 +1,45 @@
 # Example projects. Each entry is shown in the three views and is available
 # to the AI assistant. `image` is a file in the images/ folder of the content
 # directory; `live_url`, `github_url`, `pypi_url` and `docs_url` are optional.
+# Texts can be translated per language, like in cv.yaml.
 - id: portfolio-cli
-  title: "Terminal Portfolio"
+  title:
+    en: "Terminal Portfolio"
+    es: "Portfolio en terminal"
   type: webapp
   image: "cli-view.png"
-  short_description: "A draggable, themeable terminal that answers questions about its owner."
-  description: "The developer view of this portfolio: a simulated terminal with commands to list projects, filter them by technology, show contact details and change the color theme."
+  short_description:
+    en: "A draggable, themeable terminal that answers questions about its owner."
+    es: "Una terminal que se arrastra, cambia de tema y responde preguntas sobre su dueño."
+  description:
+    en: "The developer view of this portfolio: a simulated terminal with commands to list projects, filter them by technology, show contact details and change the color theme."
+    es: "La vista para desarrolladores de este portfolio: una terminal simulada con comandos para listar proyectos, filtrarlos por tecnología, ver los datos de contacto y cambiar los colores."
   technologies: ["Python", "Flask", "JavaScript"]
   github_url: "https://github.com/example/portfolio"
 - id: portfolio-assistant
-  title: "Recruiter Assistant"
+  title:
+    en: "Recruiter Assistant"
+    es: "Asistente para reclutadores"
   type: webapp
   image: "recruiter-view.png"
-  short_description: "An AI chat that answers questions about skills and projects using function calling."
-  description: "A chat assistant backed by Anthropic, OpenAI or Gemini. It reads the portfolio data through tools instead of a long prompt, so answers stay up to date with the YAML files."
+  short_description:
+    en: "An AI chat that answers questions about skills and projects using function calling."
+    es: "Un chat con IA que responde sobre habilidades y proyectos usando function calling."
+  description:
+    en: "A chat assistant that talks to any model provider through LiteLLM. It reads the portfolio data through tools instead of a long prompt, so answers stay up to date with the YAML files."
+    es: "Un asistente de chat que usa cualquier proveedor de modelos a través de LiteLLM. Lee los datos del portfolio con herramientas en lugar de un prompt largo, así las respuestas siguen al día con los archivos YAML."
   technologies: ["Python", "Flask", "LLM APIs"]
   live_url: "https://example.com/assistant"
 - id: portfolio-gallery
-  title: "Project Gallery"
+  title:
+    en: "Project Gallery"
+    es: "Galería de proyectos"
   type: webapp
   image: "visual-view.png"
-  short_description: "A visual overview of projects with links to demos and repositories."
-  description: "The visual view of this portfolio: one card per project with its image, main technologies and links."
+  short_description:
+    en: "A visual overview of projects with links to demos and repositories."
+    es: "Un resumen visual de los proyectos, con links a demos y repositorios."
+  description:
+    en: "The visual view of this portfolio: one card per project with its image, main technologies and links."
+    es: "La vista visual de este portfolio: una tarjeta por proyecto con su imagen, sus tecnologías principales y sus links."
   technologies: ["JavaScript", "CSS"]

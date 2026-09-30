@@ -28,7 +28,7 @@ function initializeVisualView() {
         const imageSrc = project.image_url || '/shell-static/images/placeholder.svg'; // Fallback defined in Step 5.1.1 correction
         const img = document.createElement('img');
         img.src = imageSrc;
-        img.alt = `${project.title || 'Project'} Screenshot`;
+        img.alt = uiText('visual.screenshot_alt', { title: project.title || '' });
         img.className = 'project-image';
         img.loading = 'lazy';
 
@@ -44,7 +44,7 @@ function initializeVisualView() {
         if (project.live_url && project.type === 'webapp') {
              const overlayText = document.createElement('div');
              overlayText.className = 'overlay-text';
-             overlayText.textContent = 'View Live Project';
+             overlayText.textContent = uiText('visual.overlay_live');
              overlay.appendChild(overlayText);
 
              const overlayLink = document.createElement('a');
@@ -52,12 +52,13 @@ function initializeVisualView() {
              overlayLink.target = '_blank';
              overlayLink.rel = 'noopener noreferrer';
              overlayLink.className = 'overlay-link';
-             overlayLink.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> Go';
+             overlayLink.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> ';
+             overlayLink.append(uiText('visual.overlay_go'));
              overlay.appendChild(overlayLink);
         } else if (project.github_url) { // Show GitHub if no live link
              const overlayText = document.createElement('div');
              overlayText.className = 'overlay-text';
-             overlayText.textContent = 'View Source Code';
+             overlayText.textContent = uiText('visual.overlay_source');
              overlay.appendChild(overlayText);
 
              const overlayLink = document.createElement('a');
@@ -85,13 +86,13 @@ function initializeVisualView() {
         // Title
         const title = document.createElement('h3');
         title.className = 'project-title';
-        title.textContent = project.title || 'Untitled Project';
+        title.textContent = project.title || uiText('visual.untitled');
         contentDiv.appendChild(title);
 
         // Description
         const description = document.createElement('p');
         description.className = 'project-description';
-        description.textContent = project.short_desc || 'No description available.';
+        description.textContent = project.short_desc || uiText('visual.no_description');
         contentDiv.appendChild(description);
 
         // Tags (Conditional) - **Restored Logic**
@@ -118,7 +119,8 @@ function initializeVisualView() {
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
             link.className = 'project-link-button primary'; // Class from visual.css
-            link.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> View Live';
+            link.innerHTML = '<i class="fas fa-external-link-alt fa-xs"></i> ';
+            link.append(uiText('visual.link_live'));
             linksContainer.appendChild(link);
             hasLinks = true;
         }
@@ -128,7 +130,8 @@ function initializeVisualView() {
              link.target = '_blank';
              link.rel = 'noopener noreferrer';
              link.className = 'project-link-button secondary'; // Class from visual.css
-             link.innerHTML = '<i class="fab fa-github fa-xs"></i> Code';
+             link.innerHTML = '<i class="fab fa-github fa-xs"></i> ';
+             link.append(uiText('visual.link_code'));
              linksContainer.appendChild(link);
              hasLinks = true;
         }
@@ -168,7 +171,8 @@ function initializeVisualView() {
     async function fetchAndRenderProjects() {
         console.log("Fetching project data for visual view...");
         // Display loading state
-        gridContainer.innerHTML = '<div class="text-center col-span-full p-10 text-gray-500 animate-pulse">Loading projects...</div>';
+        gridContainer.innerHTML = '<div class="text-center col-span-full p-10 text-gray-500 animate-pulse"></div>';
+        gridContainer.firstChild.textContent = uiText('visual.loading');
 
         try {
             // Fetch simplified project data from the visual blueprint's API
@@ -179,7 +183,8 @@ function initializeVisualView() {
             gridContainer.innerHTML = ''; // Clear loading message
 
             if (!projectsData || projectsData.length === 0) {
-                 gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-gray-500">No projects to display.</p>';
+                 gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-gray-500"></p>';
+                 gridContainer.firstChild.textContent = uiText('visual.empty');
                  return;
             }
 
@@ -198,7 +203,8 @@ function initializeVisualView() {
 
         } catch (error) {
             console.error("Error fetching or rendering projects:", error);
-            gridContainer.innerHTML = `<p class="text-center col-span-full p-10 text-red-500">Could not load projects: ${error.message}</p>`;
+            gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-red-500"></p>';
+            gridContainer.firstChild.textContent = uiText('visual.load_error', { error: error.message });
         }
     }
 
