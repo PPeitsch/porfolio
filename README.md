@@ -47,11 +47,11 @@ The engine and the content are separate: your CV, projects and texts live in pla
 
 *   **Three views** of the same content:
     *   **Developer view:** a draggable, themeable terminal with commands such as `whoami`, `ls projects`, `filter --tech <name>`, `show <project>` and `neofetch`.
-    *   **Recruiter view:** an AI chat (Anthropic, OpenAI or Gemini) that answers questions by reading your data through function calling, so it stays in sync with your files.
+    *   **Recruiter view:** an AI chat that answers questions by reading your data through function calling, so it stays in sync with your files. It works with any provider LiteLLM supports: OpenRouter, Anthropic, OpenAI, Gemini, a local Ollama and more.
     *   **Visual view:** one card per project, with image, main technologies and links.
 *   **Access code:** the terminal and the chat are protected by a code (JWT-based) to prevent abuse of your LLM API key.
 *   **Content as files:** CV, projects, system prompt, UI texts, ASCII logos and project images, all in one folder you can keep outside the repository.
-*   **Configurable provider:** LLM provider and model are set through environment variables; Gemini can go through an HTTP proxy.
+*   **Any LLM provider:** one setting, `LLM_MODEL`, picks provider and model (see [Choosing the Model](#choosing-the-model)).
 *   **Quality checks:** Black, isort, Flake8 and MyPy via pre-commit, Bandit and Safety in CI, and a test suite with coverage reported to Codecov.
 
 ### Authentication
@@ -67,7 +67,7 @@ Both the terminal and the chat ask for the access code before they can be used.
 1.  **Clone:** `git clone https://github.com/PPeitsch/porfolio.git && cd porfolio`
 2.  **Create an environment:** `python -m venv venv && source venv/bin/activate`
 3.  **Install dependencies:** `pip install -r requirements-dev.txt`
-4.  **Configure:** copy `.env.example` to `.env` and set at least `SECRET_KEY`, `RECRUITER_ACCESS_CODE` and the API key of your `LLM_PROVIDER`.
+4.  **Configure:** copy `.env.example` to `.env` and set at least `SECRET_KEY`, `RECRUITER_ACCESS_CODE` `LLM_MODEL` and the API key of its provider.
 5.  **Install the pre-commit hooks:** `pre-commit install`
 6.  **Run:** `python run.py` and open `http://127.0.0.1:5000`.
 
@@ -85,6 +85,22 @@ All the content is read from one folder: `data/` by default, or the path in `POR
 | `system_prompt.txt` | The system prompt of the AI chat. `{name}` is replaced with the name in `cv.yaml`. |
 | `text_config.yaml` | UI texts: welcome messages of the terminal and the chat, help and manual pages of the terminal commands, and the tool descriptions the AI chat receives. |
 | `logo/` | ASCII logos for the `neofetch` command. |
+
+## Choosing the Model
+
+The chat goes through [LiteLLM](https://docs.litellm.ai/docs/providers), so `LLM_MODEL` is `<provider>/<model>` and the key goes in the provider's usual variable:
+
+| `LLM_MODEL` | Key |
+|---|---|
+| `openrouter/anthropic/claude-haiku-4.5` | `OPENROUTER_API_KEY` |
+| `anthropic/claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` |
+| `openai/gpt-4.1-mini` | `OPENAI_API_KEY` |
+| `gemini/gemini-2.5-flash` | `GEMINI_API_KEY` |
+| `ollama/llama3.1` | none; set `LLM_API_BASE=http://localhost:11434` |
+
+The model must support tool (function) calling. `LLM_API_KEY` overrides the provider variable, `LLM_TIMEOUT` sets the seconds to wait for each response (default 30) and `LLM_MAX_TOOL_ROUNDS` caps the rounds of tool calls per question (default 5).
+
+Older configurations with `LLM_PROVIDER` and `ANTHROPIC_MODEL`/`OPENAI_MODEL`/`GEMINI_MODEL` still work when `LLM_MODEL` is not set. `GEMINI_PROXY_URL` is no longer supported.
 
 ## Dependency Management
 
@@ -111,8 +127,8 @@ Run it with a production WSGI server such as Gunicorn or Waitress behind a rever
 # Production environment variables
 export SECRET_KEY='your-strong-production-secret-key'
 export RECRUITER_ACCESS_CODE='your-production-access-code'
-export LLM_PROVIDER='openai'  # or 'anthropic', 'gemini'
-export OPENAI_API_KEY='your-production-openai-key'
+export LLM_MODEL='openrouter/anthropic/claude-haiku-4.5'
+export OPENROUTER_API_KEY='your-production-openrouter-key'
 export PORTFOLIO_DATA_DIR='/srv/portfolio-content'  # optional
 
 gunicorn --workers 4 --bind 0.0.0.0:8000 run:app

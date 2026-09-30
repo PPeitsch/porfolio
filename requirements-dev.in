@@ -4,15 +4,13 @@
 pip-tools>=7.0,<8.0
 flake8>=7.0,<8.0
 types-PyYAML>=6.0,<7.0
-types-requests>=2.30,<3.0
 pre-commit>=3.0,<4.0
 black>=24.0,<25.0
 isort>=5.0,<6.0
 mypy>=1.8,<2.0
 
-# Security analysis tools
+# Security analysis tools (Safety runs as a GitHub Action in CI)
 bandit>=1.7,<2.0
-safety>=3.0,<4.0
 
 # Testing tools
 pytest>=7.0,<9.0
