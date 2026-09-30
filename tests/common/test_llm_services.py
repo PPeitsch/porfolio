@@ -1,5 +1,4 @@
 import json
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -214,14 +213,17 @@ def test_openai_service_no_content(MockOpenAI, app):
 
 # --- Gemini Service Tests ---
 
-# Condition to skip tests if the proxy URL is set, as they mock the direct API
-proxy_configured = os.getenv("GEMINI_PROXY_URL") is not None
-skip_if_proxy = pytest.mark.skipif(
-    proxy_configured, reason="Skipping direct API tests when proxy is configured"
-)
+
+@pytest.fixture(autouse=True)
+def no_gemini_proxy(app, monkeypatch):
+    """Start every test without a Gemini proxy, whatever the local .env says.
+
+    Proxy tests set GEMINI_PROXY_URL themselves; monkeypatch restores the
+    config afterwards so it does not leak into the next test.
+    """
+    monkeypatch.setitem(app.config, "GEMINI_PROXY_URL", None)
 
 
-@skip_if_proxy
 @patch("app.common.llm_services.genai.Client")
 def test_gemini_service_direct_api_success(MockGenAIClient, app):
     """Test GeminiService direct API successful text response."""
@@ -241,7 +243,6 @@ def test_gemini_service_direct_api_success(MockGenAIClient, app):
     assert response == "Hello Gemini"
 
 
-@skip_if_proxy
 @patch("app.common.llm_services.genai.Client")
 def test_gemini_service_direct_api_history_processing(MockGenAIClient, app):
     """Test GeminiService direct API history processing for different message types."""
@@ -272,7 +273,6 @@ def test_gemini_service_direct_api_history_processing(MockGenAIClient, app):
     assert len(call_args["contents"]) == 4  # System prompt + 3 history items
 
 
-@skip_if_proxy
 @patch("app.common.llm_services.genai.Client")
 def test_gemini_service_direct_api_error(MockGenAIClient, app):
     """Test GeminiService direct API error handling."""
