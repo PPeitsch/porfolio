@@ -4,9 +4,9 @@ from unittest.mock import patch
 
 import pytest
 
+from app.common.exceptions import LLMConfigurationError, LLMServiceError
 from app.common.llm_services import (
     LLMService,
-    LLMServiceError,
     _parse_arguments,
     get_llm_service,
     resolve_model,
@@ -200,7 +200,8 @@ def test_get_llm_service_missing_key(app, llm_config, monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
     with app.app_context():
-        assert get_llm_service() is None
+        with pytest.raises(LLMConfigurationError, match="OPENROUTER_API_KEY"):
+            get_llm_service()
 
 
 def test_get_llm_service_explicit_key_skips_environment_check(
@@ -219,7 +220,8 @@ def test_get_llm_service_without_model(app, llm_config):
     llm_config()
 
     with app.app_context():
-        assert get_llm_service() is None
+        with pytest.raises(LLMConfigurationError, match="LLM_MODEL"):
+            get_llm_service()
 
 
 def test_get_llm_service_warns_about_gemini_proxy(app, llm_config, monkeypatch, caplog):

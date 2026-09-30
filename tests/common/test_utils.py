@@ -1,9 +1,11 @@
 import os
 from unittest.mock import mock_open, patch
 
+import pytest
 import yaml
 from flask import g
 
+from app.common.exceptions import DataFileError, DataFileNotFoundError
 from app.common.utils import (
     _get_data_filepath,
     get_professional_summary,
@@ -15,6 +17,7 @@ from app.common.utils import (
     load_system_prompt,
     load_text_config,
     load_yaml_data,
+    parse_yaml_data,
 )
 
 
@@ -62,12 +65,37 @@ def test_load_yaml_data_empty_file(mock_get_path, mock_safe_load, mock_open_):
     assert data == {}
 
 
-@patch("builtins.open", side_effect=Exception("Unexpected error"))
+@patch("builtins.open", side_effect=PermissionError("Permission denied"))
 @patch("app.common.utils._get_data_filepath")
-def test_load_yaml_data_generic_exception(mock_get_path, mock_open_):
-    """Test handling of generic exceptions during file loading."""
+def test_load_yaml_data_unreadable_file(mock_get_path, mock_open_):
+    """Test handling of a file that exists but cannot be read."""
     data = load_yaml_data("error.yaml")
     assert data == {}
+
+
+@patch("builtins.open", side_effect=FileNotFoundError)
+@patch("app.common.utils._get_data_filepath")
+def test_parse_yaml_data_raises_not_found(mock_get_path, mock_open_):
+    """The strict loader raises DataFileNotFoundError for a missing file."""
+    with pytest.raises(DataFileNotFoundError):
+        parse_yaml_data("non_existent.yaml")
+
+
+@patch("builtins.open", new_callable=mock_open, read_data="key: [unclosed")
+@patch("app.common.utils._get_data_filepath")
+def test_parse_yaml_data_raises_on_malformed_yaml(mock_get_path, mock_open_):
+    """The strict loader raises DataFileError, not a YAML error."""
+    with pytest.raises(DataFileError) as excinfo:
+        parse_yaml_data("malformed.yaml")
+    assert not isinstance(excinfo.value, DataFileNotFoundError)
+
+
+@patch("builtins.open", side_effect=RuntimeError("A bug, not a data problem"))
+@patch("app.common.utils._get_data_filepath")
+def test_load_yaml_data_does_not_hide_unexpected_errors(mock_get_path, mock_open_):
+    """Only data file errors fall back to defaults; anything else propagates."""
+    with pytest.raises(RuntimeError):
+        load_yaml_data("error.yaml")
 
 
 MOCK_CV_DATA = {
@@ -165,10 +193,10 @@ def test_load_system_prompt_not_found(mock_get_path, mock_open_):
     assert "helpful assistant" in prompt
 
 
-@patch("builtins.open", side_effect=Exception("Unexpected error"))
+@patch("builtins.open", side_effect=PermissionError("Permission denied"))
 @patch("app.common.utils._get_data_filepath")
-def test_load_system_prompt_generic_exception(mock_get_path, mock_open_):
-    """Test fallback for generic exceptions."""
+def test_load_system_prompt_unreadable_file(mock_get_path, mock_open_):
+    """Test fallback when system_prompt.txt cannot be read."""
     prompt = load_system_prompt()
     assert "helpful assistant" in prompt
 

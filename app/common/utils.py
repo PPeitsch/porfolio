@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional, cast
 import yaml
 from flask import current_app, g
 
+from app.common.exceptions import DataFileError, DataFileNotFoundError
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,29 +35,67 @@ def _get_data_filepath(filename):
     return os.path.join(project_root, "data", filename)
 
 
+def read_data_file(filename: str) -> str:
+    """Reads a text file from the data directory.
+
+    Args:
+        filename (str): The name of the file in the data directory.
+
+    Returns:
+        str: The file's content.
+
+    Raises:
+        DataFileNotFoundError: If the file does not exist.
+        DataFileError: If the file exists but cannot be read.
+    """
+    filepath = _get_data_filepath(filename)
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError as e:
+        raise DataFileNotFoundError(f"Data file not found: {filepath}") from e
+    except (OSError, UnicodeDecodeError) as e:
+        raise DataFileError(f"Could not read data file {filepath}: {e}") from e
+
+
+def parse_yaml_data(filename: str) -> Any:
+    """Reads and parses a YAML file from the data directory.
+
+    Args:
+        filename (str): The name of the YAML file in the data directory.
+
+    Returns:
+        The parsed data, or an empty dictionary if the file is empty.
+
+    Raises:
+        DataFileNotFoundError: If the file does not exist.
+        DataFileError: If the file cannot be read or is not valid YAML.
+    """
+    content = read_data_file(filename)
+    try:
+        data = yaml.safe_load(content)
+    except yaml.YAMLError as e:
+        raise DataFileError(f"Error parsing YAML file {filename}: {e}") from e
+    return data if data else {}
+
+
 def load_yaml_data(filename):
-    """Loads and parses data from a YAML file.
+    """Loads and parses data from a YAML file, never failing.
+
+    The views keep working with defaults when a data file is missing or
+    broken; the reason is logged.
 
     Args:
         filename (str): The name of the YAML file in the /data directory.
 
     Returns:
-        dict | list | None: The parsed data, or an empty dictionary on error.
+        dict | list: The parsed data, or an empty dictionary on error.
     """
-    filepath = _get_data_filepath(filename)
-    logger.debug(f"Attempting to load YAML data from: {filepath}")
+    logger.debug(f"Attempting to load YAML data from: {_get_data_filepath(filename)}")
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-            return data if data else {}
-    except FileNotFoundError:
-        logger.error(f"Data file not found: {filepath}")
-        return {}
-    except yaml.YAMLError as e:
-        logger.error(f"Error parsing YAML file {filepath}: {e}")
-        return {}
-    except Exception as e:
-        logger.error(f"An unexpected error occurred loading {filepath}: {e}")
+        return parse_yaml_data(filename)
+    except DataFileError as e:
+        logger.error(str(e))
         return {}
 
 
@@ -177,19 +217,14 @@ def load_system_prompt() -> str:
     """Loads the system prompt from data/system_prompt.txt.
 
     Returns:
-        str: The content of the system prompt file.
+        str: The content of the system prompt file, or a generic prompt if
+             it cannot be read.
     """
-    filepath = _get_data_filepath("system_prompt.txt")
-    logger.debug(f"Attempting to load system prompt from: {filepath}")
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        logger.error(f"System prompt file not found: {filepath}")
+        return read_data_file("system_prompt.txt").strip()
+    except DataFileError as e:
+        logger.error(str(e))
         return "You are a helpful assistant."  # Fallback prompt
-    except Exception as e:
-        logger.error(f"An unexpected error occurred loading {filepath}: {e}")
-        return "You are a helpful assistant."
 
 
 def get_welcome_message(view: str) -> str:

@@ -148,6 +148,23 @@ def _handle_contact(cv_data: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], 
     return output, None
 
 
+def _format_project_table(projects: List[Dict[str, Any]]) -> List[str]:
+    """Formats projects as an 'ID | Title' table.
+
+    IDs and titles are turned into strings, since YAML may load an ID like
+    2024 as a number.
+    """
+    rows = [
+        (str(p.get("id", "N/A")), str(p.get("title", "N/A")))
+        for p in projects
+        if isinstance(p, dict)
+    ]
+    id_width = max([4] + [len(proj_id) for proj_id, _ in rows])
+    table = [f"  {'ID'.ljust(id_width)}  | Title", f"  {'-' * id_width}  + {'-' * 40}"]
+    table.extend(f"  {proj_id.ljust(id_width)}  | {title}" for proj_id, title in rows)
+    return table
+
+
 def _handle_ls(
     args: List[str], projects_data: List[Dict[str, Any]], **kwargs: Any
 ) -> Tuple[List[str] | None, str | None]:
@@ -156,18 +173,7 @@ def _handle_ls(
 
     output = ["[INFO] Projects (use 'show <id>' for details):"]
     if projects_data:
-        try:
-            max_id_len = max(len(p.get("id", "")) for p in projects_data)
-            max_id_len = max(max_id_len, 4)
-            output.append(f"  {'ID'.ljust(max_id_len)}  | Title")
-            output.append(f"  {'-' * max_id_len}  + {'-' * 40}")
-            for p in projects_data:
-                proj_id = p.get("id", "N/A")
-                proj_title = p.get("title", "N/A")
-                output.append(f"  {proj_id.ljust(max_id_len)}  | {proj_title}")
-        except Exception as e:
-            logger.error(f"Error formatting ls projects: {e}")
-            output.append("  (Error formatting project list)")
+        output.extend(_format_project_table(projects_data))
     else:
         output.append("  (Project data could not be loaded)")
     return output, None
@@ -186,7 +192,7 @@ def _handle_filter(
     filtered_projects = [
         p
         for p in projects_data
-        if tech_to_filter in [tech.lower() for tech in p.get("technologies", [])]
+        if tech_to_filter in [str(tech).lower() for tech in p.get("technologies", [])]
     ]
 
     if not filtered_projects:
@@ -194,18 +200,7 @@ def _handle_filter(
         return output, None
 
     output = [f"[INFO] Projects using '{tech_to_filter.capitalize()}':"]
-    try:
-        max_id_len = max(len(p.get("id", "")) for p in filtered_projects)
-        max_id_len = max(max_id_len, 4)
-        output.append(f"  {'ID'.ljust(max_id_len)}  | Title")
-        output.append(f"  {'-' * max_id_len}  + {'-' * 40}")
-        for p in filtered_projects:
-            proj_id = p.get("id", "N/A")
-            proj_title = p.get("title", "N/A")
-            output.append(f"  {proj_id.ljust(max_id_len)}  | {proj_title}")
-    except Exception as e:
-        logger.error(f"Error formatting filtered projects: {e}")
-        output.append("  (Error formatting project list)")
+    output.extend(_format_project_table(filtered_projects))
 
     return output, None
 
