@@ -3,7 +3,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.common.llm_services import ChatResponse, LLMServiceError, ToolCall
+from app.common.exceptions import DataFileError, LLMConfigurationError, LLMServiceError
+from app.common.llm_services import ChatResponse, ToolCall
 from app.view_recruiter.routes import (
     EMPTY_REPLY,
     MAX_HISTORY_MESSAGES,
@@ -131,7 +132,7 @@ def test_chat_tool_exception_is_reported_to_the_model(llm, post_chat):
         tool_calls(("call1", "failing_tool", {})),
         text("Fallback response after tool failure."),
     ]
-    failing = MagicMock(side_effect=Exception("Tool failed!"))
+    failing = MagicMock(side_effect=DataFileError("Tool failed!"))
 
     with patch.dict("app.view_recruiter.routes.TOOL_MAP", {"failing_tool": failing}):
         response = post_chat("Run the failing tool")
@@ -140,6 +141,22 @@ def test_chat_tool_exception_is_reported_to_the_model(llm, post_chat):
     assert "Fallback response" in response.get_json()["reply"]
     tool_result = llm.get_chat_response.call_args.kwargs["messages"][-1]
     assert "Tool failed!" in json.loads(tool_result["content"])["error"]
+
+
+def test_chat_tool_with_bad_arguments(llm, post_chat):
+    llm.get_chat_response.side_effect = [
+        tool_calls(("call1", "get_skills", {"unexpected": "x"})),
+        text("Here are the skills."),
+    ]
+
+    with patch.dict(
+        "app.view_recruiter.routes.TOOL_MAP", {"get_skills": lambda category=None: []}
+    ):
+        response = post_chat("Skills?")
+
+    assert response.status_code == 200
+    tool_result = llm.get_chat_response.call_args.kwargs["messages"][-1]
+    assert "Invalid arguments" in json.loads(tool_result["content"])["error"]
 
 
 def test_chat_tool_not_found(llm, post_chat):
@@ -238,7 +255,10 @@ def test_chat_bad_request(llm, client, app, payload):
     llm.get_chat_response.assert_not_called()
 
 
-@patch("app.view_recruiter.routes.get_llm_service", return_value=None)
+@patch(
+    "app.view_recruiter.routes.get_llm_service",
+    side_effect=LLMConfigurationError("No LLM model configured."),
+)
 def test_chat_llm_service_not_configured(mock_get_llm, post_chat):
     response = post_chat()
 

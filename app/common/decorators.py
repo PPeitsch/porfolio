@@ -41,11 +41,9 @@ def token_required(f):
             logger.warning("Token has expired.")
             return jsonify({"error": "Token has expired."}), 401
         except jwt.InvalidTokenError:
+            # Base class of every decoding error PyJWT raises.
             logger.warning("Invalid token provided.")
             return jsonify({"error": "Invalid token."}), 401
-        except Exception as e:
-            logger.error(f"An unexpected error occurred during token decoding: {e}")
-            return jsonify({"error": "Token processing error."}), 401
 
         # If the token is valid, proceed with the original function
         return f(*args, **kwargs)

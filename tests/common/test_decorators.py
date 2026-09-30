@@ -56,14 +56,14 @@ def test_token_required_expired_token(client, app):
 
 
 @patch("app.common.decorators.jwt.decode")
-def test_token_required_generic_decode_error(mock_decode, client, app):
-    """Test protected route with a generic token decoding error."""
-    mock_decode.side_effect = Exception("A generic decoding error")
+def test_token_required_other_decode_error(mock_decode, client, app):
+    """Any PyJWT decoding error is reported as an invalid token."""
+    mock_decode.side_effect = jwt.InvalidAudienceError("Wrong audience")
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
     response = client.get("/protected", headers=headers)
     assert response.status_code == 401
-    assert "Token processing error" in response.get_json()["error"]
+    assert response.get_json()["error"] == "Invalid token."
 
 
 def test_token_required_no_secret_key(app):

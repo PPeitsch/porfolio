@@ -6,7 +6,8 @@ from typing import Any, Dict, List
 from flask import abort, current_app, jsonify, request, send_from_directory
 
 from app.common.decorators import token_required
-from app.common.llm_services import LLMServiceError, ToolCall, get_llm_service
+from app.common.exceptions import LLMConfigurationError, LLMServiceError, PortfolioError
+from app.common.llm_services import ToolCall, get_llm_service
 from app.common.llm_tools import TOOL_MAP, get_tool_definitions
 from app.common.utils import load_cv_data, load_system_prompt
 
@@ -64,7 +65,11 @@ def _run_tool(call: ToolCall) -> str:
         return json.dumps({"error": f"Tool '{call.name}' not found."})
     try:
         return json.dumps(tool_function(**call.arguments), default=str)
-    except Exception as e:
+    except TypeError as e:
+        # The model sent arguments the tool does not take.
+        logger.warning(f"Bad arguments for tool '{call.name}': {e}")
+        return json.dumps({"error": f"Invalid arguments for tool '{call.name}'."})
+    except PortfolioError as e:
         logger.error(f"Error executing tool '{call.name}': {e}")
         return json.dumps({"error": f"Error executing tool: {e}"})
 
@@ -86,9 +91,10 @@ def handle_chat():
     if not isinstance(user_message, str) or not user_message.strip():
         return jsonify({"error": "Message must be a non-empty string."}), 400
 
-    llm_service = get_llm_service()
-    if not llm_service:
-        logger.error("LLM service could not be initialized. Check configuration.")
+    try:
+        llm_service = get_llm_service()
+    except LLMConfigurationError as e:
+        logger.error(f"LLM service could not be initialized: {e}")
         return jsonify({"reply": "Error: Chatbot not configured correctly."}), 503
 
     owner_name = load_cv_data().get("name", "the portfolio owner")

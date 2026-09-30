@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Mapping, Optional
 
 from flask import current_app
 
+from app.common.exceptions import LLMConfigurationError, LLMServiceError
+
 # LiteLLM downloads its model price map at import time unless told to use the
 # copy it ships with. The app does not need live prices, and startup should not
 # depend on the network.
@@ -26,10 +28,6 @@ LEGACY_MODEL_SETTINGS = {
     "openai": "OPENAI_MODEL",
     "gemini": "GEMINI_MODEL",
 }
-
-
-class LLMServiceError(Exception):
-    """Raised when the model provider cannot produce a response."""
 
 
 @dataclass
@@ -123,6 +121,9 @@ class LLMService:
         if self.api_base:
             kwargs["api_base"] = self.api_base
 
+        # LiteLLM surfaces provider failures with many unrelated exception
+        # types (its own, the provider SDK's, network errors), so all of them
+        # are turned into LLMServiceError here, at the boundary.
         try:
             response = litellm.completion(**kwargs)
             message = response.choices[0].message
@@ -173,11 +174,12 @@ def resolve_model(config: Mapping[str, Any]) -> Optional[str]:
     return None
 
 
-def get_llm_service() -> Optional[LLMService]:
+def get_llm_service() -> LLMService:
     """Builds the LLM service from the app configuration.
 
-    Returns None, and logs why, when no model is configured or the provider's
-    API key is missing.
+    Raises:
+        LLMConfigurationError: If no model is configured or the provider's
+                               API key is missing.
     """
     config = current_app.config
     if config.get("GEMINI_PROXY_URL"):
@@ -188,8 +190,9 @@ def get_llm_service() -> Optional[LLMService]:
 
     model = resolve_model(config)
     if not model:
-        logger.error("No LLM model configured. Set LLM_MODEL in the environment.")
-        return None
+        raise LLMConfigurationError(
+            "No LLM model configured. Set LLM_MODEL in the environment."
+        )
 
     api_key = config.get("LLM_API_KEY")
     api_base = config.get("LLM_API_BASE")
@@ -198,11 +201,10 @@ def get_llm_service() -> Optional[LLMService]:
             "missing_keys", []
         )
         if missing:
-            logger.error(
+            raise LLMConfigurationError(
                 f"LLM model '{model}' needs {', '.join(missing)} in the environment "
                 "(or LLM_API_KEY)."
             )
-            return None
 
     return LLMService(
         model=model,

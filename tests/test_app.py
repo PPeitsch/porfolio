@@ -2,6 +2,7 @@ import sys
 from unittest.mock import patch
 
 import pytest
+from jinja2 import TemplateError
 
 
 def test_health_check(client):
@@ -44,7 +45,7 @@ def test_get_view_partial_route_not_found(client):
 @patch("app.shell.routes.render_template")
 def test_get_view_partial_template_error(mock_render_template, client):
     """Test the error handler for template rendering exceptions."""
-    mock_render_template.side_effect = Exception("Jinja2 render failed")
+    mock_render_template.side_effect = TemplateError("Jinja2 render failed")
     response = client.get("/view/cli")
     assert response.status_code == 500
     assert b"Error rendering view template" in response.data

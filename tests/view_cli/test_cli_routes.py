@@ -150,3 +150,16 @@ def test_cli_data_loading_failure(
     response = client.get("/cli/api/command/whoami", headers=headers)
     assert response.status_code == 500
     assert "Failed to load backend data" in response.get_json()["error"]
+
+
+def test_format_project_table_with_numeric_ids() -> None:
+    """IDs that YAML loads as numbers are still formatted as text."""
+    from app.view_cli.routes import _format_project_table
+
+    table = _format_project_table(
+        [{"id": 2024, "title": "Numeric"}, {"title": "No ID"}, "not a project"]
+    )
+    assert table[0].startswith("  ID  ")
+    assert "  2024  | Numeric" in table
+    assert "  N/A   | No ID" in table
+    assert len(table) == 4

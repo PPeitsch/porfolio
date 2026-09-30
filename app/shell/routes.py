@@ -2,6 +2,7 @@ import logging
 import os
 
 from flask import Blueprint, abort, current_app, render_template, send_from_directory
+from jinja2 import TemplateError
 
 from app.common.utils import get_welcome_message, load_cv_data
 
@@ -69,13 +70,13 @@ def get_view_partial(view_name):
             return render_template(
                 template_name, welcome=get_welcome_message(view_name)
             )
-        except Exception as e:
+        except TemplateError as e:
             logger.error(
                 f"Error rendering template {template_name} for view {view_name}: {e}"
             )
             error_html = (
                 '<div class="p-8 text-center"><p class="text-red-500">'
-                f"Error rendering view template: {e}</p></div>"
+                "Error rendering view template.</p></div>"
             )
             return error_html, 500
     else:
