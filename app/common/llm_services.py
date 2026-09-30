@@ -1,352 +1,212 @@
-import abc
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
+import os
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Mapping, Optional
 
-import anthropic
-import openai
-import requests
 from flask import current_app
-from google import genai
-from google.genai import types
+
+# LiteLLM downloads its model price map at import time unless told to use the
+# copy it ships with. The app does not need live prices, and startup should not
+# depend on the network.
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
+
+import litellm  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
+# LiteLLM logs every call at INFO and prints a help banner on each error;
+# keep only its warnings and errors.
+logging.getLogger("LiteLLM").setLevel(logging.WARNING)
+litellm.suppress_debug_info = True
 
-class LLMService(abc.ABC):
-    """Abstract base class for Large Language Model services.
+# Model settings of the provider-specific configuration used before LLM_MODEL.
+LEGACY_MODEL_SETTINGS = {
+    "anthropic": "ANTHROPIC_MODEL",
+    "openai": "OPENAI_MODEL",
+    "gemini": "GEMINI_MODEL",
+}
 
-    This class defines a common interface for interacting with different LLM
-    providers. Each concrete implementation must provide a method to get a
-    chat response.
+
+class LLMServiceError(Exception):
+    """Raised when the model provider cannot produce a response."""
+
+
+@dataclass
+class ToolCall:
+    """A tool the model asked to run, with its arguments already parsed."""
+
+    id: str
+    name: str
+    arguments: Dict[str, Any]
+
+
+@dataclass
+class ChatResponse:
+    """One model turn: either text or tool calls.
+
+    `message` is the assistant turn in OpenAI format, ready to be appended to
+    the conversation before the tool results.
     """
 
-    def __init__(self, api_key: str):
-        if not api_key:
-            raise ValueError(
-                f"{self.__class__.__name__} requires an API key, but none was provided."
-            )
+    content: str = ""
+    tool_calls: List[ToolCall] = field(default_factory=list)
+    message: Dict[str, Any] = field(default_factory=dict)
+
+
+def _parse_arguments(raw: Any) -> Dict[str, Any]:
+    """Tool arguments arrive as a JSON string; anything unusable becomes {}."""
+    if isinstance(raw, dict):
+        return raw
+    try:
+        parsed = json.loads(raw or "{}")
+    except (TypeError, ValueError):
+        logger.warning(f"Could not parse tool arguments: {raw!r}")
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+class LLMService:
+    """Chat completions through LiteLLM, for any provider it supports.
+
+    The model string selects the provider, e.g. "anthropic/claude-haiku-4-5",
+    "openrouter/anthropic/claude-haiku-4.5", "gemini/gemini-2.5-flash" or
+    "ollama/llama3.1". Messages and tools use the OpenAI format; LiteLLM
+    translates them for each provider.
+    """
+
+    def __init__(
+        self,
+        model: str,
+        api_key: Optional[str] = None,
+        api_base: Optional[str] = None,
+        timeout: float = 30.0,
+        max_tokens: int = 1024,
+    ):
+        self.model = model
         self.api_key = api_key
-        self.client = self._initialize_client()
+        self.api_base = api_base
+        self.timeout = timeout
+        self.max_tokens = max_tokens
 
-    @abc.abstractmethod
-    def _initialize_client(self) -> Any:
-        """Initializes and returns the specific client for the LLM provider."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def get_chat_response(
         self,
         messages: List[Dict[str, Any]],
         system_prompt: str,
         tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
-        """
-        Sends a request to the LLM and returns the chat response.
-
-        The response can be a simple string or a list of tool use requests.
+    ) -> ChatResponse:
+        """Sends the conversation to the model and returns its next turn.
 
         Args:
-            messages: A list of message dictionaries, including user, assistant,
-                      and tool messages.
+            messages: The conversation in OpenAI format (user, assistant and
+                      tool messages), without the system prompt.
             system_prompt: The system-level instructions for the model.
-            tools: An optional list of tool definitions available to the model.
+            tools: Optional tool definitions in OpenAI format.
 
         Returns:
-            - A string containing the model's text response.
-            - A list of dictionaries, where each dict is a tool call request.
+            ChatResponse: The text of the reply, or the tool calls to run.
+
+        Raises:
+            LLMServiceError: If the provider call fails.
         """
-        raise NotImplementedError
-
-
-class AnthropicService(LLMService):
-    """LLM Service implementation for Anthropic's Claude models."""
-
-    def _initialize_client(self) -> anthropic.Anthropic:
-        logger.info("Initializing Anthropic client.")
-        return anthropic.Anthropic(api_key=self.api_key)
-
-    def get_chat_response(
-        self,
-        messages: List[Dict[str, Any]],
-        system_prompt: str,
-        tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
-        try:
-            model_name = current_app.config.get("ANTHROPIC_MODEL")
-            response = self.client.messages.create(
-                model=model_name,
-                max_tokens=1024,
-                system=system_prompt,
-                messages=messages,
-                tools=tools or [],
-                tool_choice={"type": "auto"},
-            )
-
-            # Check if the model wants to use a tool
-            if response.stop_reason == "tool_use":
-                tool_calls = []
-                for content_block in response.content:
-                    if content_block.type == "tool_use":
-                        tool_calls.append(
-                            {
-                                "id": content_block.id,
-                                "name": content_block.name,
-                                "input": content_block.input,
-                            }
-                        )
-                return tool_calls
-
-            # Otherwise, return the text content
-            text_content = ""
-            for content_block in response.content:
-                if content_block.type == "text":
-                    text_content += content_block.text
-            return text_content.strip()
-
-        except anthropic.APIError as e:
-            logger.error(f"Anthropic API error: {e}")
-            return "Sorry, I'm having trouble connecting to the AI service (Anthropic)."
-        except Exception as e:
-            logger.error(f"An unexpected error occurred with AnthropicService: {e}")
-            return "An unexpected error occurred while processing your request."
-
-
-class OpenAIService(LLMService):
-    """LLM Service implementation for OpenAI's GPT models."""
-
-    def _initialize_client(self) -> openai.OpenAI:
-        logger.info("Initializing OpenAI client.")
-        return openai.OpenAI(api_key=self.api_key)
-
-    def get_chat_response(
-        self,
-        messages: List[Dict[str, Any]],
-        system_prompt: str,
-        tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
-        all_messages = [{"role": "system", "content": system_prompt}] + messages
-        try:
-            model_name = current_app.config.get("OPENAI_MODEL")
-            response = self.client.chat.completions.create(
-                model=model_name,
-                messages=all_messages,
-                tools=tools,
-                tool_choice="auto" if tools else None,
-                max_tokens=1024,
-            )
-            response_message = response.choices[0].message
-
-            # Check if the model wants to call a tool
-            if response_message.tool_calls:
-                return [
-                    {
-                        "id": tool_call.id,
-                        "name": tool_call.function.name,
-                        "input": tool_call.function.arguments,
-                    }
-                    for tool_call in response_message.tool_calls
-                ]
-
-            return str(response_message.content or "")
-        except openai.APIError as e:
-            logger.error(f"OpenAI API error: {e}")
-            return "Sorry, I'm having trouble connecting to the AI service (OpenAI)."
-        except Exception as e:
-            logger.error(f"An unexpected error occurred with OpenAIService: {e}")
-            return "An unexpected error occurred while processing your request."
-
-
-class GeminiService(LLMService):
-    """
-    LLM Service implementation for Google's Gemini models.
-
-    Supports direct API calls via the `genai` library and can route requests
-    through a configurable HTTP proxy for environments where direct access
-    is restricted.
-    """
-
-    def _initialize_client(self) -> Optional[genai.Client]:
-        # Defer client initialization to the chat response method, as it's not
-        # needed if we are using the proxy.
-        if not current_app.config.get("GEMINI_PROXY_URL"):
-            logger.info("Initializing Google Gemini client (genai library).")
-            return genai.Client(api_key=self.api_key)
-        logger.info(
-            "Google Gemini client configured to use proxy. Skipping genai init."
-        )
-        return None
-
-    def get_chat_response(
-        self,
-        messages: List[Dict[str, Any]],
-        system_prompt: str,
-        tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
-        proxy_url = current_app.config.get("GEMINI_PROXY_URL")
-
-        if proxy_url:
-            # --- Proxy Logic ---
-            logger.info(f"Routing Gemini request through proxy: {proxy_url}")
-
-            # Retrieve the configured model name, defaulting to a stable version
-            model_name = current_app.config.get("GEMINI_MODEL", "gemini-2.0-flash")
-
-            payload = {
-                "messages": messages,
-                "system_prompt": system_prompt,
-                "tools": tools,
-                "model": model_name,  # Pass the specific model to the proxy
-            }
-            try:
-                response = requests.post(proxy_url, json=payload, timeout=120)
-                response.raise_for_status()  # Raise an exception for bad status codes
-                # Cast the JSON response to the expected type to satisfy mypy
-                result = cast(
-                    Union[str, List[Dict[str, Any]]],
-                    response.json().get("reply", "Error: No reply from proxy."),
-                )
-                return result
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Gemini proxy request failed: {e}")
-                return (
-                    "Sorry, there was an error communicating with the AI service proxy."
-                )
-            except Exception as e:
-                logger.error(f"An unexpected error occurred with Gemini proxy: {e}")
-                return (
-                    "An unexpected error occurred while processing your proxy request."
-                )
-
-        # --- Direct API Logic (genai library) ---
-        if not self.client:
-            logger.error("Gemini client is not initialized for direct API call.")
-            return "Error: Gemini client is not configured."
-
-        gemini_tools = None
+        kwargs: Dict[str, Any] = {
+            "model": self.model,
+            "messages": [{"role": "system", "content": system_prompt}] + messages,
+            "max_tokens": self.max_tokens,
+            "timeout": self.timeout,
+        }
         if tools:
-            function_declarations = [
-                types.FunctionDeclaration(
-                    name=tool_def["name"],
-                    description=tool_def["description"],
-                    parameters=tool_def.get("input_schema"),
-                )
-                for tool_def in tools
-            ]
-            gemini_tools = [types.Tool(function_declarations=function_declarations)]
-
-        gemini_history = [
-            types.Content(role="user", parts=[types.Part(text=system_prompt)])
-        ]
-        for msg in messages:
-            role = "user" if msg["role"] == "user" else "model"
-            content = msg.get("content")
-
-            if msg.get("type") == "tool_result":
-                tool_results = msg.get("content", [])
-                tool_response_parts = [
-                    types.Part.from_function_response(
-                        name=tool_result["tool_use_id"],
-                        response={"result": json.loads(tool_result["content"])},
-                    )
-                    for tool_result in tool_results
-                ]
-                gemini_history.append(
-                    types.Content(role="user", parts=tool_response_parts)
-                )
-            elif isinstance(content, list):
-                tool_call_parts = [
-                    types.Part(
-                        function_call=types.FunctionCall(
-                            name=c["name"], args=c["input"]
-                        )
-                    )
-                    for c in content
-                ]
-                gemini_history.append(
-                    types.Content(role="model", parts=tool_call_parts)
-                )
-            else:
-                gemini_history.append(
-                    types.Content(role=role, parts=[types.Part(text=str(content))])
-                )
-
-        config = (
-            types.GenerateContentConfig(tools=gemini_tools) if gemini_tools else None
-        )
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+        if self.api_key:
+            kwargs["api_key"] = self.api_key
+        if self.api_base:
+            kwargs["api_base"] = self.api_base
 
         try:
-            model_name = current_app.config.get("GEMINI_MODEL")
-            response = self.client.models.generate_content(
-                model=model_name,
-                contents=gemini_history,
-                config=config,
-            )
-
-            # Type guard to ensure response has the expected structure
-            if not isinstance(response, types.GenerateContentResponse):
-                logger.error(f"Unexpected response type from Gemini: {type(response)}")
-                return "An unexpected error occurred with the AI service."
-
-            if not response.candidates:
-                logger.error("No response candidates received from Gemini.")
-                return "An error occurred while communicating with the AI service."
-
-            candidate_parts = response.candidates[0].content.parts
-            tool_calls = []
-            has_function_call = False
-            for part in candidate_parts:
-                if part.function_call:
-                    has_function_call = True
-                    fc = part.function_call
-                    tool_calls.append(
-                        {
-                            "id": fc.name,
-                            "name": fc.name,
-                            "input": dict(fc.args),
-                        }
-                    )
-
-            if has_function_call:
-                return tool_calls
-
-            return str(response.text).strip()
-
+            response = litellm.completion(**kwargs)
+            message = response.choices[0].message
         except Exception as e:
-            logger.error(f"Google Gemini API error (genai lib): {e}", exc_info=True)
-            return "Sorry, I'm having trouble connecting to the AI service (Gemini)."
+            logger.error(f"LLM request to '{self.model}' failed: {e}")
+            raise LLMServiceError(str(e)) from e
+
+        content = message.content or ""
+        tool_calls = [
+            ToolCall(
+                id=call.id,
+                name=call.function.name,
+                arguments=_parse_arguments(call.function.arguments),
+            )
+            for call in (message.tool_calls or [])
+        ]
+
+        assistant_message: Dict[str, Any] = {"role": "assistant", "content": content}
+        if tool_calls:
+            assistant_message["tool_calls"] = [
+                {
+                    "id": call.id,
+                    "type": "function",
+                    "function": {
+                        "name": call.name,
+                        "arguments": json.dumps(call.arguments),
+                    },
+                }
+                for call in tool_calls
+            ]
+        return ChatResponse(
+            content=content, tool_calls=tool_calls, message=assistant_message
+        )
+
+
+def resolve_model(config: Mapping[str, Any]) -> Optional[str]:
+    """Returns the LiteLLM model string from the app configuration.
+
+    LLM_MODEL wins. Without it, the older LLM_PROVIDER + <PROVIDER>_MODEL
+    settings are turned into "<provider>/<model>".
+    """
+    if config.get("LLM_MODEL"):
+        return str(config["LLM_MODEL"])
+    provider = str(config.get("LLM_PROVIDER") or "").lower()
+    model_setting = LEGACY_MODEL_SETTINGS.get(provider)
+    if model_setting and config.get(model_setting):
+        return f"{provider}/{config[model_setting]}"
+    return None
 
 
 def get_llm_service() -> Optional[LLMService]:
+    """Builds the LLM service from the app configuration.
+
+    Returns None, and logs why, when no model is configured or the provider's
+    API key is missing.
     """
-    Factory function to get the configured LLM service instance.
-    Uses a map for cleaner, more scalable provider selection.
-    """
-    provider = current_app.config.get("LLM_PROVIDER", "").lower()
-
-    service_map: Dict[str, Tuple[Type[LLMService], str]] = {
-        "anthropic": (AnthropicService, "ANTHROPIC_API_KEY"),
-        "openai": (OpenAIService, "OPENAI_API_KEY"),
-        "gemini": (GeminiService, "GEMINI_API_KEY"),
-    }
-
-    if provider not in service_map:
-        logger.error(f"Unsupported or missing LLM_PROVIDER configured: '{provider}'")
-        return None
-
-    service_class, api_key_name = service_map[provider]
-    api_key = current_app.config.get(api_key_name)
-
-    if not api_key:
-        logger.error(
-            f"LLM_PROVIDER is set to '{provider}', but the corresponding API key "
-            f"'{api_key_name}' is missing."
+    config = current_app.config
+    if config.get("GEMINI_PROXY_URL"):
+        logger.warning(
+            "GEMINI_PROXY_URL is no longer supported and is ignored; "
+            "set LLM_MODEL instead (e.g. an 'openrouter/...' model)."
         )
+
+    model = resolve_model(config)
+    if not model:
+        logger.error("No LLM model configured. Set LLM_MODEL in the environment.")
         return None
 
-    try:
-        # At this point, api_key is guaranteed to be a str, satisfying mypy.
-        return service_class(api_key=api_key)
-    except Exception as e:
-        logger.error(f"Failed to instantiate LLM service for '{provider}': {e}")
-        return None
+    api_key = config.get("LLM_API_KEY")
+    api_base = config.get("LLM_API_BASE")
+    if not api_key:
+        missing = litellm.validate_environment(model=model, api_base=api_base).get(
+            "missing_keys", []
+        )
+        if missing:
+            logger.error(
+                f"LLM model '{model}' needs {', '.join(missing)} in the environment "
+                "(or LLM_API_KEY)."
+            )
+            return None
+
+    return LLMService(
+        model=model,
+        api_key=api_key,
+        api_base=api_base,
+        timeout=float(config.get("LLM_TIMEOUT", 30)),
+    )

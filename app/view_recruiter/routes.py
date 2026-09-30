@@ -3,11 +3,11 @@ import logging
 import os
 from typing import Any, Dict, List
 
-from flask import abort, jsonify, request, send_from_directory
+from flask import abort, current_app, jsonify, request, send_from_directory
 
 from app.common.decorators import token_required
-from app.common.llm_services import get_llm_service
-from app.common.llm_tools import TOOL_MAP
+from app.common.llm_services import LLMServiceError, ToolCall, get_llm_service
+from app.common.llm_tools import TOOL_MAP, get_tool_definitions
 from app.common.utils import load_cv_data, load_system_prompt
 
 from . import recruiter_bp
@@ -27,17 +27,62 @@ def static_files(filename):
         abort(404)
 
 
+# Only this many earlier messages are sent back to the model.
+MAX_HISTORY_MESSAGES = 20
+
+UNAVAILABLE_REPLY = (
+    "Sorry, I'm having trouble connecting to the AI service. Please try again later."
+)
+TOO_MANY_TOOL_ROUNDS_REPLY = (
+    "Sorry, I couldn't put that answer together. Could you rephrase the question?"
+)
+EMPTY_REPLY = "Sorry, I don't have an answer for that."
+
+
+def _clean_history(history: Any) -> List[Dict[str, str]]:
+    """Keeps the last user/assistant text turns of the client's history.
+
+    The history comes from the browser, so anything else (system prompts,
+    tool messages, other fields) is dropped.
+    """
+    if not isinstance(history, list):
+        return []
+    cleaned = [
+        {"role": item["role"], "content": item["content"]}
+        for item in history
+        if isinstance(item, dict)
+        and item.get("role") in ("user", "assistant")
+        and isinstance(item.get("content"), str)
+    ]
+    return cleaned[-MAX_HISTORY_MESSAGES:]
+
+
+def _run_tool(call: ToolCall) -> str:
+    """Runs a tool the model asked for and returns its result as JSON."""
+    tool_function = TOOL_MAP.get(call.name)
+    if tool_function is None:
+        return json.dumps({"error": f"Tool '{call.name}' not found."})
+    try:
+        return json.dumps(tool_function(**call.arguments), default=str)
+    except Exception as e:
+        logger.error(f"Error executing tool '{call.name}': {e}")
+        return json.dumps({"error": f"Error executing tool: {e}"})
+
+
 @recruiter_bp.route("/api/chat", methods=["POST"])
 @token_required
 def handle_chat():
-    """API endpoint to handle chat messages using function calling."""
+    """API endpoint to handle chat messages using function calling.
+
+    The model may ask for tools several times before answering; each round's
+    tool results are sent back to it, up to LLM_MAX_TOOL_ROUNDS rounds. The
+    history returned to the client only holds the user/assistant text turns.
+    """
     if not request.json or "message" not in request.json:
         logger.warning("Chat API called with invalid payload.")
         return jsonify({"error": "Invalid request. 'message' key is required."}), 400
 
     user_message = request.json["message"]
-    chat_history = request.json.get("history", [])
-
     if not isinstance(user_message, str) or not user_message.strip():
         return jsonify({"error": "Message must be a non-empty string."}), 400
 
@@ -46,79 +91,44 @@ def handle_chat():
         logger.error("LLM service could not be initialized. Check configuration.")
         return jsonify({"reply": "Error: Chatbot not configured correctly."}), 503
 
-    cv_data = load_cv_data()
-    owner_name = cv_data.get("name", "the portfolio owner")
+    owner_name = load_cv_data().get("name", "the portfolio owner")
+    system_prompt = load_system_prompt().replace("{name}", owner_name)
+    tools = get_tool_definitions(owner_name)
 
-    raw_prompt = load_system_prompt()
-    system_prompt = raw_prompt.format(name=owner_name)
-
-    # Dynamically generate tool definitions with the owner's name
-    from app.common.llm_tools import get_tool_definitions
-
-    dynamic_tools = get_tool_definitions(owner_name)
-
-    messages: List[Dict[str, Any]] = chat_history + [
+    messages: List[Dict[str, Any]] = _clean_history(request.json.get("history")) + [
         {"role": "user", "content": user_message}
     ]
+    conversation: List[Dict[str, Any]] = list(messages)
+    max_rounds = int(current_app.config.get("LLM_MAX_TOOL_ROUNDS", 5))
 
-    while True:
-        response = llm_service.get_chat_response(
-            messages=messages, system_prompt=system_prompt, tools=dynamic_tools
-        )
+    for _ in range(max_rounds + 1):
+        try:
+            response = llm_service.get_chat_response(
+                messages=conversation, system_prompt=system_prompt, tools=tools
+            )
+        except LLMServiceError:
+            return jsonify({"reply": UNAVAILABLE_REPLY}), 502
 
-        if isinstance(response, str):
+        if not response.tool_calls:
+            reply = response.content.strip() or EMPTY_REPLY
             return jsonify(
                 {
-                    "reply": response,
-                    "history": messages + [{"role": "assistant", "content": response}],
+                    "reply": reply,
+                    "history": messages + [{"role": "assistant", "content": reply}],
                 }
             )
 
-        if isinstance(response, list) and len(response) > 0:
-            tool_calls = response
-            messages.append({"role": "assistant", "content": tool_calls})
-
-            tool_outputs = []
-            for tool_call in tool_calls:
-                tool_name = tool_call.get("name")
-                tool_input_str = tool_call.get("input", "{}")
-                tool_id = tool_call.get("id")
-
-                if tool_name in TOOL_MAP:
-                    try:
-                        tool_args = (
-                            json.loads(tool_input_str)
-                            if isinstance(tool_input_str, str)
-                            else tool_input_str
-                        )
-                        tool_function = TOOL_MAP[tool_name]
-                        result = tool_function(**tool_args)
-                        tool_outputs.append(
-                            {
-                                "tool_use_id": tool_id,
-                                "content": json.dumps(result),
-                            }
-                        )
-                    except Exception as e:
-                        logger.error(f"Error executing tool '{tool_name}': {e}")
-                        tool_outputs.append(
-                            {
-                                "tool_use_id": tool_id,
-                                "content": f"Error executing tool: {e}",
-                                "is_error": True,
-                            }
-                        )
-                else:
-                    tool_outputs.append(
-                        {
-                            "tool_use_id": tool_id,
-                            "content": f"Error: Tool '{tool_name}' not found.",
-                            "is_error": True,
-                        }
-                    )
-            messages.append(
-                {"role": "user", "content": tool_outputs, "type": "tool_result"}
+        conversation.append(response.message)
+        for call in response.tool_calls:
+            conversation.append(
+                {"role": "tool", "tool_call_id": call.id, "content": _run_tool(call)}
             )
-        else:
-            logger.error(f"Unexpected LLM response type: {type(response)}")
-            return jsonify({"reply": "An unexpected error occurred."}), 500
+
+    logger.warning(f"The model kept asking for tools after {max_rounds} rounds.")
+    return jsonify(
+        {
+            "reply": TOO_MANY_TOOL_ROUNDS_REPLY,
+            "history": messages
+            + [{"role": "assistant", "content": TOO_MANY_TOOL_ROUNDS_REPLY}],
+        }
+    )

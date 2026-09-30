@@ -13,8 +13,8 @@ TOOL_MAP: Dict[str, Callable[..., Any]] = {
 
 def get_tool_definitions(owner_name: str) -> List[Dict[str, Any]]:
     """
-    Generates the list of tool definitions for the LLM, populating
-    descriptions with the portfolio owner's name.
+    Generates the list of tool definitions for the LLM, in OpenAI format,
+    populating descriptions with the portfolio owner's name.
 
     Args:
         owner_name: The name of the portfolio owner to insert into descriptions.
@@ -25,21 +25,33 @@ def get_tool_definitions(owner_name: str) -> List[Dict[str, Any]]:
     text_config = utils.load_text_config()
     descriptions = text_config.get("llm_tool_descriptions", {})
 
+    def describe(tool: str, default: str) -> str:
+        return str(descriptions.get(tool, default)).replace("{name}", owner_name)
+
+    def tool(name: str, description: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "type": "function",
+            "function": {
+                "name": name,
+                "description": description,
+                "parameters": parameters,
+            },
+        }
+
+    no_parameters: Dict[str, Any] = {"type": "object", "properties": {}}
     tool_definitions = [
-        {
-            "name": "get_professional_summary",
-            "description": descriptions.get(
+        tool(
+            "get_professional_summary",
+            describe(
                 "get_professional_summary",
                 "Retrieves the professional summary of the portfolio owner.",
-            ).format(name=owner_name),
-            "input_schema": {"type": "object", "properties": {}},
-        },
-        {
-            "name": "get_skills",
-            "description": descriptions.get(
-                "get_skills", "Retrieves a list of the portfolio owner's skills."
-            ).format(name=owner_name),
-            "input_schema": {
+            ),
+            no_parameters,
+        ),
+        tool(
+            "get_skills",
+            describe("get_skills", "Retrieves a list of the portfolio owner's skills."),
+            {
                 "type": "object",
                 "properties": {
                     "category": {
@@ -51,36 +63,34 @@ def get_tool_definitions(owner_name: str) -> List[Dict[str, Any]]:
                     }
                 },
             },
-        },
-        {
-            "name": "get_project_list",
-            "description": descriptions.get(
-                "get_project_list", "Retrieves a summary list of all projects."
-            ).format(name=owner_name),
-            "input_schema": {"type": "object", "properties": {}},
-        },
-        {
-            "name": "get_project_details",
-            "description": descriptions.get(
+        ),
+        tool(
+            "get_project_list",
+            describe("get_project_list", "Retrieves a summary list of all projects."),
+            no_parameters,
+        ),
+        tool(
+            "get_project_details",
+            describe(
                 "get_project_details",
                 (
                     "Retrieve detailed information for a specific project. "
                     "If the project ID is not found, it returns an error message."
                 ),
-            ).format(name=owner_name),
-            "input_schema": {
+            ),
+            {
                 "type": "object",
                 "properties": {
                     "project_id": {
                         "type": "string",
                         "description": (
-                            "The unique identifier for the project, e.g., "
-                            "'portfolio', 'automateiq'."
+                            "The unique identifier for the project, as returned "
+                            "by get_project_list."
                         ),
                     }
                 },
                 "required": ["project_id"],
             },
-        },
+        ),
     ]
     return tool_definitions

@@ -1,377 +1,232 @@
 import json
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
-from anthropic import APIError as AnthropicAPIError
-from google.genai import types
-from httpx import Request
-from openai import APIError
-from requests.exceptions import RequestException
 
 from app.common.llm_services import (
-    AnthropicService,
-    GeminiService,
     LLMService,
-    OpenAIService,
+    LLMServiceError,
+    _parse_arguments,
     get_llm_service,
+    resolve_model,
 )
 
-google_genai_mock = MagicMock()
-try:
-    from google.genai.errors import ClientError
-
-    google_genai_mock.errors.ClientError = ClientError
-except ImportError:
-    google_genai_mock.errors.ClientError = type("ClientError", (Exception,), {})
-
-
-def test_llm_service_abc_methods(app):
-    """Test that ABC methods raise NotImplementedError if not correctly implemented."""
-
-    class IncompleteService(LLMService):
-        def _initialize_client(self):
-            return None
-
-        # Missing get_chat_response implementation
-
-    class AbstractClientService(LLMService):
-        def _initialize_client(self):
-            return super()._initialize_client()
-
-        def get_chat_response(self, messages, system_prompt, tools=None):
-            pass
-
-    with app.app_context():
-        with pytest.raises(TypeError):
-            IncompleteService(api_key="key")
-
-        with pytest.raises(NotImplementedError):
-            AbstractClientService(api_key="key")
-
-
-@patch("app.common.llm_services.anthropic.Anthropic")
-def test_anthropic_service_success(MockAnthropic, app):
-    """Test AnthropicService successful text response."""
-    mock_client = MagicMock()
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(type="text", text="Hello Anthropic")]
-    mock_response.stop_reason = "end_turn"
-    mock_client.messages.create.return_value = mock_response
-    MockAnthropic.return_value = mock_client
-
-    with app.app_context():
-        service = AnthropicService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert response == "Hello Anthropic"
-
-
-@patch("app.common.llm_services.anthropic.Anthropic")
-def test_anthropic_service_tool_use(MockAnthropic, app):
-    """Test AnthropicService tool use response."""
-    mock_client = MagicMock()
-    mock_response = MagicMock()
-    tool_call = MagicMock(type="tool_use", id="t1", input={})
-    tool_call.name = "get_weather"
-    mock_response.content = [tool_call]
-    mock_response.stop_reason = "tool_use"
-    mock_client.messages.create.return_value = mock_response
-    MockAnthropic.return_value = mock_client
-
-    with app.app_context():
-        service = AnthropicService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert isinstance(response, list)
-    assert response[0]["name"] == "get_weather"
-
-
-@patch("app.common.llm_services.anthropic.Anthropic")
-def test_anthropic_service_api_error(MockAnthropic, app):
-    """Test AnthropicService API error handling."""
-    mock_client = MagicMock()
-    mock_client.messages.create.side_effect = AnthropicAPIError(
-        "Anthropic error", request=Request("POST", "http://test"), body=None
-    )
-    MockAnthropic.return_value = mock_client
-
-    with app.app_context():
-        service = AnthropicService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert "Sorry" in response and "(Anthropic)" in response
-
-
-@patch("app.common.llm_services.anthropic.Anthropic")
-def test_anthropic_service_unexpected_response(MockAnthropic, app):
-    """Test AnthropicService with an unexpected response structure."""
-    mock_client = MagicMock()
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(type="unexpected_type")]
-    mock_response.stop_reason = "end_turn"
-    mock_client.messages.create.return_value = mock_response
-    MockAnthropic.return_value = mock_client
-
-    with app.app_context():
-        service = AnthropicService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-    assert response == ""
-
-
-@patch("app.common.llm_services.anthropic.Anthropic")
-def test_anthropic_service_general_exception(MockAnthropic, app):
-    """Test AnthropicService with a generic exception."""
-    mock_client = MagicMock()
-    mock_client.messages.create.side_effect = Exception("Generic Error")
-    MockAnthropic.return_value = mock_client
-    with app.app_context():
-        service = AnthropicService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-    assert "An unexpected error occurred" in response
-
-
-@patch("app.common.llm_services.openai.OpenAI")
-def test_openai_service_success(MockOpenAI, app):
-    """Test OpenAIService successful text response."""
-    mock_client = MagicMock()
-    mock_message = MagicMock(content="Hello OpenAI", tool_calls=None)
-    mock_choice = MagicMock(message=mock_message)
-    mock_response = MagicMock(choices=[mock_choice])
-    mock_client.chat.completions.create.return_value = mock_response
-    MockOpenAI.return_value = mock_client
-
-    with app.app_context():
-        service = OpenAIService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert response == "Hello OpenAI"
-
-
-@patch("app.common.llm_services.openai.OpenAI")
-def test_openai_service_tool_use(MockOpenAI, app):
-    """Test OpenAIService tool use response."""
-    mock_client = MagicMock()
-    mock_function = MagicMock(arguments='{"location": "Boston"}')
-    mock_function.name = "get_weather"
-    mock_tool_call = MagicMock(id="t1", function=mock_function)
-    mock_message = MagicMock(content=None, tool_calls=[mock_tool_call])
-    mock_choice = MagicMock(message=mock_message)
-    mock_response = MagicMock(choices=[mock_choice])
-    mock_client.chat.completions.create.return_value = mock_response
-    MockOpenAI.return_value = mock_client
-
-    with app.app_context():
-        service = OpenAIService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert isinstance(response, list)
-    assert response[0]["name"] == "get_weather"
-
-
-@patch("app.common.llm_services.openai.OpenAI")
-def test_openai_service_api_error(MockOpenAI, app):
-    """Test OpenAIService API error handling."""
-    mock_client = MagicMock()
-    mock_client.chat.completions.create.side_effect = APIError(
-        "Test error", request=Request(method="POST", url="http://test.url"), body=None
-    )
-    MockOpenAI.return_value = mock_client
-
-    with app.app_context():
-        service = OpenAIService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert "Sorry" in response and "(OpenAI)" in response
-
-
-@patch("app.common.llm_services.openai.OpenAI")
-def test_openai_service_general_exception(MockOpenAI, app):
-    """Test OpenAIService with a generic exception."""
-    mock_client = MagicMock()
-    mock_client.chat.completions.create.side_effect = Exception("Generic Error")
-    MockOpenAI.return_value = mock_client
-    with app.app_context():
-        service = OpenAIService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-    assert "An unexpected error occurred" in response
-
-
-@patch("app.common.llm_services.openai.OpenAI")
-def test_openai_service_no_content(MockOpenAI, app):
-    """Test OpenAIService when the response message has no content."""
-    mock_client = MagicMock()
-    mock_message = MagicMock(content=None, tool_calls=None)
-    mock_choice = MagicMock(message=mock_message)
-    mock_response = MagicMock(choices=[mock_choice])
-    mock_client.chat.completions.create.return_value = mock_response
-    MockOpenAI.return_value = mock_client
-    with app.app_context():
-        service = OpenAIService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-    assert response == ""
-
-
-# --- Gemini Service Tests ---
-
-
-@pytest.fixture(autouse=True)
-def no_gemini_proxy(app, monkeypatch):
-    """Start every test without a Gemini proxy, whatever the local .env says.
-
-    Proxy tests set GEMINI_PROXY_URL themselves; monkeypatch restores the
-    config afterwards so it does not leak into the next test.
-    """
-    monkeypatch.setitem(app.config, "GEMINI_PROXY_URL", None)
-
-
-@patch("app.common.llm_services.genai.Client")
-def test_gemini_service_direct_api_success(MockGenAIClient, app):
-    """Test GeminiService direct API successful text response."""
-    mock_client = MagicMock()
-    mock_response = MagicMock(spec=types.GenerateContentResponse)
-    mock_response.text = "Hello Gemini"
-    mock_response.candidates = [
-        MagicMock(content=MagicMock(parts=[MagicMock(function_call=None)]))
-    ]
-    mock_client.models.generate_content.return_value = mock_response
-    MockGenAIClient.return_value = mock_client
-
-    with app.app_context():
-        service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert response == "Hello Gemini"
-
-
-@patch("app.common.llm_services.genai.Client")
-def test_gemini_service_direct_api_history_processing(MockGenAIClient, app):
-    """Test GeminiService direct API history processing for different message types."""
-    mock_client = MagicMock()
-    mock_response = MagicMock(spec=types.GenerateContentResponse)
-    mock_response.text = "OK"
-    mock_response.candidates = []
-    mock_client.models.generate_content.return_value = mock_response
-    MockGenAIClient.return_value = mock_client
-
-    history = [
-        {"role": "user", "content": "Query"},
-        {"role": "assistant", "content": [{"name": "tool_a", "input": {}}]},
-        {
-            "role": "user",
-            "content": [
-                {"tool_use_id": "tool_a", "content": json.dumps({"status": "done"})}
-            ],
-            "type": "tool_result",
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_skills",
+            "description": "Skills.",
+            "parameters": {"type": "object", "properties": {}},
         },
+    }
+]
+
+
+def completion_result(content=None, tool_calls=None):
+    """Shapes a value like the ModelResponse that litellm.completion returns."""
+    message = SimpleNamespace(content=content, tool_calls=tool_calls)
+    return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+
+
+def tool_call(call_id, name, arguments):
+    return SimpleNamespace(
+        id=call_id, function=SimpleNamespace(name=name, arguments=arguments)
+    )
+
+
+@pytest.fixture()
+def completion():
+    with patch("app.common.llm_services.litellm.completion") as mock:
+        yield mock
+
+
+# --- LLMService ---
+
+
+def test_text_response(completion):
+    completion.return_value = completion_result(content="Hello")
+    service = LLMService(model="openrouter/anthropic/claude-haiku-4.5")
+
+    response = service.get_chat_response(
+        [{"role": "user", "content": "Hi"}], "Be brief.", TOOLS
+    )
+
+    assert response.content == "Hello"
+    assert response.tool_calls == []
+    assert response.message == {"role": "assistant", "content": "Hello"}
+    kwargs = completion.call_args.kwargs
+    assert kwargs["model"] == "openrouter/anthropic/claude-haiku-4.5"
+    assert kwargs["messages"][0] == {"role": "system", "content": "Be brief."}
+    assert kwargs["messages"][1] == {"role": "user", "content": "Hi"}
+    assert kwargs["tools"] == TOOLS
+    assert kwargs["tool_choice"] == "auto"
+    assert "api_key" not in kwargs and "api_base" not in kwargs
+
+
+def test_tool_call_response(completion):
+    completion.return_value = completion_result(
+        tool_calls=[tool_call("call1", "get_project_details", '{"project_id": "p1"}')]
+    )
+
+    response = LLMService(model="m").get_chat_response([], "sys", TOOLS)
+
+    assert response.content == ""
+    assert len(response.tool_calls) == 1
+    call = response.tool_calls[0]
+    assert (call.id, call.name, call.arguments) == (
+        "call1",
+        "get_project_details",
+        {"project_id": "p1"},
+    )
+    assert response.message["tool_calls"] == [
+        {
+            "id": "call1",
+            "type": "function",
+            "function": {
+                "name": "get_project_details",
+                "arguments": json.dumps({"project_id": "p1"}),
+            },
+        }
     ]
 
+
+def test_no_tools_means_no_tool_choice(completion):
+    completion.return_value = completion_result(content="ok")
+
+    LLMService(model="m").get_chat_response([], "sys")
+
+    assert "tools" not in completion.call_args.kwargs
+    assert "tool_choice" not in completion.call_args.kwargs
+
+
+def test_explicit_key_base_and_limits_are_passed(completion):
+    completion.return_value = completion_result(content="ok")
+    service = LLMService(
+        model="ollama/llama3.1",
+        api_key="k",
+        api_base="http://localhost:11434",
+        timeout=12,
+        max_tokens=256,
+    )
+
+    service.get_chat_response([], "sys")
+
+    kwargs = completion.call_args.kwargs
+    assert kwargs["api_key"] == "k"
+    assert kwargs["api_base"] == "http://localhost:11434"
+    assert kwargs["timeout"] == 12
+    assert kwargs["max_tokens"] == 256
+
+
+def test_provider_errors_become_llm_service_error(completion):
+    completion.side_effect = RuntimeError("503 Service Unavailable")
+
+    with pytest.raises(LLMServiceError, match="503"):
+        LLMService(model="m").get_chat_response([], "sys")
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ('{"a": 1}', {"a": 1}),
+        ({"a": 1}, {"a": 1}),
+        ("", {}),
+        (None, {}),
+        ("not json", {}),
+        ("[1, 2]", {}),
+    ],
+)
+def test_parse_arguments(raw, expected):
+    assert _parse_arguments(raw) == expected
+
+
+# --- Configuration ---
+
+
+@pytest.mark.parametrize(
+    "config, expected",
+    [
+        ({"LLM_MODEL": "openrouter/x/y", "LLM_PROVIDER": "openai"}, "openrouter/x/y"),
+        (
+            {"LLM_PROVIDER": "anthropic", "ANTHROPIC_MODEL": "claude-x"},
+            "anthropic/claude-x",
+        ),
+        ({"LLM_PROVIDER": "OpenAI", "OPENAI_MODEL": "gpt-x"}, "openai/gpt-x"),
+        ({"LLM_PROVIDER": "gemini", "GEMINI_MODEL": "gemini-x"}, "gemini/gemini-x"),
+        ({"LLM_PROVIDER": "gemini"}, None),
+        ({"LLM_PROVIDER": "unknown", "UNKNOWN_MODEL": "x"}, None),
+        ({}, None),
+    ],
+)
+def test_resolve_model(config, expected):
+    assert resolve_model(config) == expected
+
+
+@pytest.fixture()
+def llm_config(app, monkeypatch):
+    """Sets LLM settings on the test app for one test."""
+
+    def configure(**settings):
+        defaults = {
+            "LLM_MODEL": None,
+            "LLM_API_KEY": None,
+            "LLM_API_BASE": None,
+            "LLM_PROVIDER": "",
+            "LLM_TIMEOUT": 30,
+        }
+        for key, value in {**defaults, **settings}.items():
+            monkeypatch.setitem(app.config, key, value)
+
+    return configure
+
+
+def test_get_llm_service_with_key_in_environment(app, llm_config, monkeypatch):
+    llm_config(LLM_MODEL="openrouter/anthropic/claude-haiku-4.5", LLM_TIMEOUT=10)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
+
     with app.app_context():
-        service = GeminiService(api_key="fake_key")
-        service.get_chat_response(messages=history, system_prompt="")
+        service = get_llm_service()
 
-    call_args = mock_client.models.generate_content.call_args[1]
-    assert len(call_args["contents"]) == 4  # System prompt + 3 history items
+    assert service is not None
+    assert service.model == "openrouter/anthropic/claude-haiku-4.5"
+    assert service.api_key is None  # LiteLLM reads it from the environment
+    assert service.timeout == 10
 
 
-@patch("app.common.llm_services.genai.Client")
-def test_gemini_service_direct_api_error(MockGenAIClient, app):
-    """Test GeminiService direct API error handling."""
-    mock_client = MagicMock()
-    mock_client.models.generate_content.side_effect = Exception("Simulated API Error")
-    MockGenAIClient.return_value = mock_client
+def test_get_llm_service_missing_key(app, llm_config, monkeypatch):
+    llm_config(LLM_MODEL="openrouter/anthropic/claude-haiku-4.5")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
     with app.app_context():
-        service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert "Sorry" in response and "(Gemini)" in response
-
-
-@patch("app.common.llm_services.requests.post")
-@patch("app.common.llm_services.genai.Client")
-def test_gemini_service_proxy_success(mock_genai_client, mock_post, app):
-    """Test GeminiService successful response via proxy."""
-    app.config["GEMINI_PROXY_URL"] = "http://fake-proxy.com/api"
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"reply": "Hello from Proxy"}
-    mock_post.return_value = mock_response
-
-    with app.app_context():
-        service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(
-            messages=[{"role": "user", "content": "hi"}], system_prompt="system"
-        )
-
-    assert response == "Hello from Proxy"
-    mock_post.assert_called_once()
-    call_args = mock_post.call_args[1]["json"]
-    assert call_args["system_prompt"] == "system"
-    assert call_args["messages"][0]["content"] == "hi"
-    mock_genai_client.assert_not_called()  # Ensure direct client is not used
-
-
-@patch("app.common.llm_services.requests.post")
-@patch("app.common.llm_services.genai.Client")
-def test_gemini_service_proxy_request_exception(mock_genai_client, mock_post, app):
-    """Test GeminiService proxy handling of a RequestException."""
-    app.config["GEMINI_PROXY_URL"] = "http://fake-proxy.com/api"
-    mock_post.side_effect = RequestException("Connection timed out")
-
-    with app.app_context():
-        service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert "communicating with the AI service proxy" in response
-    mock_genai_client.assert_not_called()
-
-
-@patch("app.common.llm_services.requests.post")
-@patch("app.common.llm_services.genai.Client")
-def test_gemini_service_proxy_unexpected_error(mock_genai_client, mock_post, app):
-    """Test GeminiService proxy handling of a non-RequestException."""
-    app.config["GEMINI_PROXY_URL"] = "http://fake-proxy.com/api"
-    mock_post.side_effect = ValueError("Unexpected error")
-
-    with app.app_context():
-        service = GeminiService(api_key="fake_key")
-        response = service.get_chat_response(messages=[], system_prompt="")
-
-    assert "unexpected error occurred while processing" in response
-    mock_genai_client.assert_not_called()
-
-
-@patch("app.common.llm_services.AnthropicService")
-@patch("app.common.llm_services.OpenAIService")
-@patch("app.common.llm_services.GeminiService")
-def test_get_llm_service_factory(MockGemini, MockOpenAI, MockAnthropic, app):
-    """Test the factory function for creating LLM services."""
-    service_map = {
-        "anthropic": (MockAnthropic, "ANTHROPIC_API_KEY"),
-        "openai": (MockOpenAI, "OPENAI_API_KEY"),
-        "gemini": (MockGemini, "GEMINI_API_KEY"),
-    }
-
-    with app.app_context():
-        for provider, (mock_class, key_name) in service_map.items():
-            app.config["LLM_PROVIDER"] = provider
-            app.config[key_name] = f"{provider}_key"
-            get_llm_service()
-            mock_class.assert_called_once_with(api_key=f"{provider}_key")
-            mock_class.reset_mock()
-
-        # Test unsupported provider
-        app.config["LLM_PROVIDER"] = "unsupported"
         assert get_llm_service() is None
 
-        # Test missing API key
-        app.config["LLM_PROVIDER"] = "openai"
-        app.config["OPENAI_API_KEY"] = None
-        assert get_llm_service() is None
-        MockOpenAI.assert_not_called()
 
-        # Test instantiation failure
-        app.config["LLM_PROVIDER"] = "gemini"
-        app.config["GEMINI_API_KEY"] = "gemini_key"
-        MockGemini.side_effect = Exception("Instantiation failed")
+def test_get_llm_service_explicit_key_skips_environment_check(
+    app, llm_config, monkeypatch
+):
+    llm_config(LLM_MODEL="openrouter/anthropic/claude-haiku-4.5", LLM_API_KEY="k")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+
+    with app.app_context():
+        service = get_llm_service()
+
+    assert service is not None and service.api_key == "k"
+
+
+def test_get_llm_service_without_model(app, llm_config):
+    llm_config()
+
+    with app.app_context():
         assert get_llm_service() is None
+
+
+def test_get_llm_service_warns_about_gemini_proxy(app, llm_config, monkeypatch, caplog):
+    llm_config(LLM_MODEL="openrouter/anthropic/claude-haiku-4.5", LLM_API_KEY="k")
+    monkeypatch.setitem(app.config, "GEMINI_PROXY_URL", "https://old-proxy")
+
+    with app.app_context():
+        assert get_llm_service() is not None
+
+    assert "GEMINI_PROXY_URL is no longer supported" in caplog.text

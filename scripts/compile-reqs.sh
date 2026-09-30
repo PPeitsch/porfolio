@@ -7,7 +7,8 @@
 set -e
 
 # Define python executable to ensure consistency
-PYTHON_EXEC="python3.12"
+# Compile with the lowest supported Python (see the CI matrix) so the pins install on all of them.
+PYTHON_EXEC="python3.10"
 PIP_COMPILE_EXEC="$PYTHON_EXEC -m piptools compile"
 
 echo "Using Python executable: $($PYTHON_EXEC --version)"

@@ -33,20 +33,25 @@ class Config:
         ),
     )
 
-    # LLM Provider Configuration
-    # Determines which LLM service to use ('anthropic', 'openai', 'gemini')
+    # LLM configuration (LiteLLM). LLM_MODEL picks provider and model, e.g.
+    # "anthropic/claude-haiku-4-5-20251001", "openrouter/anthropic/claude-haiku-4.5",
+    # "gemini/gemini-2.5-flash", "openai/gpt-4.1-mini" or "ollama/llama3.1".
+    # The provider's key is read from its usual variable (ANTHROPIC_API_KEY,
+    # OPENROUTER_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY...) unless LLM_API_KEY
+    # is set. LLM_API_BASE points at a custom endpoint (e.g. a local Ollama).
+    LLM_MODEL = os.environ.get("LLM_MODEL")
+    LLM_API_KEY = os.environ.get("LLM_API_KEY")
+    LLM_API_BASE = os.environ.get("LLM_API_BASE")
+    LLM_TIMEOUT = float(os.environ.get("LLM_TIMEOUT", "30"))
+    # How many rounds of tool calls the chat allows before giving up on a question.
+    LLM_MAX_TOOL_ROUNDS = int(os.environ.get("LLM_MAX_TOOL_ROUNDS", "5"))
+
+    # Older settings, used only when LLM_MODEL is not set: the model becomes
+    # "<LLM_PROVIDER>/<provider>_MODEL".
     LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic").lower()
-
-    # API Keys for different LLM providers
-    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-    # Optional HTTP proxy for Gemini (e.g. a Cloud Run service that holds the
-    # key). When set, Gemini requests go through it instead of the genai client.
-    GEMINI_PROXY_URL = os.environ.get("GEMINI_PROXY_URL")
-
-    # LLM Model Name Configuration
     ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
-    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
+    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
     GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+
+    # No longer supported (Gemini goes through LiteLLM); read only to warn.
+    GEMINI_PROXY_URL = os.environ.get("GEMINI_PROXY_URL")

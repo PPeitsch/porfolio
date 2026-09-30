@@ -2,10 +2,8 @@ Flask>=2.3,<4.0
 PyJWT>=2.8,<3.0
 PyYAML>=6.0,<7.0
 python-dotenv>=1.0,<2.0
-anthropic==0.29.0
-openai>=1.0,<2.0
-google-genai==1.22.0
-requests>=2.30,<3.0
+# One API for every LLM provider (Anthropic, OpenAI, Gemini, OpenRouter, Ollama...)
+litellm>=1.103,<2.0
 # Werkzeug is usually installed by Flask, but pin if needed
 Werkzeug>=3.0
 
