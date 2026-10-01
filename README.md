@@ -86,6 +86,7 @@ All the content is read from one folder: `data/` by default, or the path in `POR
 | `system_prompt.txt` | The system prompt of the AI chat. `{name}` is replaced with the name in `cv.yaml`. |
 | `text_config.yaml` | UI texts: welcome messages of the terminal and the chat, help and manual pages of the terminal commands, the tool descriptions the AI chat receives, and the translations of the interface (`ui`). |
 | `logo/` | ASCII logos for the `neofetch` command. |
+| `pages/` | Optional standalone pages, such as a services page: `pages/services.html` is served at `/p/services`, and the files it links relatively are served next to it. |
 
 ## Languages
 
