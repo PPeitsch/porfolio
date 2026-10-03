@@ -190,3 +190,79 @@ def test_format_project_table_with_numeric_ids() -> None:
     assert "  2024  | Numeric" in table
     assert "  N/A   | No ID" in table
     assert len(table) == 4
+
+
+def _neofetch(app: Any, args: List[str], logo: Any = None) -> Tuple[Any, Any]:
+    """Runs the neofetch handler with an optional configured logo."""
+    from app.view_cli.routes import _handle_neofetch
+
+    neofetch_config = {} if logo is None else {"logo": logo}
+    with app.test_request_context():
+        return _handle_neofetch(
+            args=args,
+            cv_data=MOCK_CV_DATA_CLI,
+            projects_data=MOCK_PROJECTS_DATA_CLI,
+            text_config={"cli": {"neofetch": neofetch_config}},
+        )
+
+
+def test_neofetch_uses_configured_logo(app: Any) -> None:
+    """cli.neofetch.logo picks the logo; without it, flask is used."""
+    owl, _ = _neofetch(app, [], logo="owl")
+    default, _ = _neofetch(app, [])
+    assert any("o o" in line for line in owl)
+    assert any("| o |" in line for line in default)
+
+
+@pytest.mark.parametrize("logo", ["missing", "../cv", "Owl"])
+def test_neofetch_falls_back_to_default_logo(app: Any, logo: str) -> None:
+    """A configured logo that is missing or not a plain name falls back to flask."""
+    output, error = _neofetch(app, [], logo=logo)
+    assert error is None
+    assert any("| o |" in line for line in output)
+
+
+def test_neofetch_logo_option(app: Any) -> None:
+    """--logo shows another logo; an unknown one lists the available logos."""
+    output, error = _neofetch(app, ["--logo", "owl"])
+    assert error is None
+    assert any("o o" in line for line in output)
+
+    _, error = _neofetch(app, ["--logo", "../cv"])
+    assert "not found" in error
+    assert "owl" in error and "flask" in error
+
+
+@pytest.mark.parametrize("args", [["--logo"], ["--color", "red"], ["owl"]])
+def test_neofetch_bad_arguments(app: Any, args: List[str]) -> None:
+    """Anything other than '--logo <name>' answers with the usage."""
+    output, error = _neofetch(app, args)
+    assert output is None
+    assert "Usage: neofetch" in error
+
+
+def test_available_logos_without_folder(app: Any) -> None:
+    """Without a logo/ folder there are no logos to list."""
+    from app.view_cli.routes import _available_logos
+
+    with app.test_request_context(), patch(
+        "app.view_cli.routes.os.listdir", side_effect=FileNotFoundError
+    ):
+        assert _available_logos() == []
+
+
+def test_help_aligns_descriptions(app: Any) -> None:
+    """Within a group, every description starts in the same column."""
+    from app.view_cli.routes import _handle_help
+
+    items = [
+        {"command": "ls", "description": "short", "group": "portfolio"},
+        {
+            "command": "filter --tech <name>",
+            "description": "long",
+            "group": "portfolio",
+        },
+    ]
+    output, _ = _handle_help(text_config={"cli": {"commands": {"items": items}}})
+    columns = {line.index(" - ") for line in output[1:3]}
+    assert len(columns) == 1
