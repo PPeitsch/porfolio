@@ -41,20 +41,40 @@ window.initializeCliView = function(callbacks) {
   ];
   const availableThemes = ['dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
 
+  // Output is plain text: only <link>url</link> markers become links, so
+  // texts like "<name>" are shown as written and never parsed as HTML.
   function writeOutput(text, className = null) {
       const line = document.createElement("div");
-      line.innerHTML = text.replace(/<link>(.*?)<\/link>/g, (match, url) => {
-          const isMail = url.startsWith("mailto:");
-          if (isMail || url.startsWith("http")) {
-              const cleanUrl = url.replace("mailto:", "");
-              const linkText = cleanUrl.length > 50 ? cleanUrl.substring(0, 47) + "..." : cleanUrl;
-              return `<a href="${url}" ${!isMail ? 'target="_blank" rel="noopener noreferrer"' : ""} class="terminal-link" title="${cleanUrl}">${linkText}</a>`;
-          }
-          return url;
-      });
+      const linkPattern = /<link>(.*?)<\/link>/g;
+      let last = 0;
+      let match;
+      while ((match = linkPattern.exec(text)) !== null) {
+          line.appendChild(document.createTextNode(text.slice(last, match.index)));
+          line.appendChild(createLink(match[1]));
+          last = linkPattern.lastIndex;
+      }
+      line.appendChild(document.createTextNode(text.slice(last)));
       if (className) { line.classList.add(className); }
       outputDiv.appendChild(line);
       scrollToBottom();
+  }
+
+  function createLink(url) {
+      const isMail = url.startsWith("mailto:");
+      if (!isMail && !/^https?:\/\//.test(url)) {
+          return document.createTextNode(url);
+      }
+      const cleanUrl = url.replace("mailto:", "");
+      const link = document.createElement("a");
+      link.href = url;
+      link.className = "terminal-link";
+      link.title = cleanUrl;
+      link.textContent = cleanUrl.length > 50 ? cleanUrl.substring(0, 47) + "..." : cleanUrl;
+      if (!isMail) {
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+      }
+      return link;
   }
 
   function clearScreen() { outputDiv.innerHTML = ""; }
