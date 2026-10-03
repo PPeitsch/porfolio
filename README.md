@@ -85,7 +85,7 @@ All the content is read from one folder: `data/` by default, or the path in `POR
 | `images/` | Project images, referenced by file name from the `image` field of each project. |
 | `system_prompt.txt` | The system prompt of the AI chat. `{name}` is replaced with the name in `cv.yaml`. |
 | `text_config.yaml` | Optional. Overrides of the UI texts, which the engine brings in `app/defaults/text_config.yaml`: welcome messages of the terminal and the chat, the terminal prompt, help and manual pages of the terminal commands, the tool descriptions the AI chat receives, and the translations of the interface (`ui`). It is merged key by key over the engine's file, so it only needs what changes; the example in `data/` sets the terminal welcome, prompt and logo. |
-| `logo/` | Optional. ASCII logos for the `neofetch` command, one per `neofetch_logo_<name>.txt`, added to the engine's ones in `app/defaults/logo/` (a logo with the same name replaces the engine's). `cli.neofetch.logo` in `text_config.yaml` picks the default one by name (`flask` if unset), and `neofetch --logo <name>` shows another. |
+| `logo/` | Optional. ASCII logos for the `neofetch` command, one per `neofetch_logo_<name>.txt`, added to the engine's ones in `app/defaults/logo/` (a logo with the same name replaces the engine's). `cli.neofetch.logo` in `text_config.yaml` picks the default one by name (`flask` if unset), `neofetch --logo <name>` shows another, and `neofetch --logo` alone shows the next one each time. |
 | `pages/` | Optional standalone pages, such as a services page: `pages/services.html` is served at `/p/services`, and the files it links relatively are served next to it. |
 
 ## Languages
