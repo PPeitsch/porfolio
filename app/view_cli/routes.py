@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import textwrap
 from typing import Any, Dict, List, Tuple
@@ -47,49 +48,21 @@ def get_cached_data(data_type="cv"):
 
 
 def _handle_help(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
-    output = []
     help_config = text_config.get("cli", {}).get("commands", {})
+    items = help_config.get("items", [])
 
-    def get_cmd_base(c):
-        # Helper to get command name without arguments for alignment calculation
-        return re.sub(r"\s<.*>", "", c["command"])
+    def group_lines(group: str) -> List[str]:
+        # Descriptions start in one column: after the longest command, arguments
+        # included.
+        commands = [item for item in items if item.get("group") == group]
+        width = max((len(c["command"]) for c in commands), default=0)
+        return [f"  {c['command'].ljust(width)} - {c['description']}" for c in commands]
 
-    # --- Portfolio Commands ---
-    output.append(help_config.get("portfolio_header", "Portfolio Commands:"))
-    portfolio_commands = [
-        item
-        for item in help_config.get("items", [])
-        if item.get("group") == "portfolio"
-    ]
-    max_cmd_len = (
-        max(len(get_cmd_base(c)) for c in portfolio_commands)
-        if portfolio_commands
-        else 0
-    )
-    for cmd in portfolio_commands:
-        command_str = cmd["command"]
-        # Calculate padding needed to align descriptions
-        padding = max_cmd_len + (len(command_str) - len(get_cmd_base(cmd)))
-        line = f"  {command_str.ljust(padding)} - {cmd['description']}"
-        output.append(line)
-
+    output = [help_config.get("portfolio_header", "Portfolio Commands:")]
+    output.extend(group_lines("portfolio"))
     output.append("")
-
-    # --- System Commands ---
     output.append(help_config.get("system_header", "System Commands:"))
-
-    system_commands = [
-        item for item in help_config.get("items", []) if item.get("group") == "system"
-    ]
-    max_cmd_len = (
-        max(len(get_cmd_base(c)) for c in system_commands) if system_commands else 0
-    )
-    for cmd in system_commands:
-        command_str = cmd["command"]
-        padding = max_cmd_len + (len(command_str) - len(get_cmd_base(cmd)))
-        line = f"  {command_str.ljust(padding)} - {cmd['description']}"
-        output.append(line)
-
+    output.extend(group_lines("system"))
     return output, None
 
 
@@ -366,12 +339,41 @@ def _handle_uname(text_config: Dict[str, Any], **kwargs: Any) -> Tuple[List[str]
     return [uname_text], None
 
 
+DEFAULT_LOGO = "flask"
+# Logo names become part of a file path, so they are limited to plain names.
+_LOGO_NAME = re.compile(r"^[a-z0-9_]+$")
+_LOGO_FILE = re.compile(r"^neofetch_logo_([a-z0-9_]+)\.txt$")
+
+
+def _read_logo(name: str) -> List[str] | None:
+    """Reads logo/neofetch_logo_<name>.txt; None if the name is invalid or missing."""
+    if not _LOGO_NAME.match(name):
+        return None
+    try:
+        with open(
+            _get_data_filepath(f"logo/neofetch_logo_{name}.txt"), "r", encoding="utf-8"
+        ) as f:
+            return [line.rstrip() for line in f.readlines()]
+    except OSError:
+        return None
+
+
+def _available_logos() -> List[str]:
+    """Lists the logo names found in the logo/ folder."""
+    try:
+        files = os.listdir(_get_data_filepath("logo"))
+    except OSError:
+        return []
+    return sorted(m.group(1) for f in files if (m := _LOGO_FILE.match(f)))
+
+
 def _handle_neofetch(
+    args: List[str],
     cv_data: Dict[str, Any],
     projects_data: List[Dict[str, Any]],
     text_config: Dict[str, Any],
     **kwargs: Any,
-) -> Tuple[List[str], None]:
+) -> Tuple[List[str] | None, str | None]:
     name = cv_data.get("name", "N/A")
     title = cv_data.get("title", "N/A")
     project_count = len(projects_data)
@@ -380,13 +382,22 @@ def _handle_neofetch(
     neofetch_config = text_config.get("cli", {}).get("neofetch", {})
     host_template = neofetch_config.get("host_template", "{name}'s Dev Environment")
 
-    logo = []
-    try:
-        logo_path = _get_data_filepath("logo/neofetch_logo_flask.txt")
-        with open(logo_path, "r", encoding="utf-8") as f:
-            logo = [line.rstrip() for line in f.readlines()]
-    except FileNotFoundError:
-        logo = [t("cli_out.logo_not_found")]
+    if args:
+        if len(args) != 2 or args[0] != "--logo":
+            return None, t("cli_out.neofetch_usage")
+        logo = _read_logo(args[1])
+        if logo is None:
+            return None, t(
+                "cli_out.logo_unknown",
+                logo=args[1],
+                logos=", ".join(_available_logos()),
+            )
+    else:
+        configured = str(neofetch_config.get("logo") or DEFAULT_LOGO)
+        logo = _read_logo(configured)
+        if logo is None:
+            logger.warning(f"neofetch logo '{configured}' not found, using default.")
+            logo = _read_logo(DEFAULT_LOGO) or [t("cli_out.logo_not_found")]
 
     info = [
         f"{name}@{text_config.get('cli', {}).get('prompt', {}).get('host', 'flaskos')}",
