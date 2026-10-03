@@ -325,4 +325,5 @@ def test_show_translates_project_type(
         output, _ = _handle_show(
             args=["x"], projects_dict={"x": project}, terminal_width=80
         )
+    assert output is not None
     assert any(expected in line for line in output)
