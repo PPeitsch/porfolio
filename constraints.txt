@@ -25,7 +25,7 @@ attrs==26.1.0
     #   referencing
 bandit==1.8.6
     # via -r requirements-dev.in
-black==24.10.0
+black==26.5.1
     # via -r requirements-dev.in
 blinker==1.9.0
     # via flask
@@ -67,6 +67,7 @@ fastuuid==0.14.0
 filelock==3.32.7
     # via
     #   huggingface-hub
+    #   python-discovery
     #   virtualenv
 flake8==7.3.0
     # via -r requirements-dev.in
@@ -159,7 +160,9 @@ packaging==25.0
     #   build
     #   huggingface-hub
     #   pytest
-pathspec==0.12.1
+    #   virtualenv
+    #   wheel
+pathspec==1.1.1
     # via
     #   black
     #   mypy
@@ -172,7 +175,9 @@ platformdirs==4.3.8
     #   black
     #   virtualenv
 pluggy==1.6.0
-    # via pytest
+    # via
+    #   pytest
+    #   pytest-cov
 pre-commit==3.8.0
     # via -r requirements-dev.in
 propcache==0.5.4
@@ -192,7 +197,7 @@ pydantic-settings==2.15.0
     # via litellm
 pyflakes==3.4.0
     # via flake8
-pygments==2.19.2
+pygments==2.21.0
     # via
     #   pytest
     #   rich
@@ -202,19 +207,23 @@ pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-pytest==8.4.1
+pytest==9.1.1
     # via
     #   -r requirements-dev.in
     #   pytest-cov
-pytest-cov==5.0.0
+pytest-cov==6.3.0
     # via -r requirements-dev.in
 python-dateutil==2.9.0.post0
     # via botocore
+python-discovery==1.6.1
+    # via virtualenv
 python-dotenv==1.2.3
     # via
     #   -r requirements.in
     #   litellm
     #   pydantic-settings
+pytokens==0.4.1
+    # via black
 pyyaml==6.0.2
     # via
     #   -r requirements.in
@@ -279,6 +288,7 @@ typing-extensions==4.14.1
     #   pyjwt
     #   referencing
     #   typing-inspection
+    #   virtualenv
 typing-inspection==0.4.2
     # via
     #   pydantic
@@ -288,13 +298,13 @@ urllib3==2.8.0
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==20.32.0
+virtualenv==21.14.5
     # via pre-commit
 werkzeug==3.1.9
     # via
     #   -r requirements.in
     #   flask
-wheel==0.45.1
+wheel==0.48.0
     # via pip-tools
 yarl==1.25.1
     # via aiohttp
