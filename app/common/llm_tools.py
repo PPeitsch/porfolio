@@ -6,6 +6,8 @@ from app.common import utils
 TOOL_MAP: Dict[str, Callable[..., Any]] = {
     "get_professional_summary": utils.get_professional_summary,
     "get_skills": utils.get_skills,
+    "get_experience": utils.get_experience,
+    "get_education": utils.get_education,
     "get_project_list": utils.get_project_list,
     "get_project_details": utils.get_project_details,
 }
@@ -63,6 +65,24 @@ def get_tool_definitions(owner_name: str) -> List[Dict[str, Any]]:
                     }
                 },
             },
+        ),
+        tool(
+            "get_experience",
+            describe(
+                "get_experience",
+                "Retrieves the portfolio owner's work experience: role, company, "
+                "period and description of each position.",
+            ),
+            no_parameters,
+        ),
+        tool(
+            "get_education",
+            describe(
+                "get_education",
+                "Retrieves the portfolio owner's education: degree, institution "
+                "and period of each entry.",
+            ),
+            no_parameters,
         ),
         tool(
             "get_project_list",

@@ -28,6 +28,23 @@ skills:
   - Git
   - JavaScript
   - Pytest
+experience:
+  - role: { en: Backend Developer, es: Desarrollador Backend }
+    company: Example Corp
+    period: { en: Mar 2023 - Present, es: Mar 2023 - Actual }
+    description:
+      en: Builds and maintains the REST APIs and background jobs of the company's main product.
+      es: Desarrolla y mantiene las APIs REST y los procesos en segundo plano del producto principal.
+  - role: { en: Junior Python Developer, es: Desarrollador Python Junior }
+    company: Sample Labs
+    period: 2021 - 2023
+    description:
+      en: Wrote data connectors and internal automation tools.
+      es: Escribió conectores de datos y herramientas internas de automatización.
+education:
+  - degree: { en: BSc in Computer Science, es: Licenciatura en Ciencias de la Computación }
+    institution: Example University
+    period: 2017 - 2021
 social_links:
   github: "https://github.com/example"
   linkedin: "https://www.linkedin.com/in/example/"

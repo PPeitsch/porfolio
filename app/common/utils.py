@@ -182,6 +182,18 @@ def get_skills(category: Optional[str] = None) -> List[str]:
     return cast(List[str], skills)
 
 
+def get_experience() -> List[Dict[str, Any]]:
+    """Retrieves the work experience entries from the CV data."""
+    experience = load_cv_data().get("experience") or []
+    return [e for e in cast(List[Any], experience) if isinstance(e, dict)]
+
+
+def get_education() -> List[Dict[str, Any]]:
+    """Retrieves the education entries from the CV data."""
+    education = load_cv_data().get("education") or []
+    return [e for e in cast(List[Any], education) if isinstance(e, dict)]
+
+
 def get_project_list() -> List[Dict[str, str]]:
     """Retrieves a summary list of all available projects."""
     projects, _ = load_projects_data()

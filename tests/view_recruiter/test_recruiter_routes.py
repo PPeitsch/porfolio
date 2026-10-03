@@ -73,6 +73,8 @@ def test_chat_sends_openai_format_tools_and_system_prompt(llm, post_chat):
     assert {tool["function"]["name"] for tool in kwargs["tools"]} == {
         "get_professional_summary",
         "get_skills",
+        "get_experience",
+        "get_education",
         "get_project_list",
         "get_project_details",
     }

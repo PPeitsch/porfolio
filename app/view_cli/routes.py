@@ -130,6 +130,58 @@ def _handle_skills(
     return output, None
 
 
+def _format_cv_entries(
+    entries: Any,
+    heading_keys: Tuple[str, str],
+    terminal_width: int,
+) -> List[str]:
+    """Formats CV entries as 'Heading @ Place (Period)' plus a wrapped description.
+
+    Entries that are not mappings are skipped; missing fields are left out.
+    """
+    output: List[str] = []
+    for entry in entries if isinstance(entries, list) else []:
+        if not isinstance(entry, dict):
+            continue
+        heading, place = (str(entry.get(key) or "") for key in heading_keys)
+        line = " @ ".join(part for part in (heading, place) if part)
+        if entry.get("period"):
+            line = f"{line} ({entry['period']})" if line else str(entry["period"])
+        output.append(f"  {line}")
+        if entry.get("description"):
+            output.extend(
+                textwrap.wrap(
+                    str(entry["description"]),
+                    width=terminal_width - 2,
+                    initial_indent="    ",
+                    subsequent_indent="    ",
+                )
+            )
+    return output
+
+
+def _handle_experience(
+    cv_data: Dict[str, Any], terminal_width: int, **kwargs: Any
+) -> Tuple[List[str], None]:
+    entries = _format_cv_entries(
+        cv_data.get("experience"), ("role", "company"), terminal_width
+    )
+    output = [t("cli_out.experience_header")]
+    output.extend(entries or [t("cli_out.experience_none")])
+    return output, None
+
+
+def _handle_education(
+    cv_data: Dict[str, Any], terminal_width: int, **kwargs: Any
+) -> Tuple[List[str], None]:
+    entries = _format_cv_entries(
+        cv_data.get("education"), ("degree", "institution"), terminal_width
+    )
+    output = [t("cli_out.education_header")]
+    output.extend(entries or [t("cli_out.education_none")])
+    return output, None
+
+
 def _handle_contact(cv_data: Dict[str, Any], **kwargs: Any) -> Tuple[List[str], None]:
     output = [t("cli_out.contact_header")]
     contact_found = False
@@ -382,6 +434,8 @@ COMMAND_HANDLERS = {
     "help": _handle_help,
     "whoami": _handle_whoami,
     "skills": _handle_skills,
+    "experience": _handle_experience,
+    "education": _handle_education,
     "contact": _handle_contact,
     "ls": _handle_ls,
     "filter": _handle_filter,

@@ -8,6 +8,8 @@ from flask import g
 from app.common.exceptions import DataFileError, DataFileNotFoundError
 from app.common.utils import (
     _get_data_filepath,
+    get_education,
+    get_experience,
     get_professional_summary,
     get_project_details,
     get_project_list,
@@ -230,3 +232,27 @@ def test_get_project_functions(mock_load_projects):
     assert nonexistent_project_result is not None
     assert "error" in nonexistent_project_result
     assert "not found" in nonexistent_project_result["error"]
+
+
+@patch(
+    "app.common.utils.load_cv_data",
+    return_value={
+        "experience": [{"role": "Dev", "company": "Acme"}, "stray text"],
+        "education": None,
+    },
+)
+def test_experience_and_education(mock_load_cv):
+    """Experience keeps only mappings; a missing or empty section is an empty list."""
+    assert get_experience() == [{"role": "Dev", "company": "Acme"}]
+    assert get_education() == []
+
+
+def test_tool_definitions_include_experience_and_education(app):
+    """The chat gets the experience and education tools, mapped to callables."""
+    from app.common.llm_tools import TOOL_MAP, get_tool_definitions
+
+    with app.test_request_context():
+        names = [d["function"]["name"] for d in get_tool_definitions("Alex")]
+    for name in ("get_experience", "get_education"):
+        assert name in names
+        assert callable(TOOL_MAP[name])

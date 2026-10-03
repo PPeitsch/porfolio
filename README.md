@@ -80,7 +80,7 @@ All the content is read from one folder: `data/` by default, or the path in `POR
 
 | File | What it holds |
 |---|---|
-| `cv.yaml` | `name`, `title`, `email`, `website`, `summary`, `skills` and `social_links` (`github`, `linkedin`, ...). |
+| `cv.yaml` | `name`, `title`, `email`, `website`, `summary`, `skills`, `social_links` (`github`, `linkedin`, ...), `experience` (`role`, `company`, `period`, `description`) and `education` (`degree`, `institution`, `period`). |
 | `projects.yaml` | A list of projects: `id`, `title`, `type`, `image`, `short_description`, `description`, `technologies` and optional `live_url`, `github_url`, `pypi_url`, `docs_url`. |
 | `images/` | Project images, referenced by file name from the `image` field of each project. |
 | `system_prompt.txt` | The system prompt of the AI chat. `{name}` is replaced with the name in `cv.yaml`. |
