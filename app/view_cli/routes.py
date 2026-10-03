@@ -4,7 +4,7 @@ import re
 import textwrap
 from typing import Any, Dict, List, Set, Tuple
 
-from flask import g, jsonify
+from flask import g, jsonify, request
 
 from app.common.decorators import token_required
 from app.common.i18n import t
@@ -390,6 +390,20 @@ def _available_logos() -> List[str]:
     return sorted(names)
 
 
+# Cookie with the last logo shown by `neofetch --logo`, so the next call
+# shows the following one.
+LOGO_ROTATION_COOKIE = "neofetch_logo"
+
+
+def _next_logo(current: str) -> str | None:
+    """Returns the logo after `current` in the list, wrapping around."""
+    logos = _available_logos()
+    if not logos:
+        return None
+    following = [name for name in logos if name > current]
+    return following[0] if following else logos[0]
+
+
 def _handle_neofetch(
     args: List[str],
     cv_data: Dict[str, Any],
@@ -405,7 +419,17 @@ def _handle_neofetch(
     neofetch_config = text_config.get("cli", {}).get("neofetch", {})
     host_template = neofetch_config.get("host_template", "{name}'s Dev Environment")
 
-    if args:
+    configured = str(neofetch_config.get("logo") or DEFAULT_LOGO)
+    if args == ["--logo"]:
+        # Without a name, each call shows the next logo.
+        last = request.cookies.get(LOGO_ROTATION_COOKIE) or configured
+        next_name = _next_logo(last)
+        logo = _read_logo(next_name) if next_name else None
+        if logo is None:
+            logo = [t("cli_out.logo_not_found")]
+        else:
+            g.neofetch_logo = next_name
+    elif args:
         if len(args) != 2 or args[0] != "--logo":
             return None, t("cli_out.neofetch_usage")
         logo = _read_logo(args[1])
@@ -416,7 +440,6 @@ def _handle_neofetch(
                 logos=", ".join(_available_logos()),
             )
     else:
-        configured = str(neofetch_config.get("logo") or DEFAULT_LOGO)
         logo = _read_logo(configured)
         if logo is None:
             logger.warning(f"neofetch logo '{configured}' not found, using default.")
@@ -432,6 +455,9 @@ def _handle_neofetch(
         f"{t('cli_out.neofetch_skills')}: {skill_count}",
         f"Shell: {neofetch_config.get('shell_name', 'Web-CLI')}",
     ]
+    if "neofetch_logo" in g:
+        # Rotating: name the logo, so it can be picked with --logo <name>.
+        info.append(f"Logo: {g.neofetch_logo}")
     max_logo_width = max(len(line) for line in logo) if logo else 0
     logo_vertical_offset = 1
     num_lines = max(len(logo) + logo_vertical_offset, len(info))
@@ -551,4 +577,9 @@ def handle_command_api(command_line):
     prompt_config = TEXT_CONFIG.get("cli", {}).get("prompt", {})
     response_data["prompt"] = prompt_config
 
-    return jsonify(response_data)
+    response = jsonify(response_data)
+    if "neofetch_logo" in g:
+        response.set_cookie(
+            LOGO_ROTATION_COOKIE, g.neofetch_logo, samesite="Lax", httponly=True
+        )
+    return response

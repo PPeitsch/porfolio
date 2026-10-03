@@ -119,7 +119,7 @@ UI_DEFAULTS: Dict[str, str] = {
     "cli_out.neofetch_skills": "Skills",
     "cli_out.logo_not_found": "(Logo not found)",
     "cli_out.logo_unknown": "[ERROR] Logo '{logo}' not found. Available: {logos}",
-    "cli_out.neofetch_usage": "[ERROR] Usage: neofetch [--logo <name>]",
+    "cli_out.neofetch_usage": "[ERROR] Usage: neofetch [--logo [<name>]]",
     "cli_out.man_usage": "[ERROR] Usage: man <command>. Please specify a command.",
     "cli_out.man_none": "[ERROR] No manual entry for '{command}'.",
     "cli_out.command_not_found": "[ERROR] Command not found: '{command}'. Type 'help'.",

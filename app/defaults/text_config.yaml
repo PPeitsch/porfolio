@@ -54,7 +54,7 @@ cli:
      - { command: "date", description: { en: "Display the current date and time", es: "Mostrar la fecha y la hora" }, group: "system" }
      - { command: "echo <text>", description: { en: "Display a line of text", es: "Mostrar una línea de texto" }, group: "system" }
      - { command: "uname -a", description: { en: "Print simulated system information", es: "Mostrar información (simulada) del sistema" }, group: "system" }
-     - { command: "neofetch [--logo <name>]", description: { en: "Show a visual summary of the profile", es: "Mostrar un resumen visual del perfil" }, group: "system" }
+     - { command: "neofetch [--logo [<name>]]", description: { en: "Show a visual summary of the profile", es: "Mostrar un resumen visual del perfil" }, group: "system" }
      - { command: "exit / close", description: { en: "Close the terminal window", es: "Cerrar la ventana" }, group: "system" }
 
  # Manual pages for the 'man' command
@@ -252,18 +252,20 @@ cli:
        - "NAME"
        - "    neofetch - show a visual summary of the profile"
        - "SYNOPSIS"
-       - "    neofetch [--logo <name>]"
+       - "    neofetch [--logo [<name>]]"
        - "DESCRIPTION"
        - "    Displays a 'neofetch'-style summary with an ASCII logo and key profile information."
-       - "    --logo <name> shows it with another logo; an unknown name lists the available ones."
+       - "    --logo alone shows the next logo each time it is run."
+       - "    --logo <name> shows it with that logo; an unknown name lists the available ones."
      es:
        - "NOMBRE"
        - "    neofetch - muestra un resumen visual del perfil"
        - "SINOPSIS"
-       - "    neofetch [--logo <nombre>]"
+       - "    neofetch [--logo [<nombre>]]"
        - "DESCRIPCIÓN"
        - "    Muestra un resumen al estilo 'neofetch', con un logo ASCII y los datos principales del perfil."
-       - "    --logo <nombre> lo muestra con otro logo; con un nombre que no existe, lista los disponibles."
+       - "    --logo solo muestra el logo siguiente cada vez que se corre."
+       - "    --logo <nombre> lo muestra con ese logo; con un nombre que no existe, lista los disponibles."
    uname:
      en:
        - "NAME"
@@ -450,7 +452,7 @@ ui:
    neofetch_skills: { es: "Habilidades" }
    logo_not_found: { es: "(No se encontró el logo)" }
    logo_unknown: { es: "[ERROR] No existe el logo '{logo}'. Disponibles: {logos}" }
-   neofetch_usage: { es: "[ERROR] Uso: neofetch [--logo <nombre>]" }
+   neofetch_usage: { es: "[ERROR] Uso: neofetch [--logo [<nombre>]]" }
    man_usage: { es: "[ERROR] Uso: man <comando>. Falta indicar el comando." }
    man_none: { es: "[ERROR] No hay manual para '{command}'." }
    command_not_found: { es: "[ERROR] Comando no encontrado: '{command}'. 'help' lista los disponibles." }

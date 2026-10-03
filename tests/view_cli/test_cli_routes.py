@@ -237,7 +237,7 @@ def test_neofetch_logo_option(app: Any) -> None:
     assert "owl" in error and "flask" in error
 
 
-@pytest.mark.parametrize("args", [["--logo"], ["--color", "red"], ["owl"]])
+@pytest.mark.parametrize("args", [["--color", "red"], ["owl"], ["--logo", "a", "b"]])
 def test_neofetch_bad_arguments(app: Any, args: List[str]) -> None:
     """Anything other than '--logo <name>' answers with the usage."""
     output, error = _neofetch(app, args)
@@ -327,3 +327,62 @@ def test_show_translates_project_type(
         )
     assert output is not None
     assert any(expected in line for line in output)
+
+
+def test_next_logo_wraps_around(app: Any) -> None:
+    """The rotation goes in name order and starts over after the last logo."""
+    from app.view_cli.routes import _available_logos, _next_logo
+
+    with app.test_request_context():
+        logos = _available_logos()
+        assert _next_logo(logos[0]) == logos[1]
+        assert _next_logo(logos[-1]) == logos[0]
+        assert _next_logo("not_a_logo") in logos
+
+
+def test_next_logo_without_logos(app: Any) -> None:
+    """Without any logo there is nothing to rotate to."""
+    from app.view_cli.routes import _next_logo
+
+    with app.test_request_context(), patch(
+        "app.view_cli.routes._available_logos", return_value=[]
+    ):
+        assert _next_logo("flask") is None
+
+
+@patch("app.view_cli.routes.get_cached_data")
+def test_neofetch_logo_alone_rotates(
+    mock_get_cached_data: MagicMock, client: FlaskClient, app: Any
+) -> None:
+    """Each `neofetch --logo` shows the logo after the last one shown."""
+    from app.view_cli.routes import LOGO_ROTATION_COOKIE, _available_logos
+
+    mock_get_cached_data.side_effect = [
+        MOCK_CV_DATA_CLI,
+        (MOCK_PROJECTS_DATA_CLI, MOCK_PROJECTS_DICT_CLI),
+    ] * 10
+    headers = {"Authorization": f"Bearer {generate_test_token(app)}"}
+    with app.test_request_context():
+        logos = _available_logos()
+
+    shown = []
+    for _ in range(3):
+        response = client.get("/cli/api/command/neofetch --logo", headers=headers)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["error"] is None
+        cookie = client.get_cookie(LOGO_ROTATION_COOKIE)
+        assert cookie is not None
+        assert any(f"Logo: {cookie.value}" in line for line in data["output"])
+        shown.append(cookie.value)
+    assert shown[0] != "flask"
+    assert logos.index(shown[1]) == (logos.index(shown[0]) + 1) % len(logos)
+    assert logos.index(shown[2]) == (logos.index(shown[1]) + 1) % len(logos)
+
+
+def test_neofetch_logo_alone_without_logos(app: Any) -> None:
+    """With no logos at all, `neofetch --logo` still answers."""
+    with patch("app.view_cli.routes._available_logos", return_value=[]):
+        output, error = _neofetch(app, ["--logo"])
+    assert error is None
+    assert output is not None
