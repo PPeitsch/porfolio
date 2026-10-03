@@ -154,3 +154,27 @@ def content_image(filename):
     if not os.path.isfile(os.path.join(images_dir, filename)):
         abort(404)
     return send_from_directory(images_dir, filename)
+
+
+@shell_bp.route("/p/<path:filename>")
+def content_page(filename):
+    """Serves a standalone page, or one of its files, from the pages/ folder.
+
+    A page is a complete HTML document kept with the content, such as a
+    services or "hire me" page: ``pages/services.html`` is served at
+    ``/p/services``, and the files it links relatively (``eicosane.png``)
+    at ``/p/eicosane.png``.
+
+    Args:
+        filename (str): A page name without extension, or a file path
+                        relative to <DATA_DIR>/pages.
+
+    Returns:
+        Response: The page or file, or 404 if it does not exist.
+    """
+    pages_dir = os.path.join(current_app.config["DATA_DIR"], "pages")
+    if not os.path.splitext(filename)[1]:
+        filename += ".html"
+    if not os.path.isfile(os.path.join(pages_dir, filename)):
+        abort(404)
+    return send_from_directory(pages_dir, filename)

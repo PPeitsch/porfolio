@@ -72,3 +72,31 @@ def test_visual_prefers_content_images_and_falls_back(content_app):
     urls = {p["id"]: p["image_url"] for p in projects}
     assert urls["one"] == "/content/images/one.png"
     assert urls["two"] == "/shell-static/images/projects/legacy.png"
+
+
+@pytest.fixture()
+def pages_app(content_app, content_dir):
+    (content_dir / "pages").mkdir()
+    (content_dir / "pages" / "services.html").write_text(
+        "<!doctype html><title>Services</title>", encoding="utf-8"
+    )
+    (content_dir / "pages" / "plot.png").write_bytes(b"\x89PNG plot")
+    return content_app
+
+
+def test_content_page_is_served_without_extension(pages_app):
+    response = pages_app.test_client().get("/p/services")
+    assert response.status_code == 200
+    assert "<title>Services</title>" in response.get_data(as_text=True)
+
+
+def test_content_page_serves_its_files(pages_app):
+    response = pages_app.test_client().get("/p/plot.png")
+    assert response.status_code == 200
+    assert response.data == b"\x89PNG plot"
+
+
+@pytest.mark.parametrize("path", ["missing", "../cv.yaml", "../cv"])
+def test_content_page_rejects_missing_or_outside_files(pages_app, path):
+    response = pages_app.test_client().get(f"/p/{path}")
+    assert response.status_code == 404
