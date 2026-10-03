@@ -70,7 +70,7 @@ Both the terminal and the chat ask for the access code before they can be used.
 3.  **Install dependencies:** `pip install -r requirements-dev.txt`
 4.  **Configure:** copy `.env.example` to `.env` and set at least `SECRET_KEY`, `RECRUITER_ACCESS_CODE` `LLM_MODEL` and the API key of its provider.
 5.  **Install the pre-commit hooks:** `pre-commit install`
-6.  **Run:** `python run.py` and open `http://127.0.0.1:5000`.
+6.  **Run:** `FLASK_DEBUG=1 python run.py` and open `http://127.0.0.1:5000`. `FLASK_DEBUG=1` turns on auto-reload and the debugger; the server listens on localhost unless `FLASK_RUN_HOST` sets another address. `run.py` is for development only: in production, run `run:app` with a WSGI server such as gunicorn.
 
 It starts with the example content in `data/`. Replace it with yours as described below.
 

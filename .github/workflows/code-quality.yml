@@ -29,6 +29,7 @@ jobs:
           black --check .
           isort --check-only .
           flake8 .
+          mypy app tests
 
   security-scan:
     name: Security Scan
