@@ -49,8 +49,8 @@ jobs:
       - name: Run Bandit (SAST)
         run: bandit -r . --exclude ./venv,./.venv -c pyproject.toml
 
-      # The lock is fully pinned, so pip-audit reads it without installing anything.
-      - name: Audit runtime dependencies (pip-audit)
+      # The locks are fully pinned, so pip-audit reads them without installing anything.
+      - name: Audit dependencies (pip-audit)
         run: |
           pip install pip-audit
-          pip-audit --disable-pip --no-deps -r requirements.txt
+          pip-audit --disable-pip --no-deps -r requirements.txt -r requirements-dev.txt

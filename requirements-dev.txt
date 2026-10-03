@@ -39,7 +39,7 @@ bandit==1.8.6
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
-black==24.10.0
+black==26.5.1
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -106,6 +106,7 @@ filelock==3.32.7
     # via
     #   -c constraints.txt
     #   huggingface-hub
+    #   python-discovery
     #   virtualenv
 flake8==7.3.0
     # via
@@ -257,7 +258,9 @@ packaging==25.0
     #   build
     #   huggingface-hub
     #   pytest
-pathspec==0.12.1
+    #   virtualenv
+    #   wheel
+pathspec==1.1.1
     # via
     #   -c constraints.txt
     #   black
@@ -279,6 +282,7 @@ pluggy==1.6.0
     # via
     #   -c constraints.txt
     #   pytest
+    #   pytest-cov
 pre-commit==3.8.0
     # via
     #   -c constraints.txt
@@ -310,7 +314,7 @@ pyflakes==3.4.0
     # via
     #   -c constraints.txt
     #   flake8
-pygments==2.19.2
+pygments==2.21.0
     # via
     #   -c constraints.txt
     #   pytest
@@ -324,12 +328,12 @@ pyproject-hooks==1.2.0
     #   -c constraints.txt
     #   build
     #   pip-tools
-pytest==8.4.1
+pytest==9.1.1
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
     #   pytest-cov
-pytest-cov==5.0.0
+pytest-cov==6.3.0
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -337,12 +341,20 @@ python-dateutil==2.9.0.post0
     # via
     #   -c constraints.txt
     #   botocore
+python-discovery==1.6.1
+    # via
+    #   -c constraints.txt
+    #   virtualenv
 python-dotenv==1.2.3
     # via
     #   -c constraints.txt
     #   -r requirements.in
     #   litellm
     #   pydantic-settings
+pytokens==0.4.1
+    # via
+    #   -c constraints.txt
+    #   black
 pyyaml==6.0.2
     # via
     #   -c constraints.txt
@@ -432,6 +444,7 @@ typing-extensions==4.14.1
     #   pyjwt
     #   referencing
     #   typing-inspection
+    #   virtualenv
 typing-inspection==0.4.2
     # via
     #   -c constraints.txt
@@ -443,7 +456,7 @@ urllib3==2.8.0
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==20.32.0
+virtualenv==21.14.5
     # via
     #   -c constraints.txt
     #   pre-commit
@@ -452,7 +465,7 @@ werkzeug==3.1.9
     #   -c constraints.txt
     #   -r requirements.in
     #   flask
-wheel==0.45.1
+wheel==0.48.0
     # via
     #   -c constraints.txt
     #   pip-tools
