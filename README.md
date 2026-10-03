@@ -53,7 +53,7 @@ The engine and the content are separate: your CV, projects and texts live in pla
 *   **Content as files:** CV, projects, system prompt, UI texts, ASCII logos and project images, all in one folder you can keep outside the repository.
 *   **Bilingual:** interface and content in English and Spanish (or any languages you configure), chosen from the browser's language or a switcher (see [Languages](#languages)).
 *   **Any LLM provider:** one setting, `LLM_MODEL`, picks provider and model (see [Choosing the Model](#choosing-the-model)).
-*   **Quality checks:** Black, isort, Flake8 and MyPy via pre-commit, Bandit and Safety in CI, and a test suite with coverage reported to Codecov.
+*   **Quality checks:** Black, isort, Flake8 and MyPy via pre-commit, Bandit and pip-audit in CI, and a test suite with coverage reported to Codecov.
 
 ### Authentication
 
