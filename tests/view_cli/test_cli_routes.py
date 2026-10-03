@@ -183,9 +183,13 @@ def test_format_project_table_with_numeric_ids() -> None:
     """IDs that YAML loads as numbers are still formatted as text."""
     from app.view_cli.routes import _format_project_table
 
-    table = _format_project_table(
-        [{"id": 2024, "title": "Numeric"}, {"title": "No ID"}, "not a project"]
-    )
+    # The stray string checks that non-mapping entries are skipped.
+    projects: List[Any] = [
+        {"id": 2024, "title": "Numeric"},
+        {"title": "No ID"},
+        "not a project",
+    ]
+    table = _format_project_table(projects)
     assert table[0].startswith("  ID  ")
     assert "  2024  | Numeric" in table
     assert "  N/A   | No ID" in table
