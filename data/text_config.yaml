@@ -17,6 +17,8 @@ recruiter:
 llm_tool_descriptions:
  get_professional_summary: "Retrieves the professional summary or overview of {name}. Use this to answer general questions about their background and focus."
  get_skills: "Retrieves a list of {name}'s technical skills. Use this to answer questions about their expertise in specific technologies, languages, or frameworks."
+ get_experience: "Retrieves {name}'s work experience: role, company, period and description of each position. Use this to answer questions about where they have worked, their roles, or their professional history."
+ get_education: "Retrieves {name}'s education: degree, institution and period of each entry. Use this to answer questions about their studies, degrees, or training."
  get_project_list: "Retrieves a summary list of all available projects. Use this when the user asks for an overview of projects or wants to know what projects exist."
  get_project_details: "Retrieve detailed information for a specific project based on its unique identifier (ID). Use this when the user asks for details about a specific project by name or ID."
 
@@ -32,6 +34,8 @@ cli:
    items:
      - { command: "whoami", description: { en: "Display summary about me", es: "Mostrar un resumen sobre mí" }, group: "portfolio" }
      - { command: "skills", description: { en: "List my technical skills", es: "Listar mis habilidades técnicas" }, group: "portfolio" }
+     - { command: "experience", description: { en: "List my work experience", es: "Listar mi experiencia laboral" }, group: "portfolio" }
+     - { command: "education", description: { en: "List my education", es: "Listar mi formación" }, group: "portfolio" }
      - { command: "contact", description: { en: "Show contact information", es: "Mostrar los datos de contacto" }, group: "portfolio" }
      - { command: "links", description: { en: "Show social and repository links", es: "Mostrar redes y repositorios" }, group: "portfolio" }
      - { command: "ls projects", description: { en: "List available projects", es: "Listar los proyectos" }, group: "portfolio" }
@@ -75,6 +79,28 @@ cli:
        - "    skills - lista las habilidades técnicas"
        - "DESCRIPCIÓN"
        - "    Muestra todas las habilidades técnicas, separadas por comas."
+   experience:
+     en:
+       - "NAME"
+       - "    experience - list work experience"
+       - "DESCRIPTION"
+       - "    Lists each position with its role, company, period and description."
+     es:
+       - "NOMBRE"
+       - "    experience - lista la experiencia laboral"
+       - "DESCRIPCIÓN"
+       - "    Muestra cada puesto con el rol, la empresa, el período y la descripción."
+   education:
+     en:
+       - "NAME"
+       - "    education - list education"
+       - "DESCRIPTION"
+       - "    Lists each degree or course with its institution and period."
+     es:
+       - "NOMBRE"
+       - "    education - lista la formación"
+       - "DESCRIPCIÓN"
+       - "    Muestra cada título o curso con la institución y el período."
    contact:
      en:
        - "NAME"
@@ -376,6 +402,10 @@ ui:
    no_summary: { es: "No hay un resumen disponible." }
    skills_header: { es: "[INFO] Habilidades técnicas:" }
    skills_unavailable: { es: "  (No hay datos de habilidades)" }
+   experience_header: { es: "[INFO] Experiencia:" }
+   experience_none: { es: "  (No hay experiencia cargada)" }
+   education_header: { es: "[INFO] Formación:" }
+   education_none: { es: "  (No hay formación cargada)" }
    contact_header: { es: "[INFO] Contacto:" }
    contact_none: { es: "  (No hay datos de contacto)" }
    ls_usage: { es: "[ERROR] Argumento desconocido para 'ls'. ¿Quisiste decir 'ls projects'?" }

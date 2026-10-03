@@ -73,6 +73,10 @@ UI_DEFAULTS: Dict[str, str] = {
     "cli_out.no_summary": "No summary available.",
     "cli_out.skills_header": "[INFO] Technical Skills:",
     "cli_out.skills_unavailable": "  (Skills data unavailable)",
+    "cli_out.experience_header": "[INFO] Experience:",
+    "cli_out.experience_none": "  (No experience listed)",
+    "cli_out.education_header": "[INFO] Education:",
+    "cli_out.education_none": "  (No education listed)",
     "cli_out.contact_header": "[INFO] Contact Information:",
     "cli_out.contact_none": "  (No contact details available)",
     "cli_out.ls_usage": (

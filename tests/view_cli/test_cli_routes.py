@@ -13,6 +13,17 @@ MOCK_CV_DATA_CLI: Dict[str, Any] = {
     "email": "test@example.com",
     "social_links": {"github": "http://github.com/test"},
     "website": "example.com",
+    "experience": [
+        {
+            "role": "Backend Dev",
+            "company": "Acme",
+            "period": "2023 - Present",
+            "description": "Builds APIs.",
+        },
+        "not a mapping",
+        {"company": "NoRole Inc"},
+    ],
+    "education": [{"degree": "BSc", "institution": "Uni", "period": "2017 - 2021"}],
 }
 MOCK_PROJECTS_DATA_CLI: List[Dict[str, Any]] = [
     {"id": "p1", "title": "Project 1", "description": "First one"},
@@ -39,6 +50,11 @@ def test_cli_command_unauthorized(client: FlaskClient) -> None:
     [
         ("whoami", "Name:    Test User"),
         ("skills", "pytest, mocking"),
+        ("experience", "Backend Dev @ Acme (2023 - Present)"),
+        ("experience", "    Builds APIs."),
+        ("experience", "  NoRole Inc"),
+        ("education", "BSc @ Uni (2017 - 2021)"),
+        ("man experience", "DESCRIPTION"),
         ("contact", "test@example.com"),
         ("links", "http://github.com/test"),
         ("ls projects", "p1"),
@@ -93,6 +109,10 @@ def test_cli_commands_with_empty_data(
         empty_projects,
         empty_cv,
         empty_projects,
+        empty_cv,
+        empty_projects,
+        empty_cv,
+        empty_projects,
     ]
     token = generate_test_token(app)
     headers = {"Authorization": f"Bearer {token}"}
@@ -114,6 +134,13 @@ def test_cli_commands_with_empty_data(
     response_contact_data = response_contact.get_json()
     assert isinstance(response_contact_data, dict)
     assert "(No contact details available)" in response_contact_data["output"][1]
+
+    # Test 'experience' and 'education' with nothing in the CV
+    for command in ("experience", "education"):
+        response_cv = client.get(f"/cli/api/command/{command}", headers=headers)
+        response_cv_data = response_cv.get_json()
+        assert isinstance(response_cv_data, dict)
+        assert f"(No {command} listed)" in response_cv_data["output"][1]
 
     # Test 'skills' with no skills
     response_skills = client.get("/cli/api/command/skills", headers=headers)
