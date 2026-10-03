@@ -177,6 +177,35 @@ def test_load_text_config_merges_content_over_engine(mock_parse_yaml, app):
 
 @patch(
     "app.common.utils.parse_yaml_data",
+    side_effect=DataFileError("bad YAML"),
+)
+def test_load_text_config_with_broken_content_file(mock_parse_yaml, app):
+    """A content text_config.yaml that cannot be read leaves the engine's texts."""
+    with app.app_context():
+        text_config = load_text_config()
+    assert text_config["cli"]["commands"]["items"]
+
+
+@patch("app.common.utils.parse_yaml_data", return_value={"key": "value"})
+def test_load_text_config_without_engine_file(mock_parse_yaml, app, monkeypatch):
+    """If the engine's texts cannot be read, the content's ones are still used."""
+    monkeypatch.setattr("app.common.utils.DEFAULTS_DIR", "/nonexistent")
+    with app.app_context():
+        text_config = load_text_config()
+    assert text_config == {"key": "value"}
+
+
+@patch("app.common.utils.parse_yaml_data", return_value={"ui": "not a mapping"})
+def test_ui_texts_ignore_a_ui_section_that_is_not_a_mapping(mock_parse_yaml, app):
+    """A `ui` that is not a mapping is ignored; the built-in texts remain."""
+    from app.common.i18n import UI_DEFAULTS, get_ui_texts
+
+    with app.test_request_context():
+        assert get_ui_texts()["cli_out.type"] == UI_DEFAULTS["cli_out.type"]
+
+
+@patch(
+    "app.common.utils.parse_yaml_data",
     side_effect=DataFileNotFoundError("missing"),
 )
 def test_load_text_config_without_content_file(mock_parse_yaml, app):
