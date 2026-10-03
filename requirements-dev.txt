@@ -74,7 +74,7 @@ charset-normalizer==3.4.2
     # via
     #   -c constraints.txt
     #   requests
-click==8.2.1
+click==8.3.3
     # via
     #   -c constraints.txt
     #   black
