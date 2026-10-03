@@ -245,8 +245,30 @@ def test_neofetch_bad_arguments(app: Any, args: List[str]) -> None:
     assert "Usage: neofetch" in error
 
 
+def test_content_logos_add_to_and_override_engine_logos(
+    app: Any, tmp_path: Any, monkeypatch: Any
+) -> None:
+    """A logo in the content's logo/ adds a name or replaces the engine's one."""
+    from app.view_cli.routes import _available_logos
+
+    logo_dir = tmp_path / "logo"
+    logo_dir.mkdir()
+    (logo_dir / "neofetch_logo_mine.txt").write_text("MINE\n", encoding="utf-8")
+    (logo_dir / "neofetch_logo_owl.txt").write_text("MY OWL\n", encoding="utf-8")
+    monkeypatch.setitem(app.config, "DATA_DIR", str(tmp_path))
+
+    mine, _ = _neofetch(app, ["--logo", "mine"])
+    owl, _ = _neofetch(app, ["--logo", "owl"])
+    flask, _ = _neofetch(app, [])
+    assert any("MINE" in line for line in mine)
+    assert any("MY OWL" in line for line in owl)
+    assert any("| o |" in line for line in flask)
+    with app.test_request_context():
+        assert {"mine", "owl", "flask"} <= set(_available_logos())
+
+
 def test_available_logos_without_folder(app: Any) -> None:
-    """Without a logo/ folder there are no logos to list."""
+    """Without any logo/ folder there are no logos to list."""
     from app.view_cli.routes import _available_logos
 
     with app.test_request_context(), patch(
@@ -270,3 +292,38 @@ def test_help_aligns_descriptions(app: Any) -> None:
     output, _ = _handle_help(text_config={"cli": {"commands": {"items": items}}})
     columns = {line.index(" - ") for line in output[1:3]}
     assert len(columns) == 1
+
+
+def test_whoami_indents_every_summary_line(app: Any) -> None:
+    """The summary is indented the same on its first line and the rest."""
+    from app.view_cli.routes import _handle_whoami
+
+    cv = {"name": "Test User", "title": "Dev", "summary": "word " * 40}
+    with app.test_request_context():
+        output, _ = _handle_whoami(cv_data=cv, terminal_width=40)
+    summary_lines = output[3:]
+    assert len(summary_lines) > 1
+    assert all(line.startswith("  ") for line in summary_lines)
+
+
+@pytest.mark.parametrize(
+    "lang, project_type, expected",
+    [
+        ("en", "webapp", "Type: Web app"),
+        ("es", "mobile", "Tipo: Aplicación móvil"),
+        ("es", "game", "Tipo: Game"),
+    ],
+)
+def test_show_translates_project_type(
+    app: Any, lang: str, project_type: str, expected: str
+) -> None:
+    """show labels known project types in the visitor's language."""
+    from app.view_cli.routes import _handle_show
+
+    project = {"id": "x", "title": "X", "type": project_type}
+    with app.test_request_context(headers={"Cookie": f"lang={lang}"}):
+        output, _ = _handle_show(
+            args=["x"], projects_dict={"x": project}, terminal_width=80
+        )
+    assert output is not None
+    assert any(expected in line for line in output)

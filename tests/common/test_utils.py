@@ -151,16 +151,69 @@ def test_load_projects_data_dict_repopulation(mock_load_yaml, app):
         assert projects_dict["proj1"]["title"] == "Project One"
 
 
-@patch("app.common.utils.load_yaml_data")
-def test_load_text_config_caching(mock_load_yaml, app):
+@patch("app.common.utils.parse_yaml_data")
+def test_load_text_config_caching(mock_parse_yaml, app):
     """Test that text config data is loaded once and cached in 'g'."""
-    mock_load_yaml.return_value = {"key": "value"}
+    mock_parse_yaml.return_value = {"key": "value"}
     with app.app_context():
-        g.pop("text_config", None)
         data1 = load_text_config()
         load_text_config()
-    assert data1 == {"key": "value"}
-    mock_load_yaml.assert_called_once()
+    assert data1["key"] == "value"
+    mock_parse_yaml.assert_called_once()
+
+
+@patch("app.common.utils.parse_yaml_data")
+def test_load_text_config_merges_content_over_engine(mock_parse_yaml, app):
+    """The content's text_config.yaml only overrides the keys it sets."""
+    mock_parse_yaml.return_value = {"cli": {"neofetch": {"logo": "rocket"}}}
+    with app.app_context():
+        text_config = load_text_config()
+    assert text_config["cli"]["neofetch"]["logo"] == "rocket"
+    # The rest comes from the engine's texts.
+    assert text_config["cli"]["neofetch"]["os_name"] == "FlaskOS 1.0"
+    assert text_config["cli"]["commands"]["items"]
+    assert "get_skills" in text_config["llm_tool_descriptions"]
+
+
+@patch(
+    "app.common.utils.parse_yaml_data",
+    side_effect=DataFileError("bad YAML"),
+)
+def test_load_text_config_with_broken_content_file(mock_parse_yaml, app):
+    """A content text_config.yaml that cannot be read leaves the engine's texts."""
+    with app.app_context():
+        text_config = load_text_config()
+    assert text_config["cli"]["commands"]["items"]
+
+
+@patch("app.common.utils.parse_yaml_data", return_value={"key": "value"})
+def test_load_text_config_without_engine_file(mock_parse_yaml, app, monkeypatch):
+    """If the engine's texts cannot be read, the content's ones are still used."""
+    monkeypatch.setattr("app.common.utils.DEFAULTS_DIR", "/nonexistent")
+    with app.app_context():
+        text_config = load_text_config()
+    assert text_config == {"key": "value"}
+
+
+@patch("app.common.utils.parse_yaml_data", return_value={"ui": "not a mapping"})
+def test_ui_texts_ignore_a_ui_section_that_is_not_a_mapping(mock_parse_yaml, app):
+    """A `ui` that is not a mapping is ignored; the built-in texts remain."""
+    from app.common.i18n import UI_DEFAULTS, get_ui_texts
+
+    with app.test_request_context():
+        assert get_ui_texts()["cli_out.type"] == UI_DEFAULTS["cli_out.type"]
+
+
+@patch(
+    "app.common.utils.parse_yaml_data",
+    side_effect=DataFileNotFoundError("missing"),
+)
+def test_load_text_config_without_content_file(mock_parse_yaml, app):
+    """Without a text_config.yaml in the content, the engine's texts are used."""
+    with app.app_context():
+        text_config = load_text_config()
+    assert text_config["cli"]["commands"]["items"]
+    assert text_config["cli"]["manuals"]
 
 
 @patch("app.common.utils.load_yaml_data")
@@ -181,10 +234,11 @@ def test_loaders_with_bad_data_type(mock_load_yaml, app):
         assert projects_data == []
         assert projects_dict == {}
 
-        # Test load_text_config with a list instead of a dict
-        mock_load_yaml.return_value = []
+    # A content text_config.yaml that is not a mapping is ignored: the engine's
+    # texts are still used.
+    with app.app_context(), patch("app.common.utils.parse_yaml_data", return_value=[]):
         text_config = load_text_config()
-        assert text_config == {}
+        assert text_config["cli"]["commands"]["items"]
 
 
 @patch("builtins.open", side_effect=FileNotFoundError)

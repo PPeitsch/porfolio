@@ -10,6 +10,12 @@ from app.common.i18n import localize
 
 logger = logging.getLogger(__name__)
 
+# Texts and logos of the engine itself. The content folder's text_config.yaml
+# and logo/ only add to them or override them.
+DEFAULTS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "defaults"
+)
+
 
 def _get_data_filepath(filename):
     """Constructs the full, absolute path to a data file.
@@ -251,16 +257,56 @@ def get_welcome_message(view: str) -> str:
     return cast(str, template).replace("{name}", name)
 
 
-def load_text_config():
-    """Loads text configuration from text_config.yaml, caching it in the context.
+def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    """Returns base with override on top; nested mappings merge key by key."""
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
 
-    Bilingual texts are resolved to the language of the current request.
+
+def load_raw_text_config() -> Dict[str, Any]:
+    """Returns the engine's text_config.yaml with the content's one on top.
+
+    The content file is optional: it only needs the texts it changes. Texts
+    are not localized here. The result is cached in the context.
+    """
+    if "raw_text_config" not in g:
+        try:
+            with open(
+                os.path.join(DEFAULTS_DIR, "text_config.yaml"), "r", encoding="utf-8"
+            ) as f:
+                defaults = yaml.safe_load(f) or {}
+        except (OSError, yaml.YAMLError) as e:
+            logger.error(f"Could not load the engine's text_config.yaml: {e}")
+            defaults = {}
+        try:
+            content = parse_yaml_data("text_config.yaml")
+        except DataFileNotFoundError:
+            content = {}
+        except DataFileError as e:
+            logger.error(str(e))
+            content = {}
+        if not isinstance(content, dict):
+            logger.error("text_config.yaml must be a mapping; ignoring it.")
+            content = {}
+        g.raw_text_config = _deep_merge(defaults, content)
+    return cast(Dict[str, Any], g.raw_text_config)
+
+
+def load_text_config():
+    """Returns the text configuration resolved to the request's language.
+
+    It is the engine's texts with the content's text_config.yaml on top
+    (see load_raw_text_config), cached in the context.
 
     Returns:
         dict: A dictionary containing the text configuration.
     """
     if "text_config" not in g:
-        logger.info("Loading text_config.yaml into context g")
-        loaded_data = localize(load_yaml_data("text_config.yaml"))
+        loaded_data = localize(load_raw_text_config())
         g.text_config = loaded_data if isinstance(loaded_data, dict) else {}
     return g.text_config

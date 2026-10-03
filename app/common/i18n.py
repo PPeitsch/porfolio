@@ -94,6 +94,10 @@ UI_DEFAULTS: Dict[str, str] = {
     "cli_out.show_not_found": ("[ERROR] Project '{id}' not found. Use 'ls projects'."),
     "cli_out.show_header": "--- Project: {title} ---",
     "cli_out.type": "[INFO] Type: {type}",
+    # Labels of the project types; a type without one is shown capitalized.
+    "project_type.webapp": "Web app",
+    "project_type.mobile": "Mobile app",
+    "project_type.library": "Library",
     "cli_out.description": "[INFO] Description:",
     "cli_out.no_description": "(No description)",
     "cli_out.technologies": "[INFO] Technologies:",
@@ -272,10 +276,11 @@ def get_ui_texts() -> Dict[str, str]:
         return dict(UI_DEFAULTS)
     if "ui_texts" not in g:
         # Imported here: utils needs this module to localize the data files.
-        from app.common.utils import load_yaml_data
+        from app.common.utils import load_raw_text_config
 
-        raw_config = load_yaml_data("text_config.yaml")
-        ui = raw_config.get("ui", {}) if isinstance(raw_config, dict) else {}
+        ui = load_raw_text_config().get("ui", {})
+        if not isinstance(ui, dict):
+            ui = {}
         texts = dict(UI_DEFAULTS)
         texts.update(_ui_overrides(ui, get_locale()))
         g.ui_texts = texts

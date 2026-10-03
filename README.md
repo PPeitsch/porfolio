@@ -84,8 +84,8 @@ All the content is read from one folder: `data/` by default, or the path in `POR
 | `projects.yaml` | A list of projects: `id`, `title`, `type`, `image`, `short_description`, `description`, `technologies` and optional `live_url`, `github_url`, `pypi_url`, `docs_url`. |
 | `images/` | Project images, referenced by file name from the `image` field of each project. |
 | `system_prompt.txt` | The system prompt of the AI chat. `{name}` is replaced with the name in `cv.yaml`. |
-| `text_config.yaml` | UI texts: welcome messages of the terminal and the chat, help and manual pages of the terminal commands, the tool descriptions the AI chat receives, and the translations of the interface (`ui`). |
-| `logo/` | ASCII logos for the `neofetch` command, one per `neofetch_logo_<name>.txt`. `cli.neofetch.logo` in `text_config.yaml` picks the default one by name (`flask` if unset), and `neofetch --logo <name>` shows another. |
+| `text_config.yaml` | Optional. Overrides of the UI texts, which the engine brings in `app/defaults/text_config.yaml`: welcome messages of the terminal and the chat, the terminal prompt, help and manual pages of the terminal commands, the tool descriptions the AI chat receives, and the translations of the interface (`ui`). It is merged key by key over the engine's file, so it only needs what changes; the example in `data/` sets the terminal welcome, prompt and logo. |
+| `logo/` | Optional. ASCII logos for the `neofetch` command, one per `neofetch_logo_<name>.txt`, added to the engine's ones in `app/defaults/logo/` (a logo with the same name replaces the engine's). `cli.neofetch.logo` in `text_config.yaml` picks the default one by name (`flask` if unset), and `neofetch --logo <name>` shows another. |
 | `pages/` | Optional standalone pages, such as a services page: `pages/services.html` is served at `/p/services`, and the files it links relatively are served next to it. |
 
 ## Languages
@@ -102,7 +102,7 @@ title:
 
 A text missing in the visitor's language falls back to the default language, then to any translation given. The example files in `data/` are bilingual.
 
-The interface texts (buttons, placeholders, terminal messages) are built in in English; the `ui` section of `text_config.yaml` holds their translations, e.g. `ui.chat.thinking.es`. `UI_DEFAULTS` in `app/common/i18n.py` lists every key. To add a language, add its code to `PORTFOLIO_LANGUAGES` and its translations to the content files and to `ui`.
+The interface texts (buttons, placeholders, terminal messages) are built in in English; the `ui` section of the engine's `app/defaults/text_config.yaml` holds their Spanish translations, e.g. `ui.chat.thinking.es`. `UI_DEFAULTS` in `app/common/i18n.py` lists every key. To add a language, add its code to `PORTFOLIO_LANGUAGES` and its translations to the content files and, under `ui`, `cli.commands` and `cli.manuals`, to the `text_config.yaml` of the content.
 
 The chat is told the visitor's language, and answers in the language of each question.
 

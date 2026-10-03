@@ -2,13 +2,14 @@ import logging
 import os
 import re
 import textwrap
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from flask import g, jsonify
 
 from app.common.decorators import token_required
 from app.common.i18n import t
 from app.common.utils import (
+    DEFAULTS_DIR,
     _get_data_filepath,
     load_cv_data,
     load_projects_data,
@@ -78,7 +79,10 @@ def _handle_whoami(
     ]
     summary = cv_data.get("summary") or t("cli_out.no_summary")
     wrapped_summary = textwrap.wrap(
-        summary, width=terminal_width - 2, subsequent_indent="  "
+        summary,
+        width=terminal_width - 2,
+        initial_indent="  ",
+        subsequent_indent="  ",
     )
     output.extend(wrapped_summary)
     return output, None
@@ -233,6 +237,15 @@ def _handle_filter(
     return output, None
 
 
+def _project_type_label(project_type: Any) -> str:
+    """Returns the translated label of a project type, or the type capitalized."""
+    if not project_type:
+        return "N/A"
+    key = f"project_type.{project_type}"
+    label = t(key)
+    return str(project_type).capitalize() if label == key else label
+
+
 def _handle_show(
     args: List[str],
     projects_dict: Dict[str, Any],
@@ -249,7 +262,7 @@ def _handle_show(
 
     output = [
         t("cli_out.show_header", title=project.get("title", "N/A")),
-        t("cli_out.type", type=str(project.get("type", "N/A")).capitalize()),
+        t("cli_out.type", type=_project_type_label(project.get("type"))),
         t("cli_out.description"),
     ]
     desc = project.get("description") or t("cli_out.no_description")
@@ -345,26 +358,36 @@ _LOGO_NAME = re.compile(r"^[a-z0-9_]+$")
 _LOGO_FILE = re.compile(r"^neofetch_logo_([a-z0-9_]+)\.txt$")
 
 
+def _logo_dirs() -> List[str]:
+    """Logo folders, the content's first so its logos win over the engine's."""
+    return [_get_data_filepath("logo"), os.path.join(DEFAULTS_DIR, "logo")]
+
+
 def _read_logo(name: str) -> List[str] | None:
     """Reads logo/neofetch_logo_<name>.txt; None if the name is invalid or missing."""
     if not _LOGO_NAME.match(name):
         return None
-    try:
-        with open(
-            _get_data_filepath(f"logo/neofetch_logo_{name}.txt"), "r", encoding="utf-8"
-        ) as f:
-            return [line.rstrip() for line in f.readlines()]
-    except OSError:
-        return None
+    for folder in _logo_dirs():
+        try:
+            with open(
+                os.path.join(folder, f"neofetch_logo_{name}.txt"), "r", encoding="utf-8"
+            ) as f:
+                return [line.rstrip() for line in f.readlines()]
+        except OSError:
+            continue
+    return None
 
 
 def _available_logos() -> List[str]:
-    """Lists the logo names found in the logo/ folder."""
-    try:
-        files = os.listdir(_get_data_filepath("logo"))
-    except OSError:
-        return []
-    return sorted(m.group(1) for f in files if (m := _LOGO_FILE.match(f)))
+    """Lists the logo names found in the content's and the engine's logo/."""
+    names: Set[str] = set()
+    for folder in _logo_dirs():
+        try:
+            files = os.listdir(folder)
+        except OSError:
+            continue
+        names.update(m.group(1) for f in files if (m := _LOGO_FILE.match(f)))
+    return sorted(names)
 
 
 def _handle_neofetch(
