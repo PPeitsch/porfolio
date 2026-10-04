@@ -7,6 +7,7 @@ from flask import g
 
 from app.common.exceptions import DataFileError, DataFileNotFoundError
 from app.common.utils import (
+    FALLBACK_SYSTEM_PROMPT,
     _get_data_filepath,
     get_education,
     get_experience,
@@ -241,20 +242,35 @@ def test_loaders_with_bad_data_type(mock_load_yaml, app):
         assert text_config["cli"]["commands"]["items"]
 
 
-@patch("builtins.open", side_effect=FileNotFoundError)
-@patch("app.common.utils._get_data_filepath")
-def test_load_system_prompt_not_found(mock_get_path, mock_open_):
-    """Test fallback when system_prompt.txt is not found."""
-    prompt = load_system_prompt()
-    assert "helpful assistant" in prompt
+def test_load_system_prompt_from_the_content():
+    with patch("app.common.utils.read_data_file", return_value=" Custom prompt\n"):
+        assert load_system_prompt() == "Custom prompt"
 
 
-@patch("builtins.open", side_effect=PermissionError("Permission denied"))
-@patch("app.common.utils._get_data_filepath")
-def test_load_system_prompt_unreadable_file(mock_get_path, mock_open_):
-    """Test fallback when system_prompt.txt cannot be read."""
-    prompt = load_system_prompt()
-    assert "helpful assistant" in prompt
+def test_load_system_prompt_falls_back_to_the_engine():
+    """Without a content prompt, the engine's strict one is used."""
+    with patch(
+        "app.common.utils.read_data_file", side_effect=DataFileNotFoundError("none")
+    ):
+        prompt = load_system_prompt()
+    assert "nothing else" in prompt
+    assert "Do not use emojis" in prompt
+
+
+def test_load_system_prompt_unreadable_content(caplog):
+    with patch("app.common.utils.read_data_file", side_effect=DataFileError("denied")):
+        prompt = load_system_prompt()
+    assert "nothing else" in prompt
+    assert "denied" in caplog.text
+
+
+def test_load_system_prompt_last_fallback():
+    """If neither file can be read, a short prompt still keeps the chat on topic."""
+    with patch(
+        "app.common.utils.read_data_file", side_effect=DataFileNotFoundError("none")
+    ), patch("builtins.open", side_effect=PermissionError("denied")):
+        prompt = load_system_prompt()
+    assert prompt == FALLBACK_SYSTEM_PROMPT
 
 
 @patch(

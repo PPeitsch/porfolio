@@ -236,18 +236,37 @@ def get_project_details(project_id: str) -> Dict[str, Any]:
     return cast(Dict[str, Any], project)
 
 
+# Used only if the engine's system_prompt.txt cannot be read either: the chat
+# stays an assistant for the portfolio, not a general one.
+FALLBACK_SYSTEM_PROMPT = (
+    "You are the assistant of {name}'s portfolio website. Answer only questions "
+    "about {name}'s skills, experience, education and projects, using the tools."
+)
+
+
 def load_system_prompt() -> str:
-    """Loads the system prompt from data/system_prompt.txt.
+    """Loads the chat's system prompt.
+
+    The content's system_prompt.txt wins; without it, the engine's one in
+    app/defaults/ is used.
 
     Returns:
-        str: The content of the system prompt file, or a generic prompt if
-             it cannot be read.
+        str: The prompt, or a short fallback if neither file can be read.
     """
     try:
         return read_data_file("system_prompt.txt").strip()
+    except DataFileNotFoundError:
+        pass
     except DataFileError as e:
         logger.error(str(e))
-        return "You are a helpful assistant."  # Fallback prompt
+    try:
+        with open(
+            os.path.join(DEFAULTS_DIR, "system_prompt.txt"), "r", encoding="utf-8"
+        ) as f:
+            return f.read().strip()
+    except OSError as e:
+        logger.error(f"Could not read the engine's system prompt: {e}")
+        return FALLBACK_SYSTEM_PROMPT
 
 
 def get_welcome_message(view: str) -> str:
