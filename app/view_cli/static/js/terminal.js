@@ -123,6 +123,12 @@ window.initializeCliView = function(callbacks) {
                   body: JSON.stringify({ code: code }),
               });
 
+              if (response.status === 429) {
+                  const data = await response.json().catch(() => ({}));
+                  const minutes = Math.max(1, Math.ceil((Number(data.retry_after) || 60) / 60));
+                  writeOutput(uiText("cli.too_many_attempts", { minutes }), "error-message");
+                  return;
+              }
               if (!response.ok) {
                   const errorData = await response.json();
                   throw new Error(errorData.error || uiText('cli.permission_denied'));

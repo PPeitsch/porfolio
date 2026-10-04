@@ -56,6 +56,19 @@ class Config:
     # How many rounds of tool calls the chat allows before giving up on a question.
     LLM_MAX_TOOL_ROUNDS = int(os.environ.get("LLM_MAX_TOOL_ROUNDS", "5"))
 
+    # Abuse limits, per client IP (see app/common/rate_limit.py for the format).
+    # Longest message the chat accepts, in characters.
+    CHAT_MAX_MESSAGE_CHARS = int(os.environ.get("CHAT_MAX_MESSAGE_CHARS", "2000"))
+    # Chat messages a client may send.
+    CHAT_RATE_LIMITS = os.environ.get("CHAT_RATE_LIMITS", "8/minute,60/hour,200/day")
+    # Wrong access codes a client may try; past them every attempt is refused
+    # until the window frees one, right code or not.
+    AUTH_FAILURE_LIMITS = os.environ.get("AUTH_FAILURE_LIMITS", "5/15minute,20/day")
+    # Behind a reverse proxy (nginx), how many proxies set X-Forwarded-For.
+    # Without it every visitor has the proxy's address and they all share one
+    # limit; set it only behind a proxy, or the header can be forged.
+    PROXY_COUNT = int(os.environ.get("PROXY_COUNT", "0"))
+
     # Older settings, used only when LLM_MODEL is not set: the model becomes
     # "<LLM_PROVIDER>/<provider>_MODEL".
     LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic").lower()

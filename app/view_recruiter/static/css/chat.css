@@ -155,3 +155,66 @@
 .chat-bubble.bot li {
     margin-bottom: 0.25rem;
 }
+
+/* Notice over the chat when a message is refused (too long, too many).
+   Only theme variables, so it follows the palette like the rest of the window. */
+#chat-window .window-content {
+    position: relative;
+}
+.chat-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: color-mix(in srgb, var(--bg, #1e1e2e) 75%, transparent);
+    backdrop-filter: blur(2px);
+    animation: fadeInModal 0.15s ease-out;
+}
+.chat-modal[hidden] {
+    display: none;
+}
+.chat-modal-box {
+    width: 100%;
+    max-width: 22rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color, #494d64);
+    border-radius: 0.75rem;
+    background-color: var(--title-bar-bg, #181926);
+    color: var(--fg, #cad3f5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.chat-modal-title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--fg, #cad3f5);
+}
+.chat-modal-text {
+    margin: 0 0 1rem;
+    line-height: 1.5;
+    opacity: 0.85;
+}
+.chat-modal-button {
+    display: block;
+    margin-left: auto;
+    padding: 0.4rem 1.1rem;
+    border: none;
+    border-radius: 20px;
+    background-color: var(--blue, #89b4fa);
+    color: var(--bg, #1e1e2e);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.chat-modal-button:hover,
+.chat-modal-button:focus-visible {
+    background-color: var(--bright-blue, #89b4fa);
+    outline: none;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

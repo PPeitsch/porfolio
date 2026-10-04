@@ -6,7 +6,11 @@ import pytest
 from app.common.exceptions import DataFileError, LLMConfigurationError, LLMServiceError
 from app.common.i18n import UI_DEFAULTS
 from app.common.llm_services import ChatResponse, ToolCall
-from app.view_recruiter.routes import MAX_HISTORY_MESSAGES, _clean_history
+from app.view_recruiter.routes import (
+    MAX_HISTORY_MESSAGE_CHARS,
+    MAX_HISTORY_MESSAGES,
+    _clean_history,
+)
 from tests.helpers import generate_test_token
 
 
@@ -269,3 +273,40 @@ def test_recruiter_static_file_not_found(mock_send, client):
     mock_send.side_effect = FileNotFoundError
     response = client.get("/recruiter/static/js/nonexistent.js")
     assert response.status_code == 404
+
+
+def test_chat_refuses_a_message_over_the_limit(app, llm, post_chat):
+    app.config["CHAT_MAX_MESSAGE_CHARS"] = 10
+
+    response = post_chat("x" * 11)
+
+    assert response.status_code == 413
+    data = response.get_json()
+    assert data["error_code"] == "message_too_long"
+    assert data["max_chars"] == 10
+    llm.get_chat_response.assert_not_called()
+    assert post_chat("x" * 10).status_code == 200
+
+
+def test_chat_rate_limits_each_client(app, llm, post_chat):
+    app.config["CHAT_RATE_LIMITS"] = "2/minute"
+    llm.get_chat_response.return_value = text("Hi")
+
+    assert post_chat().status_code == 200
+    assert post_chat().status_code == 200
+    response = post_chat()
+
+    assert response.status_code == 429
+    data = response.get_json()
+    assert data["error_code"] == "rate_limited"
+    assert 0 < data["retry_after"] <= 60
+    assert response.headers["Retry-After"] == str(data["retry_after"])
+    assert llm.get_chat_response.call_count == 2
+
+
+def test_clean_history_cuts_long_messages():
+    cleaned = _clean_history(
+        [{"role": "user", "content": "x" * (MAX_HISTORY_MESSAGE_CHARS + 100)}]
+    )
+
+    assert len(cleaned[0]["content"]) == MAX_HISTORY_MESSAGE_CHARS

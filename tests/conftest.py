@@ -30,6 +30,13 @@ def app():
     yield app
 
 
+@pytest.fixture(autouse=True)
+def fresh_rate_limits(request):
+    """Starts every test with empty rate-limit counters."""
+    if "app" in request.fixturenames:
+        request.getfixturevalue("app").extensions.pop("rate_limiters", None)
+
+
 @pytest.fixture()
 def client(app):
     """A test client for the app."""

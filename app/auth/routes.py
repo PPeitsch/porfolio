@@ -5,6 +5,7 @@ import logging
 import jwt
 from flask import current_app, jsonify, request
 
+from app.common.rate_limit import client_ip, get_limiter
 from app.common.utils import load_text_config
 
 from . import auth_bp
@@ -26,6 +27,25 @@ def verify_access_code():
         logger.error("RECRUITER_ACCESS_CODE or SECRET_KEY is not configured.")
         return jsonify({"error": "Authentication system is not configured."}), 503
 
+    # Past the allowed wrong codes every attempt is refused, the right one
+    # too, so guessing the code takes days instead of minutes.
+    ip = client_ip()
+    failures = get_limiter("AUTH_FAILURE_LIMITS")
+    wait = failures.retry_after(ip)
+    if wait:
+        logger.warning(f"Access code attempt from {ip} refused: too many failures.")
+        response = jsonify(
+            {
+                "error": "Too many failed attempts.",
+                "error_code": "too_many_attempts",
+                "retry_after": wait,
+            }
+        )
+        response.headers["Retry-After"] = str(wait)
+        return response, 429
+
+    if not isinstance(submitted_code, str):
+        submitted_code = ""
     # Use hmac.compare_digest for safe, constant-time string comparison
     # to mitigate timing attacks.
     is_valid = hmac.compare_digest(
@@ -33,7 +53,9 @@ def verify_access_code():
     )
 
     if not is_valid:
-        logger.warning(f"Invalid access code attempt: '{submitted_code}'")
+        # The submitted code is not logged: a near miss would give the code away.
+        failures.hit(ip)
+        logger.warning(f"Invalid access code attempt from {ip}.")
         return jsonify({"error": "Invalid access code."}), 401
 
     try:

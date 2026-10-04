@@ -95,7 +95,12 @@ window.initializeRecruiterView = function (callbacks) {
     const chatInput = chatWindow.querySelector('#chat-input');
     const sendButton = chatWindow.querySelector('#chat-send-button');
 
-    if (!chatMessages || !chatForm || !chatInput || !sendButton) {
+    const modal = chatWindow.querySelector('#chat-modal');
+    const modalTitle = chatWindow.querySelector('#chat-modal-title');
+    const modalText = chatWindow.querySelector('#chat-modal-text');
+    const modalClose = chatWindow.querySelector('#chat-modal-close');
+
+    if (!chatMessages || !chatForm || !chatInput || !sendButton || !modal) {
         console.error("One or more Chat UI content elements are missing!");
         return;
     }
@@ -105,6 +110,7 @@ window.initializeRecruiterView = function (callbacks) {
     const TOKEN_KEY = 'app_access_token';
     const THEME_KEY = 'cli_theme';
     let conversationHistory = [];
+    const maxChars = parseInt(chatWindow.dataset.maxChars, 10) || 0;
 
     function applyTheme(themeName) {
         chatWindow.dataset.theme = themeName;
@@ -125,13 +131,47 @@ window.initializeRecruiterView = function (callbacks) {
 
         chatMessages.appendChild(bubble);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        return bubble;
     }
 
     function setInputState(enabled, placeholder) {
         chatInput.disabled = !enabled;
         sendButton.disabled = !enabled;
         chatInput.placeholder = placeholder;
-        if (enabled) chatInput.focus();
+        if (enabled && modal.hidden) chatInput.focus();
+    }
+
+    // Notice over the chat for a refused message; it stays until dismissed.
+    function showNotice(title, text) {
+        modalTitle.textContent = title;
+        modalText.textContent = text;
+        modal.hidden = false;
+        modalClose.focus();
+    }
+
+    function hideNotice() {
+        if (modal.hidden) return;
+        modal.hidden = true;
+        if (!chatInput.disabled) chatInput.focus();
+    }
+
+    function handleModalClick(event) {
+        if (event.target === modal) hideNotice();
+    }
+
+    function handleModalKey(event) {
+        if (event.key === 'Escape') hideNotice();
+    }
+
+    function showTooLong(count, max) {
+        showNotice(uiText('chat.too_long_title'),
+            uiText('chat.too_long_text', { max, count }));
+    }
+
+    // Minutes to wait, from the seconds the server sends in retry_after.
+    async function retryMinutes(response) {
+        const data = await response.json().catch(() => ({}));
+        return Math.max(1, Math.ceil((Number(data.retry_after) || 60) / 60));
     }
 
     async function handleCodeSubmission(code) {
@@ -148,6 +188,13 @@ window.initializeRecruiterView = function (callbacks) {
 
             chatWindow.querySelector('#typing-indicator')?.remove();
 
+            if (response.status === 429) {
+                const minutes = await retryMinutes(response);
+                setInputState(true, uiText('chat.code_placeholder'));
+                showNotice(uiText('chat.locked_title'),
+                    uiText('chat.locked_text', { minutes }));
+                return;
+            }
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || uiText('chat.wrong_code'));
@@ -173,7 +220,7 @@ window.initializeRecruiterView = function (callbacks) {
     async function handleChatMessage(message) {
         isLoading = true;
         setInputState(false, uiText('chat.thinking'));
-        addMessage(message, 'user');
+        const userBubble = addMessage(message, 'user');
         conversationHistory.push({role: 'user', content: message});
         addMessage('', 'bot', true);
 
@@ -213,6 +260,22 @@ window.initializeRecruiterView = function (callbacks) {
                 setInputState(true, uiText('chat.code_placeholder'));
                 return;
             }
+            if (response.status === 413 || response.status === 429) {
+                // Refused before reaching the model: the message goes back to
+                // the input, to be shortened or sent later.
+                userBubble.remove();
+                conversationHistory.pop();
+                chatInput.value = message;
+                if (response.status === 413) {
+                    const data = await response.json().catch(() => ({}));
+                    showTooLong(message.length, data.max_chars || maxChars);
+                } else {
+                    const minutes = await retryMinutes(response);
+                    showNotice(uiText('chat.rate_title'),
+                        uiText('chat.rate_text', { minutes }));
+                }
+                return;
+            }
             if (!response.ok) throw new Error(uiText('chat.unavailable'));
 
             const data = await response.json();
@@ -233,6 +296,11 @@ window.initializeRecruiterView = function (callbacks) {
         event.preventDefault();
         const userInput = chatInput.value.trim();
         if (!userInput || isLoading) return;
+        if (chatState === 'chatting' && maxChars && userInput.length > maxChars) {
+            // The text stays in the input, to be shortened.
+            showTooLong(userInput.length, maxChars);
+            return;
+        }
         chatInput.value = '';
 
         if (chatState === 'awaiting_code') {
@@ -266,6 +334,9 @@ window.initializeRecruiterView = function (callbacks) {
     }
 
     chatForm.addEventListener('submit', handleFormSubmit);
+    modalClose.addEventListener('click', hideNotice);
+    modal.addEventListener('click', handleModalClick);
+    modal.addEventListener('keydown', handleModalKey);
     initializeChat();
 
     console.log("Recruiter (Chat) View Specifics Initialized with History.");
@@ -273,5 +344,8 @@ window.initializeRecruiterView = function (callbacks) {
     window.cleanupRecruiterView = () => {
         console.log("Running cleanup for Recruiter Chat view...");
         chatForm.removeEventListener('submit', handleFormSubmit);
+        modalClose.removeEventListener('click', hideNotice);
+        modal.removeEventListener('click', handleModalClick);
+        modal.removeEventListener('keydown', handleModalKey);
     };
 };
