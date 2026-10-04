@@ -55,6 +55,17 @@ class Config:
     LLM_TIMEOUT = float(os.environ.get("LLM_TIMEOUT", "30"))
     # How many rounds of tool calls the chat allows before giving up on a question.
     LLM_MAX_TOOL_ROUNDS = int(os.environ.get("LLM_MAX_TOOL_ROUNDS", "5"))
+    # Most tokens of each model response; in reasoning models the reasoning
+    # counts too, so a long one can cut the answer short.
+    LLM_MAX_TOKENS = int(os.environ.get("LLM_MAX_TOKENS", "1024"))
+    # Reasoning effort for models that reason: "none" turns it off where the
+    # model allows it (faster, cheaper, no cut answers); "low", "medium" or
+    # "high" set it. Unset, the model's default is used.
+    LLM_REASONING_EFFORT = os.environ.get("LLM_REASONING_EFFORT") or None
+    # Models tried in order when LLM_MODEL fails (comma-separated, same format),
+    # each with an optional "@<reasoning effort>"; LLM_REASONING_EFFORT is only
+    # for LLM_MODEL.
+    LLM_FALLBACK_MODELS = os.environ.get("LLM_FALLBACK_MODELS", "")
 
     # Abuse limits, per client IP (see app/common/rate_limit.py for the format).
     # Longest message the chat accepts, in characters.

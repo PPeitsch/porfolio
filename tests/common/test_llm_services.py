@@ -120,6 +120,31 @@ def test_explicit_key_base_and_limits_are_passed(completion):
     assert kwargs["max_tokens"] == 256
 
 
+def test_reasoning_and_fallbacks_are_passed_only_when_set(completion):
+    completion.return_value = completion_result(content="ok")
+
+    LLMService(model="m").get_chat_response([], "sys")
+    kwargs = completion.call_args.kwargs
+    assert "reasoning_effort" not in kwargs
+    assert "fallbacks" not in kwargs
+
+    LLMService(
+        model="m", reasoning_effort="none", fallbacks=[("f1", "low"), ("f2", None)]
+    ).get_chat_response([], "sys")
+    kwargs = completion.call_args.kwargs
+    assert kwargs["reasoning_effort"] == "none"
+    assert kwargs["allowed_openai_params"] == ["reasoning_effort"]
+    # A fallback without its own effort does not inherit the main model's.
+    assert kwargs["fallbacks"] == [
+        {
+            "model": "f1",
+            "reasoning_effort": "low",
+            "allowed_openai_params": ["reasoning_effort"],
+        },
+        {"model": "f2", "reasoning_effort": None, "allowed_openai_params": []},
+    ]
+
+
 def test_provider_errors_become_llm_service_error(completion):
     completion.side_effect = RuntimeError("503 Service Unavailable")
 
@@ -175,6 +200,9 @@ def llm_config(app, monkeypatch):
             "LLM_API_BASE": None,
             "LLM_PROVIDER": "",
             "LLM_TIMEOUT": 30,
+            "LLM_MAX_TOKENS": 1024,
+            "LLM_REASONING_EFFORT": None,
+            "LLM_FALLBACK_MODELS": "",
         }
         for key, value in {**defaults, **settings}.items():
             monkeypatch.setitem(app.config, key, value)
@@ -232,3 +260,40 @@ def test_get_llm_service_warns_about_gemini_proxy(app, llm_config, monkeypatch, 
         assert get_llm_service() is not None
 
     assert "GEMINI_PROXY_URL is no longer supported" in caplog.text
+
+
+def test_get_llm_service_reads_tokens_reasoning_and_fallbacks(
+    app, llm_config, monkeypatch
+):
+    llm_config(
+        LLM_MODEL="openrouter/qwen/qwen3.7-flash",
+        LLM_MAX_TOKENS=2048,
+        LLM_REASONING_EFFORT="none",
+        LLM_FALLBACK_MODELS=(
+            " openrouter/deepseek/deepseek-v4-flash@none, ,openrouter/x/y "
+        ),
+    )
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
+
+    with app.app_context():
+        service = get_llm_service()
+
+    assert service.max_tokens == 2048
+    assert service.reasoning_effort == "none"
+    assert service.fallbacks == [
+        ("openrouter/deepseek/deepseek-v4-flash", "none"),
+        ("openrouter/x/y", None),
+    ]
+
+
+def test_get_llm_service_checks_the_fallbacks_keys(app, llm_config, monkeypatch):
+    llm_config(
+        LLM_MODEL="openrouter/qwen/qwen3.7-flash",
+        LLM_FALLBACK_MODELS="anthropic/claude-haiku-4-5",
+    )
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    with app.app_context():
+        with pytest.raises(LLMConfigurationError, match="anthropic/claude-haiku-4-5"):
+            get_llm_service()
