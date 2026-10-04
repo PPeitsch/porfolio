@@ -120,7 +120,7 @@ The chat goes through [LiteLLM](https://docs.litellm.ai/docs/providers), so `LLM
 | `gemini/gemini-2.5-flash` | `GEMINI_API_KEY` |
 | `ollama/llama3.1` | none; set `LLM_API_BASE=http://localhost:11434` |
 
-The model must support tool (function) calling. `LLM_API_KEY` overrides the provider variable, `LLM_TIMEOUT` sets the seconds to wait for each response (default 30) and `LLM_MAX_TOOL_ROUNDS` caps the rounds of tool calls per question (default 5).
+The model must support tool (function) calling. `LLM_API_KEY` overrides the provider variable, `LLM_TIMEOUT` sets the seconds to wait for each response (default 30) and `LLM_MAX_TOOL_ROUNDS` caps the rounds of tool calls per question (default 5). `LLM_MAX_TOKENS` caps each response (default 1024; in reasoning models the reasoning counts too), `LLM_REASONING_EFFORT` sets the reasoning of models that reason (`none` turns it off where the model allows it), and `LLM_FALLBACK_MODELS` lists models tried in order when `LLM_MODEL` fails, each with an optional `@<effort>` (`LLM_REASONING_EFFORT` applies only to `LLM_MODEL`, since some models cannot turn reasoning off).
 
 Older configurations with `LLM_PROVIDER` and `ANTHROPIC_MODEL`/`OPENAI_MODEL`/`GEMINI_MODEL` still work when `LLM_MODEL` is not set. `GEMINI_PROXY_URL` is no longer supported.
 

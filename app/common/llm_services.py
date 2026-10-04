@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from flask import current_app
 
@@ -80,12 +80,16 @@ class LLMService:
         api_base: Optional[str] = None,
         timeout: float = 30.0,
         max_tokens: int = 1024,
+        reasoning_effort: Optional[str] = None,
+        fallbacks: Optional[List[Tuple[str, Optional[str]]]] = None,
     ):
         self.model = model
         self.api_key = api_key
         self.api_base = api_base
         self.timeout = timeout
         self.max_tokens = max_tokens
+        self.reasoning_effort = reasoning_effort
+        self.fallbacks = fallbacks or []
 
     def get_chat_response(
         self,
@@ -120,6 +124,23 @@ class LLMService:
             kwargs["api_key"] = self.api_key
         if self.api_base:
             kwargs["api_base"] = self.api_base
+        if self.reasoning_effort:
+            # Reasoning tokens count against max_tokens; "none" turns it off
+            # in the models that allow it. LiteLLM translates it per provider.
+            kwargs["reasoning_effort"] = self.reasoning_effort
+            kwargs["allowed_openai_params"] = ["reasoning_effort"]
+        if self.fallbacks:
+            # Tried in order when the model fails (down, rate-limited, error),
+            # each with its own reasoning effort: a fallback must not inherit
+            # the main model's, since some models cannot turn reasoning off.
+            kwargs["fallbacks"] = [
+                {
+                    "model": name,
+                    "reasoning_effort": effort,
+                    "allowed_openai_params": ["reasoning_effort"] if effort else [],
+                }
+                for name, effort in self.fallbacks
+            ]
 
         # LiteLLM surfaces provider failures with many unrelated exception
         # types (its own, the provider SDK's, network errors), so all of them
@@ -159,6 +180,18 @@ class LLMService:
         )
 
 
+def parse_fallbacks(setting: Any) -> List[Tuple[str, Optional[str]]]:
+    """Parses LLM_FALLBACK_MODELS: comma-separated models, each optionally
+    with "@<reasoning effort>", e.g. "openrouter/deepseek/deepseek-v4-flash@none".
+    """
+    fallbacks: List[Tuple[str, Optional[str]]] = []
+    for entry in str(setting or "").split(","):
+        name, _, effort = entry.strip().partition("@")
+        if name.strip():
+            fallbacks.append((name.strip(), effort.strip() or None))
+    return fallbacks
+
+
 def resolve_model(config: Mapping[str, Any]) -> Optional[str]:
     """Returns the LiteLLM model string from the app configuration.
 
@@ -194,21 +227,26 @@ def get_llm_service() -> LLMService:
             "No LLM model configured. Set LLM_MODEL in the environment."
         )
 
+    fallbacks = parse_fallbacks(config.get("LLM_FALLBACK_MODELS"))
     api_key = config.get("LLM_API_KEY")
     api_base = config.get("LLM_API_BASE")
     if not api_key:
-        missing = litellm.validate_environment(model=model, api_base=api_base).get(
-            "missing_keys", []
-        )
-        if missing:
-            raise LLMConfigurationError(
-                f"LLM model '{model}' needs {', '.join(missing)} in the environment "
-                "(or LLM_API_KEY)."
+        for name in [model] + [fallback for fallback, _ in fallbacks]:
+            missing = litellm.validate_environment(model=name, api_base=api_base).get(
+                "missing_keys", []
             )
+            if missing:
+                raise LLMConfigurationError(
+                    f"LLM model '{name}' needs {', '.join(missing)} in the "
+                    "environment (or LLM_API_KEY)."
+                )
 
     return LLMService(
         model=model,
         api_key=api_key,
         api_base=api_base,
         timeout=float(config.get("LLM_TIMEOUT", 30)),
+        max_tokens=int(config.get("LLM_MAX_TOKENS") or 1024),
+        reasoning_effort=config.get("LLM_REASONING_EFFORT") or None,
+        fallbacks=fallbacks,
     )
