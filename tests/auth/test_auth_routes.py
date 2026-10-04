@@ -108,3 +108,72 @@ def test_verify_access_code_unsupported_media_type(client):
     """
     response = client.post("/auth/verify", data="not json", content_type="text/plain")
     assert response.status_code == 415
+
+
+def post_code(client, code, ip="203.0.113.7"):
+    return client.post(
+        "/auth/verify",
+        json={"code": code},
+        environ_base={"REMOTE_ADDR": ip},
+    )
+
+
+def test_verify_access_code_locks_out_after_too_many_failures(client, app):
+    app.config["AUTH_FAILURE_LIMITS"] = "3/15minute"
+    for _ in range(3):
+        assert post_code(client, "wrong").status_code == 401
+
+    # Locked out: the right code is refused too, and other clients are not.
+    response = post_code(client, "test-code")
+    assert response.status_code == 429
+    data = response.get_json()
+    assert data["error_code"] == "too_many_attempts"
+    assert 0 < data["retry_after"] <= 900
+    assert response.headers["Retry-After"] == str(data["retry_after"])
+    assert post_code(client, "test-code", ip="198.51.100.1").status_code == 200
+
+
+def test_verify_access_code_success_does_not_count(client, app):
+    app.config["AUTH_FAILURE_LIMITS"] = "1/15minute"
+
+    assert post_code(client, "test-code").status_code == 200
+    assert post_code(client, "test-code").status_code == 200
+
+
+def test_verify_access_code_does_not_log_the_code(client, caplog):
+    post_code(client, "almost-the-code")
+
+    assert "almost-the-code" not in caplog.text
+    assert "203.0.113.7" in caplog.text
+
+
+def test_verify_access_code_rejects_a_non_string_code(client):
+    assert post_code(client, 1234).status_code == 401
+
+
+def test_proxy_count_takes_the_client_ip_from_the_proxy(monkeypatch):
+    from app.shell import create_app
+
+    monkeypatch.setattr("config.Config.PROXY_COUNT", 1)
+    monkeypatch.setattr("config.Config.AUTH_FAILURE_LIMITS", "1/minute")
+    app = create_app()
+    client = app.test_client()
+
+    def post(forwarded_for):
+        return client.post(
+            "/auth/verify",
+            json={"code": "wrong"},
+            headers={"X-Forwarded-For": forwarded_for},
+        )
+
+    assert post("203.0.113.7").status_code == 401
+    assert post("203.0.113.7").status_code == 429
+    assert post("198.51.100.1").status_code == 401
+
+
+def test_create_app_rejects_a_bad_limit(monkeypatch):
+    from app.shell import create_app
+
+    monkeypatch.setattr("config.Config.CHAT_RATE_LIMITS", "lots")
+    with pytest.raises(ValueError):
+        create_app()

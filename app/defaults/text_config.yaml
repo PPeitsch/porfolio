@@ -400,6 +400,7 @@ ui:
    hint_help: { es: "'help' muestra la lista de comandos disponibles." }
    hint_theme: { es: "'theme light' o 'theme gruvbox' cambian el aspecto." }
    permission_denied: { es: "Permiso denegado. El código no es válido." }
+   too_many_attempts: { es: "[ERROR] Demasiados códigos incorrectos. Se puede volver a intentar en {minutes} min." }
    theme_current: { es: "Tema actual: '{theme}'." }
    theme_available: { es: "Temas disponibles: {themes}" }
    theme_set: { es: "Tema cambiado a '{theme}'." }
@@ -481,6 +482,13 @@ ui:
    reply_unavailable: { es: "No puedo conectarme con el servicio de IA en este momento. Conviene intentar más tarde." }
    reply_too_many_rounds: { es: "No pude armar esa respuesta. ¿Podrías reformular la pregunta?" }
    reply_empty: { es: "No tengo una respuesta para eso." }
+   modal_ok: { es: "Entendido" }
+   too_long_title: { es: "Mensaje demasiado largo" }
+   too_long_text: { es: "Los mensajes admiten hasta {max} caracteres y este tiene {count}. Hay que acortarlo para enviarlo." }
+   rate_title: { es: "Demasiados mensajes" }
+   rate_text: { es: "Se enviaron muchos mensajes en poco tiempo. Se puede volver a preguntar en {minutes} min." }
+   locked_title: { es: "Demasiados intentos" }
+   locked_text: { es: "Se ingresaron demasiados códigos incorrectos desde esta conexión. Se puede volver a intentar en {minutes} min." }
  visual:
    heading: { es: "Proyectos" }
    loading: { es: "Cargando proyectos..." }

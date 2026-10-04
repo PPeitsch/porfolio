@@ -59,6 +59,9 @@ UI_DEFAULTS: Dict[str, str] = {
     "cli.hint_help": "Type 'help' for a list of available commands.",
     "cli.hint_theme": "Type 'theme light' or 'theme gruvbox' to change the look.",
     "cli.permission_denied": "Permission denied, please try again.",
+    "cli.too_many_attempts": (
+        "[ERROR] Too many wrong codes. Try again in {minutes} min."
+    ),
     "cli.theme_current": "Current theme: '{theme}'.",
     "cli.theme_available": "Available themes: {themes}",
     "cli.theme_set": "Theme set to '{theme}'.",
@@ -155,6 +158,22 @@ UI_DEFAULTS: Dict[str, str] = {
         "Sorry, I couldn't put that answer together. Could you rephrase the question?"
     ),
     "chat.reply_empty": "Sorry, I don't have an answer for that.",
+    "chat.modal_ok": "OK",
+    "chat.too_long_title": "Message too long",
+    "chat.too_long_text": (
+        "Messages can be up to {max} characters and this one has {count}. "
+        "Please shorten it and send it again."
+    ),
+    "chat.rate_title": "Too many messages",
+    "chat.rate_text": (
+        "Many messages were sent in a short time. "
+        "You can ask again in {minutes} min."
+    ),
+    "chat.locked_title": "Too many attempts",
+    "chat.locked_text": (
+        "Too many wrong codes were entered from this connection. "
+        "You can try again in {minutes} min."
+    ),
     "chat.language_hint": (
         "The visitor is browsing the site in {language}. Answer in the language "
         "of their question; if it is unclear, answer in {language}."

@@ -2,7 +2,7 @@
 <div class="p-4 md:p-6 lg:p-8 flex items-center justify-center h-full relative">
 
     <!-- OS-style Draggable Window -->
-    <div id="chat-window" class="os-window" data-welcome="{{ welcome }}">
+    <div id="chat-window" class="os-window" data-welcome="{{ welcome }}" data-max-chars="{{ config.CHAT_MAX_MESSAGE_CHARS }}">
         <!-- Title Bar -->
         <div id="chat-title-bar" class="title-bar">
             <div class="title-text">
@@ -27,6 +27,16 @@
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </form>
+
+            <!-- Notice shown when the chat refuses a message (too long, too many) -->
+            <div id="chat-modal" class="chat-modal" role="alertdialog" aria-modal="true"
+                 aria-labelledby="chat-modal-title" aria-describedby="chat-modal-text" hidden>
+                <div class="chat-modal-box">
+                    <h2 id="chat-modal-title" class="chat-modal-title"></h2>
+                    <p id="chat-modal-text" class="chat-modal-text"></p>
+                    <button type="button" id="chat-modal-close" class="chat-modal-button">{{ t('chat.modal_ok') }}</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

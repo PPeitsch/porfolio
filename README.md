@@ -59,6 +59,8 @@ The engine and the content are separate: your CV, projects and texts live in pla
 
 Both the terminal and the chat ask for the access code before they can be used.
 
+Some limits, per client IP, keep the chat and the code from abuse: after 5 wrong codes in 15 minutes (or 20 in a day) every attempt is refused for a while, the chat takes up to 8 messages a minute, 60 an hour and 200 a day, and a message can be up to 2000 characters. Past a limit the chat shows a notice saying how long to wait. `AUTH_FAILURE_LIMITS`, `CHAT_RATE_LIMITS` and `CHAT_MAX_MESSAGE_CHARS` change them (see `.env.example`). The counts are kept in each worker's memory, so with several workers a client gets up to that many times the limit; for hard limits use the proxy (Nginx `limit_req`, fail2ban).
+
 <p align="center">
   <img src="docs/images/cli-auth-view.png" alt="Access code prompt in the terminal view" width="75%">
 </p>
@@ -150,6 +152,7 @@ export RECRUITER_ACCESS_CODE='your-production-access-code'
 export LLM_MODEL='openrouter/anthropic/claude-haiku-4.5'
 export OPENROUTER_API_KEY='your-production-openrouter-key'
 export PORTFOLIO_DATA_DIR='/srv/portfolio-content'  # optional
+export PROXY_COUNT=1  # behind one reverse proxy, so the limits see the client IP
 
 gunicorn --workers 4 --bind 0.0.0.0:8000 run:app
 ```

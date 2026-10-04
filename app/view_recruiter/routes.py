@@ -10,6 +10,7 @@ from app.common.exceptions import LLMConfigurationError, LLMServiceError, Portfo
 from app.common.i18n import get_locale, language_name, t
 from app.common.llm_services import ToolCall, get_llm_service
 from app.common.llm_tools import TOOL_MAP, get_tool_definitions
+from app.common.rate_limit import client_ip, get_limiter
 from app.common.utils import load_cv_data, load_system_prompt
 
 from . import recruiter_bp
@@ -31,6 +32,10 @@ def static_files(filename):
 
 # Only this many earlier messages are sent back to the model.
 MAX_HISTORY_MESSAGES = 20
+# Each of them cut to this many characters. The history comes from the
+# browser, so without a cap it could carry any amount of text to the model;
+# this leaves room for the longest replies (max_tokens 1024).
+MAX_HISTORY_MESSAGE_CHARS = 8000
 
 
 def _clean_history(history: Any) -> List[Dict[str, str]]:
@@ -42,7 +47,7 @@ def _clean_history(history: Any) -> List[Dict[str, str]]:
     if not isinstance(history, list):
         return []
     cleaned = [
-        {"role": item["role"], "content": item["content"]}
+        {"role": item["role"], "content": item["content"][:MAX_HISTORY_MESSAGE_CHARS]}
         for item in history
         if isinstance(item, dict)
         and item.get("role") in ("user", "assistant")
@@ -83,6 +88,35 @@ def handle_chat():
     user_message = request.json["message"]
     if not isinstance(user_message, str) or not user_message.strip():
         return jsonify({"error": "Message must be a non-empty string."}), 400
+
+    max_chars = int(current_app.config.get("CHAT_MAX_MESSAGE_CHARS", 2000))
+    if len(user_message) > max_chars:
+        return (
+            jsonify(
+                {
+                    "error": f"Message is longer than {max_chars} characters.",
+                    "error_code": "message_too_long",
+                    "max_chars": max_chars,
+                }
+            ),
+            413,
+        )
+
+    ip = client_ip()
+    limiter = get_limiter("CHAT_RATE_LIMITS")
+    wait = limiter.retry_after(ip)
+    if wait:
+        logger.warning(f"Chat message from {ip} refused: rate limit reached.")
+        response = jsonify(
+            {
+                "error": "Too many messages.",
+                "error_code": "rate_limited",
+                "retry_after": wait,
+            }
+        )
+        response.headers["Retry-After"] = str(wait)
+        return response, 429
+    limiter.hit(ip)
 
     try:
         llm_service = get_llm_service()

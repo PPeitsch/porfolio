@@ -1,6 +1,9 @@
 import logging
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+from app.common.rate_limit import parse_limits
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -31,6 +34,16 @@ def create_app(config_name="default"):
             "Could not import config.Config. Ensure config.py is in the project root."
         )
         app.config.from_mapping(SECRET_KEY="default-fallback-key-error")  # nosec B106
+
+    # Fail at startup, not on the first request, if a limit is mistyped.
+    for setting in ("CHAT_RATE_LIMITS", "AUTH_FAILURE_LIMITS"):
+        parse_limits(str(app.config.get(setting) or ""))
+
+    proxy_count = int(app.config.get("PROXY_COUNT") or 0)
+    if proxy_count:
+        app.wsgi_app = ProxyFix(  # type: ignore[method-assign]
+            app.wsgi_app, x_for=proxy_count
+        )
 
     logging.info(f"App created with config: {config_name}")
     logging.info(f"App Root Path: {app.root_path}")
