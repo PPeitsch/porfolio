@@ -1,11 +1,13 @@
 import json
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from flask import current_app
 
+from app.common import llm_usage
 from app.common.exceptions import LLMConfigurationError, LLMServiceError
 
 # LiteLLM downloads its model price map at import time unless told to use the
@@ -96,6 +98,7 @@ class LLMService:
         messages: List[Dict[str, Any]],
         system_prompt: str,
         tools: Optional[List[Dict[str, Any]]] = None,
+        visitor: Optional[str] = None,
     ) -> ChatResponse:
         """Sends the conversation to the model and returns its next turn.
 
@@ -104,6 +107,8 @@ class LLMService:
                       tool messages), without the system prompt.
             system_prompt: The system-level instructions for the model.
             tools: Optional tool definitions in OpenAI format.
+            visitor: Who asked, as ``llm_usage.visitor_id`` gives it, for the
+                     usage log.
 
         Returns:
             ChatResponse: The text of the reply, or the tool calls to run.
@@ -145,12 +150,23 @@ class LLMService:
         # LiteLLM surfaces provider failures with many unrelated exception
         # types (its own, the provider SDK's, network errors), so all of them
         # are turned into LLMServiceError here, at the boundary.
+        started = time.monotonic()
         try:
             response = litellm.completion(**kwargs)
             message = response.choices[0].message
         except Exception as e:
             logger.error(f"LLM request to '{self.model}' failed: {e}")
+            llm_usage.record(
+                self.model, None, started, error=type(e).__name__, visitor=visitor
+            )
             raise LLMServiceError(str(e)) from e
+        llm_usage.record(
+            self.model,
+            response,
+            started,
+            visitor=visitor,
+            tool_calls=len(message.tool_calls or []),
+        )
 
         content = message.content or ""
         tool_calls = [

@@ -66,6 +66,10 @@ class Config:
     # each with an optional "@<reasoning effort>"; LLM_REASONING_EFFORT is only
     # for LLM_MODEL.
     LLM_FALLBACK_MODELS = os.environ.get("LLM_FALLBACK_MODELS", "")
+    # Usage log of the chat, one JSONL per day (app/common/llm_usage.py). Unset:
+    # <instance>/llm_usage; empty: off.
+    LLM_USAGE_DIR = os.environ.get("LLM_USAGE_DIR")
+    LLM_USAGE_KEEP_DAYS = int(os.environ.get("LLM_USAGE_KEEP_DAYS", "90"))
 
     # Abuse limits, per client IP (see app/common/rate_limit.py for the format).
     # Longest message the chat accepts, in characters.
