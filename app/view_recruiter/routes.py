@@ -10,6 +10,7 @@ from app.common.exceptions import LLMConfigurationError, LLMServiceError, Portfo
 from app.common.i18n import get_locale, language_name, t
 from app.common.llm_services import ToolCall, get_llm_service
 from app.common.llm_tools import TOOL_MAP, get_tool_definitions
+from app.common.llm_usage import visitor_id
 from app.common.rate_limit import client_ip, get_limiter
 from app.common.utils import load_cv_data, load_system_prompt
 
@@ -137,10 +138,14 @@ def handle_chat():
     conversation: List[Dict[str, Any]] = list(messages)
     max_rounds = int(current_app.config.get("LLM_MAX_TOOL_ROUNDS", 5))
 
+    visitor = visitor_id(ip)
     for _ in range(max_rounds + 1):
         try:
             response = llm_service.get_chat_response(
-                messages=conversation, system_prompt=system_prompt, tools=tools
+                messages=conversation,
+                system_prompt=system_prompt,
+                tools=tools,
+                visitor=visitor,
             )
         except LLMServiceError:
             return jsonify({"reply": t("chat.reply_unavailable")}), 502

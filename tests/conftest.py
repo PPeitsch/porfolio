@@ -18,6 +18,8 @@ def app():
             "SECRET_KEY": "test-secret-key-at-least-32-bytes-long",
             # Tests must not depend on the developer's .env
             "GEMINI_PROXY_URL": None,
+            # No usage log unless a test asks for one (tests/common/test_llm_usage.py)
+            "LLM_USAGE_DIR": "",
         }
     )
 
