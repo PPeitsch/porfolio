@@ -7,45 +7,49 @@
     <!-- Favicon Links -->
     <link rel="icon" href="{{ url_for('shell.static', filename='favicon.svg') }}" type="image/svg+xml">
     <!-- External CSS & Fonts -->
+    <script>
+        // Theme before the first paint, so the page does not flash the default one.
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem('cli_theme') || 'dracula';
+        } catch (e) {
+            document.documentElement.dataset.theme = 'dracula';
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('shell.static', filename='css/themes.css') }}">
     <link rel="stylesheet" href="{{ url_for('shell.static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    <!-- Inline styles for simple card hover effect -->
-    <style>
-        .selector-card { transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; border: 1px solid #e5e7eb; }
-        .selector-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 10px -6px rgba(0, 0, 0, 0.1); }
-    </style>
 </head>
 <body class="flex items-center justify-center">
 
     <!-- ===== Main Selector View ===== -->
     <div id="selector-container" class="text-center p-6 md:p-10 max-w-5xl w-full mx-auto visible-view">
         <!-- Header Section -->
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{{ cv.get('name', 'Welcome') }}</h1>
-        <p class="text-lg text-gray-600 mb-10 md:mb-16">{{ t('selector.subtitle') }}</p>
+        <h1 class="selector-title text-3xl md:text-4xl font-bold mb-2">{{ cv.get('name', 'Welcome') }}</h1>
+        <p class="selector-subtitle text-lg mb-10 md:mb-16">{{ t('selector.subtitle') }}</p>
 
         <!-- Options Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
 
             <!-- Developer / CLI Option -->
-            <div id="select-cli" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
-                <i class="fas fa-terminal fa-3x text-emerald-500 mb-5"></i>
-                <h2 class="text-xl font-semibold text-gray-700 mb-1">{{ t('selector.cli_title') }}</h2>
-                <p class="text-gray-500 text-sm">{{ t('selector.cli_desc') }}</p>
+            <div id="select-cli" class="selector-card p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
+                <i class="fas fa-terminal fa-3x icon-cli mb-5"></i>
+                <h2 class="text-xl font-semibold mb-1">{{ t('selector.cli_title') }}</h2>
+                <p class="text-sm">{{ t('selector.cli_desc') }}</p>
             </div>
 
             <!-- Recruiter / Chat Option -->
-            <div id="select-recruiter" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
-                <i class="fas fa-comments fa-3x text-sky-500 mb-5"></i>
-                <h2 class="text-xl font-semibold text-gray-700 mb-1">{{ t('selector.recruiter_title') }}</h2>
-                <p class="text-gray-500 text-sm">{{ t('selector.recruiter_desc') }}</p>
+            <div id="select-recruiter" class="selector-card p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
+                <i class="fas fa-comments fa-3x icon-recruiter mb-5"></i>
+                <h2 class="text-xl font-semibold mb-1">{{ t('selector.recruiter_title') }}</h2>
+                <p class="text-sm">{{ t('selector.recruiter_desc') }}</p>
             </div>
 
             <!-- Visual / Simple Option -->
-            <div id="select-visual" class="selector-card bg-white p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
-                <i class="fas fa-eye fa-3x text-indigo-500 mb-5"></i>
-                <h2 class="text-xl font-semibold text-gray-700 mb-1">{{ t('selector.visual_title') }}</h2>
-                <p class="text-gray-500 text-sm">{{ t('selector.visual_desc') }}</p>
+            <div id="select-visual" class="selector-card p-6 md:p-8 rounded-xl shadow-sm cursor-pointer text-center">
+                <i class="fas fa-eye fa-3x icon-visual mb-5"></i>
+                <h2 class="text-xl font-semibold mb-1">{{ t('selector.visual_title') }}</h2>
+                <p class="text-sm">{{ t('selector.visual_desc') }}</p>
             </div>
 
         </div> <!-- End Options Grid -->
@@ -130,7 +134,6 @@
             view_recruiter: '{{ url_for("shell.get_view_partial", view_name="recruiter") }}',
             view_visual: '{{ url_for("shell.get_view_partial", view_name="visual") }}',
             shared_window_css: '{{ url_for("shell.static", filename="css/window.css") }}',
-            shared_themes_css: '{{ url_for("shell.static", filename="css/themes.css") }}',
             shared_window_js: '{{ url_for("shell.static", filename="js/window.js") }}',
             cli_css: '{{ url_for("cli.static", filename="css/terminal.css") }}',
             cli_js: '{{ url_for("cli.static", filename="js/terminal.js") }}',

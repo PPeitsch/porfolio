@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentThemeIndex = themeIndex !== -1 ? themeIndex : 0;
         const activeTheme = availableThemes[currentThemeIndex];
 
-        // Apply to any open OS-style window
+        // The page (desktop, dock, selector, visual view) and every open window
+        document.documentElement.dataset.theme = activeTheme;
         document.querySelectorAll('.os-window').forEach(win => {
             win.dataset.theme = activeTheme;
         });
@@ -110,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             viewContainer.innerHTML = await response.text();
 
-            const themesCssId = 'shared-themes-css';
             const viewSpecificCssId = 'cli-view-css';
             const viewSpecificJsId = 'cli-view-js';
             const sharedWindowCssId = 'shared-window-css';
@@ -118,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
             loadCSS(_app_urls.cli_css, viewSpecificCssId);
-            loadCSS(_app_urls.shared_themes_css, themesCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.cli_js, viewSpecificJsId, () => {
                     window.initializeCliView({onClose: showSelector});
@@ -128,11 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentCleanup = () => {
                 console.log("Cleaning up CLI view resources...");
-                cleanupResources([viewSpecificCssId, viewSpecificJsId, sharedWindowCssId, sharedWindowJsId, themesCssId]);
+                cleanupResources([viewSpecificCssId, viewSpecificJsId, sharedWindowCssId, sharedWindowJsId]);
             };
         } catch (error) {
             console.error("Error loading CLI view:", error);
-            viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error loading Developer view: ${error.message}</p></div>`;
+            viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-error">Error loading Developer view: ${error.message}</p></div>`;
             viewContainer.classList.add('items-center', 'justify-center');
         }
     }
@@ -143,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             viewContainer.innerHTML = await response.text();
 
-            const themesCssId = 'shared-themes-css';
             const viewSpecificCssId = 'recruiter-view-css';
             const viewSpecificJsId = 'recruiter-view-js';
             const sharedWindowCssId = 'shared-window-css';
@@ -151,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loadCSS(_app_urls.shared_window_css, sharedWindowCssId);
             loadCSS(_app_urls.recruiter_css, viewSpecificCssId);
-            loadCSS(_app_urls.shared_themes_css, themesCssId);
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, () => {
                     window.initializeRecruiterView({onClose: showSelector});
@@ -164,11 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.cleanupRecruiterView && typeof window.cleanupRecruiterView === 'function') {
                     window.cleanupRecruiterView();
                 }
-                cleanupResources([viewSpecificCssId, viewSpecificJsId, sharedWindowCssId, sharedWindowJsId, themesCssId]);
+                cleanupResources([viewSpecificCssId, viewSpecificJsId, sharedWindowCssId, sharedWindowJsId]);
             };
         } catch (error) {
             console.error("Error loading Recruiter view:", error);
-            viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error loading Recruiter path: ${error.message}</p></div>`;
+            viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-error">Error loading Recruiter path: ${error.message}</p></div>`;
             viewContainer.classList.add('items-center', 'justify-center');
         }
     }
@@ -196,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         } catch (error) {
             console.error("Error loading Visual view:", error);
-            viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error loading Visual overview: ${error.message}</p></div>`;
+            viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-error">Error loading Visual overview: ${error.message}</p></div>`;
             viewContainer.classList.add('items-center', 'justify-center');
         }
     }
@@ -248,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             default:
                 console.error(`Unknown view name requested: ${viewName}`);
-                viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-red-500">Error: Unknown view requested.</p></div>`;
+                viewContainer.innerHTML = `<div class="p-8 text-center self-center"><p class="text-error">Error: Unknown view requested.</p></div>`;
                 viewContainer.classList.add('items-center', 'justify-center', 'flex');
         }
 
