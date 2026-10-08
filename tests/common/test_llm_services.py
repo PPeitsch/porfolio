@@ -9,6 +9,7 @@ from app.common.llm_services import (
     LLMService,
     _parse_arguments,
     get_llm_service,
+    parse_max_price,
     resolve_model,
 )
 
@@ -145,6 +146,50 @@ def test_reasoning_and_fallbacks_are_passed_only_when_set(completion):
     ]
 
 
+def test_price_cap_goes_only_to_openrouter_models(completion):
+    completion.return_value = completion_result(content="ok")
+
+    LLMService(model="openrouter/a/b").get_chat_response([], "sys")
+    assert "extra_body" not in completion.call_args.kwargs
+
+    LLMService(
+        model="openrouter/a/b",
+        fallbacks=[("openrouter/c/d", None), ("anthropic/claude-haiku-4-5", None)],
+        max_price=(0.5, 2.0),
+    ).get_chat_response([], "sys")
+    kwargs = completion.call_args.kwargs
+    cap = {"provider": {"max_price": {"prompt": 0.5, "completion": 2.0}}}
+    assert kwargs["extra_body"] == cap
+    # Each fallback carries its own body, so the non-OpenRouter one does not
+    # inherit the main model's cap.
+    assert [f["extra_body"] for f in kwargs["fallbacks"]] == [cap, {}]
+
+    LLMService(
+        model="anthropic/claude-haiku-4-5", max_price=(0.5, 2.0)
+    ).get_chat_response([], "sys")
+    assert completion.call_args.kwargs["extra_body"] == {}
+
+
+@pytest.mark.parametrize(
+    "setting, expected",
+    [
+        (None, None),
+        ("", None),
+        ("  ", None),
+        ("0.5/2", (0.5, 2.0)),
+        (" 0 / 1.25 ", (0.0, 1.25)),
+    ],
+)
+def test_parse_max_price(setting, expected):
+    assert parse_max_price(setting) == expected
+
+
+@pytest.mark.parametrize("setting", ["0.5", "a/b", "0.5/", "-1/2", "1/2/3"])
+def test_parse_max_price_rejects_bad_settings(setting):
+    with pytest.raises(LLMConfigurationError, match="LLM_MAX_PRICE"):
+        parse_max_price(setting)
+
+
 def test_provider_errors_become_llm_service_error(completion):
     completion.side_effect = RuntimeError("503 Service Unavailable")
 
@@ -203,6 +248,7 @@ def llm_config(app, monkeypatch):
             "LLM_MAX_TOKENS": 1024,
             "LLM_REASONING_EFFORT": None,
             "LLM_FALLBACK_MODELS": "",
+            "LLM_MAX_PRICE": "",
         }
         for key, value in {**defaults, **settings}.items():
             monkeypatch.setitem(app.config, key, value)
@@ -272,6 +318,7 @@ def test_get_llm_service_reads_tokens_reasoning_and_fallbacks(
         LLM_FALLBACK_MODELS=(
             " openrouter/deepseek/deepseek-v4-flash@none, ,openrouter/x/y "
         ),
+        LLM_MAX_PRICE="0.5/2",
     )
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
 
@@ -284,6 +331,7 @@ def test_get_llm_service_reads_tokens_reasoning_and_fallbacks(
         ("openrouter/deepseek/deepseek-v4-flash", "none"),
         ("openrouter/x/y", None),
     ]
+    assert service.max_price == (0.5, 2.0)
 
 
 def test_get_llm_service_checks_the_fallbacks_keys(app, llm_config, monkeypatch):
