@@ -140,6 +140,11 @@ UI_DEFAULTS: Dict[str, str] = {
     "chat.wrong_code": "Sorry, that's not the correct code. Please try again.",
     "chat.code_placeholder": "Enter access code...",
     "chat.thinking": "Thinking...",
+    # Comments next to the spinner, separated by "|"; one is picked at random.
+    "chat.working": (
+        "Thinking...|Reading the resume...|Looking through the projects..."
+        "|Going over the experience...|Putting the answer together..."
+    ),
     "chat.session_expired": (
         "Your session has expired. Please enter the access code again."
     ),

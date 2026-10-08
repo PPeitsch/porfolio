@@ -116,22 +116,61 @@ window.initializeRecruiterView = function (callbacks) {
         chatWindow.dataset.theme = themeName;
     }
 
-    function addMessage(text, sender, isTyping = false) {
+    function addMessage(text, sender) {
         const bubble = document.createElement('div');
         bubble.classList.add('chat-bubble', sender);
-
-        if (isTyping) {
-            bubble.classList.add('typing');
-            bubble.setAttribute('id', 'typing-indicator');
-            bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-        } else {
-            bubble.innerHTML = renderChatMarkdown(text);
-        }
-
-
+        bubble.innerHTML = renderChatMarkdown(text);
         chatMessages.appendChild(bubble);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         return bubble;
+    }
+
+    // Spinner frames: braille, which no system draws as emoji.
+    const SPINNER_FRAMES = '\u280b\u2819\u2839\u2838\u283c\u2834\u2826\u2827\u2807\u280f';
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let spinnerTimers = [];
+
+    // Bot bubble with a spinner and a comment while the reply is on its way.
+    // textKey holds the comments separated by "|": one is picked at random and
+    // another one replaces it every few seconds.
+    function showWorking(textKey) {
+        hideWorking();
+        const comments = uiText(textKey).split('|').map(c => c.trim()).filter(Boolean);
+        const bubble = document.createElement('div');
+        bubble.classList.add('chat-bubble', 'bot', 'working');
+        bubble.id = 'working-indicator';
+        bubble.setAttribute('role', 'status');
+        const glyph = document.createElement('span');
+        glyph.className = 'spinner-glyph';
+        glyph.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.className = 'spinner-text';
+        bubble.append(glyph, label);
+
+        let frame = 0;
+        let shown = -1;
+        const nextFrame = () => {
+            glyph.textContent = SPINNER_FRAMES[frame++ % SPINNER_FRAMES.length];
+        };
+        const nextComment = () => {
+            let pick = Math.floor(Math.random() * comments.length);
+            if (comments.length > 1 && pick === shown) pick = (pick + 1) % comments.length;
+            shown = pick;
+            label.textContent = comments[pick] || '';
+        };
+        nextFrame();
+        nextComment();
+        if (!reducedMotion) spinnerTimers.push(setInterval(nextFrame, 80));
+        if (comments.length > 1) spinnerTimers.push(setInterval(nextComment, 2500));
+
+        chatMessages.appendChild(bubble);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function hideWorking() {
+        spinnerTimers.forEach(clearInterval);
+        spinnerTimers = [];
+        chatWindow.querySelector('#working-indicator')?.remove();
     }
 
     function setInputState(enabled, placeholder) {
@@ -177,7 +216,7 @@ window.initializeRecruiterView = function (callbacks) {
     async function handleCodeSubmission(code) {
         isLoading = true;
         setInputState(false, uiText('chat.verifying'));
-        addMessage('', 'bot', true);
+        showWorking('chat.verifying');
 
         try {
             const response = await fetch('/auth/verify', {
@@ -186,7 +225,7 @@ window.initializeRecruiterView = function (callbacks) {
                 body: JSON.stringify({code: code}),
             });
 
-            chatWindow.querySelector('#typing-indicator')?.remove();
+            hideWorking();
 
             if (response.status === 429) {
                 const minutes = await retryMinutes(response);
@@ -222,11 +261,11 @@ window.initializeRecruiterView = function (callbacks) {
         setInputState(false, uiText('chat.thinking'));
         const userBubble = addMessage(message, 'user');
         conversationHistory.push({role: 'user', content: message});
-        addMessage('', 'bot', true);
+        showWorking('chat.working');
 
         const token = sessionStorage.getItem(TOKEN_KEY);
         if (!token) {
-            chatWindow.querySelector('#typing-indicator')?.remove();
+            hideWorking();
             addMessage(uiText('chat.session_expired'), 'bot');
             chatState = 'awaiting_code';
             chatInput.classList.add('password-mask');
@@ -249,7 +288,7 @@ window.initializeRecruiterView = function (callbacks) {
                 }),
             });
 
-            chatWindow.querySelector('#typing-indicator')?.remove();
+            hideWorking();
 
             if (response.status === 401) {
                 sessionStorage.removeItem(TOKEN_KEY);
@@ -283,7 +322,7 @@ window.initializeRecruiterView = function (callbacks) {
             conversationHistory = data.history || [];
 
         } catch (error) {
-            chatWindow.querySelector('#typing-indicator')?.remove();
+            hideWorking();
             addMessage(uiText('chat.error', { error: error.message }), 'bot');
             conversationHistory.pop();
         } finally {
