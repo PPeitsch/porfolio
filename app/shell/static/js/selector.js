@@ -296,6 +296,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (recruiterOption) recruiterOption.addEventListener('click', () => showView('Recruiter'));
     if (visualOption) visualOption.addEventListener('click', () => showView('Visual'));
     if (themeSwitcher) themeSwitcher.addEventListener('click', cycleTheme);
+    const homeThemeSwitcher = document.getElementById('home-theme-switcher');
+    if (homeThemeSwitcher) homeThemeSwitcher.addEventListener('click', cycleTheme);
 
 
     // --- Dock Event Listeners ---

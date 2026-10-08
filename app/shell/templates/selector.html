@@ -55,18 +55,23 @@
         </div> <!-- End Options Grid -->
     </div> <!-- End Main Selector View -->
 
-    {% if languages|length > 1 %}
-    <!-- ===== Language Switcher (only with the selector visible) ===== -->
-    <nav id="language-switcher" class="language-switcher" aria-label="{{ t('dock.language') }}">
-        {% for code, name in languages %}
-        {% if code == lang %}
-        <span class="language-current" aria-current="true" title="{{ name }}">{{ code|upper }}</span>
-        {% else %}
-        <a class="language-link" href="{{ url_for('shell.set_language', code=code) }}" lang="{{ code }}" title="{{ name }}">{{ code|upper }}</a>
+    <!-- ===== Theme and language (only with the selector visible; the dock has them in the views) ===== -->
+    <div id="home-controls" class="home-controls">
+        <button id="home-theme-switcher" class="home-theme-button" aria-label="{{ t('dock.theme') }}" title="{{ t('dock.theme') }}">
+            <i class="fas fa-palette"></i>
+        </button>
+        {% if languages|length > 1 %}
+        <nav id="language-switcher" class="language-switcher" aria-label="{{ t('dock.language') }}">
+            {% for code, name in languages %}
+            {% if code == lang %}
+            <span class="language-current" aria-current="true" title="{{ name }}">{{ code|upper }}</span>
+            {% else %}
+            <a class="language-link" href="{{ url_for('shell.set_language', code=code) }}" lang="{{ code }}" title="{{ name }}">{{ code|upper }}</a>
+            {% endif %}
+            {% endfor %}
+        </nav>
         {% endif %}
-        {% endfor %}
-    </nav>
-    {% endif %}
+    </div>
 
 
 
