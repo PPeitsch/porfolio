@@ -66,6 +66,10 @@ class Config:
     # each with an optional "@<reasoning effort>"; LLM_REASONING_EFFORT is only
     # for LLM_MODEL.
     LLM_FALLBACK_MODELS = os.environ.get("LLM_FALLBACK_MODELS", "")
+    # Price cap per request for OpenRouter models, "<input>/<output>" in USD per
+    # million tokens (e.g. "0.5/2"): a model that gets dearer fails and the next
+    # fallback answers. Unset: no cap. Other providers ignore it.
+    LLM_MAX_PRICE = os.environ.get("LLM_MAX_PRICE", "")
     # Usage log of the chat, one JSONL per day (app/common/llm_usage.py). Unset:
     # <instance>/llm_usage; empty: off.
     LLM_USAGE_DIR = os.environ.get("LLM_USAGE_DIR")

@@ -84,6 +84,7 @@ class LLMService:
         max_tokens: int = 1024,
         reasoning_effort: Optional[str] = None,
         fallbacks: Optional[List[Tuple[str, Optional[str]]]] = None,
+        max_price: Optional[Tuple[float, float]] = None,
     ):
         self.model = model
         self.api_key = api_key
@@ -92,6 +93,7 @@ class LLMService:
         self.max_tokens = max_tokens
         self.reasoning_effort = reasoning_effort
         self.fallbacks = fallbacks or []
+        self.max_price = max_price
 
     def get_chat_response(
         self,
@@ -134,6 +136,8 @@ class LLMService:
             # in the models that allow it. LiteLLM translates it per provider.
             kwargs["reasoning_effort"] = self.reasoning_effort
             kwargs["allowed_openai_params"] = ["reasoning_effort"]
+        if self.max_price:
+            kwargs["extra_body"] = self._price_cap(self.model)
         if self.fallbacks:
             # Tried in order when the model fails (down, rate-limited, error),
             # each with its own reasoning effort: a fallback must not inherit
@@ -146,6 +150,12 @@ class LLMService:
                 }
                 for name, effort in self.fallbacks
             ]
+            if self.max_price:
+                # Each fallback gets its own body: otherwise it inherits the
+                # main model's, and a provider other than OpenRouter would
+                # receive OpenRouter's "provider" field.
+                for fallback in kwargs["fallbacks"]:
+                    fallback["extra_body"] = self._price_cap(fallback["model"])
 
         # LiteLLM surfaces provider failures with many unrelated exception
         # types (its own, the provider SDK's, network errors), so all of them
@@ -194,6 +204,38 @@ class LLMService:
         return ChatResponse(
             content=content, tool_calls=tool_calls, message=assistant_message
         )
+
+    def _price_cap(self, model: str) -> Dict[str, Any]:
+        """OpenRouter's per-request price cap for the model, in USD per million
+        tokens: no provider above it serves the request, which then fails and
+        moves on to the next fallback. Other providers have no such field."""
+        if not self.max_price or not model.startswith("openrouter/"):
+            return {}
+        prompt, completion = self.max_price
+        return {"provider": {"max_price": {"prompt": prompt, "completion": completion}}}
+
+
+def parse_max_price(setting: Any) -> Optional[Tuple[float, float]]:
+    """Parses LLM_MAX_PRICE: "<input>/<output>" in USD per million tokens,
+    e.g. "0.5/2". Empty means no cap.
+
+    Raises:
+        LLMConfigurationError: If the setting is not two non-negative numbers.
+    """
+    text = str(setting or "").strip()
+    if not text:
+        return None
+    prompt, slash, completion = text.partition("/")
+    try:
+        prices = (float(prompt), float(completion))
+    except ValueError:
+        prices = None
+    if not slash or prices is None or min(prices) < 0:
+        raise LLMConfigurationError(
+            f"LLM_MAX_PRICE must be '<input>/<output>' in USD per million "
+            f"tokens, e.g. '0.5/2'; got '{text}'."
+        )
+    return prices
 
 
 def parse_fallbacks(setting: Any) -> List[Tuple[str, Optional[str]]]:
@@ -244,6 +286,7 @@ def get_llm_service() -> LLMService:
         )
 
     fallbacks = parse_fallbacks(config.get("LLM_FALLBACK_MODELS"))
+    max_price = parse_max_price(config.get("LLM_MAX_PRICE"))
     api_key = config.get("LLM_API_KEY")
     api_base = config.get("LLM_API_BASE")
     if not api_key:
@@ -265,4 +308,5 @@ def get_llm_service() -> LLMService:
         max_tokens=int(config.get("LLM_MAX_TOKENS") or 1024),
         reasoning_effort=config.get("LLM_REASONING_EFFORT") or None,
         fallbacks=fallbacks,
+        max_price=max_price,
     )
