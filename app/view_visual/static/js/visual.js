@@ -171,7 +171,7 @@ function initializeVisualView() {
     async function fetchAndRenderProjects() {
         console.log("Fetching project data for visual view...");
         // Display loading state
-        gridContainer.innerHTML = '<div class="text-center col-span-full p-10 text-gray-500 animate-pulse"></div>';
+        gridContainer.innerHTML = '<div class="text-center col-span-full p-10 text-muted animate-pulse"></div>';
         gridContainer.firstChild.textContent = uiText('visual.loading');
 
         try {
@@ -183,7 +183,7 @@ function initializeVisualView() {
             gridContainer.innerHTML = ''; // Clear loading message
 
             if (!projectsData || projectsData.length === 0) {
-                 gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-gray-500"></p>';
+                 gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-muted"></p>';
                  gridContainer.firstChild.textContent = uiText('visual.empty');
                  return;
             }
@@ -203,7 +203,7 @@ function initializeVisualView() {
 
         } catch (error) {
             console.error("Error fetching or rendering projects:", error);
-            gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-red-500"></p>';
+            gridContainer.innerHTML = '<p class="text-center col-span-full p-10 text-error"></p>';
             gridContainer.firstChild.textContent = uiText('visual.load_error', { error: error.message });
         }
     }

@@ -1,7 +1,10 @@
-/* --- Terminal Color Themes --- */
-/* Variables are scoped to the window element for easy switching via data-theme attribute */
+/* --- Color Themes --- */
+/* The whole page follows the theme: <html data-theme> sets it for the desktop,
+   the dock and the selector and visual views (style.css builds on these), and
+   each window repeats it in its own data-theme. */
 
 /* Default Theme (Dracula) */
+:root,
 .os-window {
     --bg: #282a36;
     --fg: #f8f8f2;
@@ -32,6 +35,7 @@
 }
 
 /* Catppuccin Theme */
+:root[data-theme="catppuccin"],
 .os-window[data-theme="catppuccin"] {
     --bg: #1e1e2e;
     --fg: #cad3f5;
@@ -62,6 +66,7 @@
 }
 
 /* Light Theme */
+:root[data-theme="light"],
 .os-window[data-theme="light"] {
     --bg: #ffffff;
     --fg: #212529;
@@ -92,9 +97,10 @@
 }
 
 /* Solarized Dark Theme */
+:root[data-theme="solarized"],
 .os-window[data-theme="solarized"] {
     --bg: #002b36;
-    --fg: #839496;
+    --fg: #93a1a1; /* base1: base0 (#839496) read poorly on the cards */
     --selection-bg: #073642;
     --cursor-color: #839496;
     --black: #073642;
@@ -122,6 +128,7 @@
 }
 
 /* Gruvbox Dark Theme */
+:root[data-theme="gruvbox"],
 .os-window[data-theme="gruvbox"] {
     --bg: #282828;
     --fg: #ebdbb2;

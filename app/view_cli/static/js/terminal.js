@@ -170,7 +170,8 @@ window.initializeCliView = function(callbacks) {
               }
 
               if (availableThemes.includes(themeName)) {
-                  // Every open window, as the dock button does.
+                  // The whole page and every open window, as the dock button does.
+                  document.documentElement.dataset.theme = themeName;
                   document.querySelectorAll('.os-window').forEach(win => {
                       win.dataset.theme = themeName;
                   });
