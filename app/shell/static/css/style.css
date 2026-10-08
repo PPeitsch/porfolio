@@ -172,18 +172,23 @@ body {
 }
 
 .home-theme-button {
-    padding: 4px 8px;
-    border: none;
-    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--muted);
+    border-radius: 50%;
     background: transparent;
-    color: var(--muted);
+    color: var(--fg);
     font-size: 14px;
     cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .home-theme-button:hover {
     background-color: color-mix(in srgb, var(--fg) 10%, transparent);
-    color: var(--fg);
+    border-color: var(--fg);
 }
 
 .language-switcher {
