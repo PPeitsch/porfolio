@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function cycleTheme() {
+        // From the saved theme: the CLI's "theme" command changes it too.
+        const savedIndex = availableThemes.indexOf(localStorage.getItem(THEME_KEY));
+        if (savedIndex !== -1) currentThemeIndex = savedIndex;
         currentThemeIndex = (currentThemeIndex + 1) % availableThemes.length;
         const nextTheme = availableThemes[currentThemeIndex];
         applyTheme(nextTheme);
