@@ -170,7 +170,10 @@ window.initializeCliView = function(callbacks) {
               }
 
               if (availableThemes.includes(themeName)) {
-                  cliWindow.dataset.theme = themeName;
+                  // Every open window, as the dock button does.
+                  document.querySelectorAll('.os-window').forEach(win => {
+                      win.dataset.theme = themeName;
+                  });
                   localStorage.setItem(THEME_KEY, themeName);
                   writeOutput(uiText('cli.theme_set', { theme: themeName }), 'info-message');
               } else {

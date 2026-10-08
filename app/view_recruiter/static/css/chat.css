@@ -49,8 +49,9 @@
 }
 
 .chat-bubble.bot {
-    /* Use CSS variables for theming */
-    background-color: var(--bright-black, #363a4f);
+    /* --selection-bg keeps the text readable in every theme (contrast 4.1 or
+       more); --bright-black dropped to 1.7 in solarized and 2.7 in gruvbox. */
+    background-color: var(--selection-bg, #363a4f);
     color: var(--fg, #cad3f5);
     border-bottom-left-radius: 0.25rem;
     align-self: flex-start;
@@ -76,7 +77,7 @@
 }
 .spinner-glyph {
     /* Same color as the bot text: an accent color is lost against the
-       --bright-black bubble in several themes. */
+       bubble in several themes. */
     color: inherit;
     font-weight: bold;
     font-family: monospace;
@@ -103,8 +104,8 @@
     padding: 0.6rem 1rem;
     border: 1px solid var(--border-color, #494d64);
     border-radius: 20px;
-    /* Use CSS variables for theming */
-    background-color: var(--bright-black, #363a4f);
+    /* Same surface as the bot bubble, for the same reason. */
+    background-color: var(--selection-bg, #363a4f);
     color: var(--fg, #cad3f5);
     outline: none;
     transition: border-color 0.2s;
