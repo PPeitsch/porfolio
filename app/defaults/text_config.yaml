@@ -473,6 +473,9 @@ ui:
    wrong_code: { es: "Ese código no es correcto. Se puede intentar de nuevo." }
    code_placeholder: { es: "Código de acceso..." }
    thinking: { es: "Pensando..." }
+   # Comments next to the spinner while a reply is on its way, separated by "|":
+   # one is picked at random and changes every few seconds.
+   working: { es: "Pensando...|Revisando el CV...|Buscando en los proyectos...|Repasando la experiencia...|Armando la respuesta..." }
    session_expired: { es: "La sesión expiró. Hay que ingresar el código de acceso de nuevo." }
    unavailable: { es: "El asistente no está disponible en este momento." }
    error: { es: "Ocurrió un error: {error}" }
