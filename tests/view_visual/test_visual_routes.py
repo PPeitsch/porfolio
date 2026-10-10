@@ -54,6 +54,7 @@ def test_get_projects_for_visual_success(mock_load_projects, client):
         "pypi_url",
         "docs_url",
         "type",
+        "type_label",
         "technologies",
     ]
     for key in expected_keys:
@@ -62,14 +63,16 @@ def test_get_projects_for_visual_success(mock_load_projects, client):
     assert project1["id"] == "proj1"
     assert project1["title"] == "Project One"
     assert project1["image_url"] == "/shell-static/images/projects/proj1.png"
-    assert project1["short_desc"].endswith("...")
-    assert len(project1["short_desc"]) <= 103
-    assert len(project1["technologies"]) == 4
+    # Whole description and every technology: the card does the cutting.
+    assert project1["short_desc"] == MOCK_PROJECTS[0]["description"]
+    assert len(project1["technologies"]) == 5
+    assert project1["type_label"] == "Web app"
 
     # Test second project with missing/alternative data
     project2 = response_data[1]
-    assert project2["image_url"] == "/shell-static/images/placeholder.svg"
+    assert project2["image_url"] is None
     assert project2["short_desc"] == "Short desc."
+    assert project2["type_label"] == "Library"
 
 
 @patch("app.view_visual.routes.load_projects_data", return_value=(None, None))
@@ -98,3 +101,14 @@ def test_visual_static_file_not_found(mock_send, client):
 
     # The abort(404) will be triggered by our exception handler
     assert response.status_code == 404
+
+
+@patch(
+    "app.view_visual.routes.load_projects_data",
+    return_value=([{"id": "x", "title": "X", "type": "spaceship"}], {}),
+)
+def test_unknown_project_type_has_no_label(mock_load_projects, client):
+    """A type without a text gets an empty label instead of the raw key."""
+    project = client.get("/visual/api/projects").get_json()[0]
+    assert project["type"] == "spaceship"
+    assert project["type_label"] == ""
