@@ -34,3 +34,24 @@ def test_versioned_responses_are_cached_for_long(client):
     # Without the version, browsers keep revalidating as before.
     plain = client.get("/shell-static/css/style.css").headers.get("Cache-Control", "")
     assert "immutable" not in plain
+
+
+def test_only_static_endpoints_are_versioned(app):
+    """Other endpoints, an explicit version and unknown files are left alone."""
+    with app.test_request_context():
+        from flask import url_for
+
+        assert "v=" not in url_for("shell.selector")
+        assert "v=" not in url_for("shell.static", filename="css/missing.css")
+        assert url_for("shell.static", filename="css/style.css", v="x").endswith("?v=x")
+        assert "v=" not in url_for("health_check")
+        # Has a filename but is not a static folder
+        assert "v=" not in url_for("shell.content_image", filename="a.png")
+
+
+def test_unknown_blueprint_has_no_static_folder(app):
+    from app.common.assets import _static_folder
+
+    assert _static_folder(app, "nope.static") is None
+    assert _static_folder(app, "shell.selector") is None
+    assert _static_folder(app, "static") == app.static_folder
