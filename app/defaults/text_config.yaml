@@ -389,6 +389,7 @@ ui:
    recruiter: { es: "Abrir el asistente" }
    visual: { es: "Abrir la vista visual" }
    theme: { es: "Cambiar el tema" }
+   theme_current: { es: "Tema: {name}" }
    info: { es: "Ver información" }
    language: { es: "Cambiar el idioma" }
  view:

@@ -49,6 +49,7 @@ UI_DEFAULTS: Dict[str, str] = {
     "dock.recruiter": "Open Recruiter View",
     "dock.visual": "Open Visual View",
     "dock.theme": "Switch Theme",
+    "dock.theme_current": "Theme: {name}",
     "dock.info": "Show Info",
     "dock.language": "Change language",
     "view.render_error": "Error rendering view template.",
