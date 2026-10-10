@@ -73,3 +73,18 @@ def test_create_app_no_config_file(monkeypatch):
     # Clean up by restoring the module if necessary for other tests,
     # though pytest usually isolates this.
     reload(shell)
+
+
+@pytest.mark.parametrize(
+    "configured, expected",
+    [("catppuccin", "catppuccin"), ("gruvbox", "gruvbox"), ("neon", "catppuccin")],
+)
+def test_selector_default_theme(app, client, configured, expected):
+    """The page starts in DEFAULT_THEME, or catppuccin if it is unknown."""
+    saved = app.config.get("DEFAULT_THEME")
+    app.config["DEFAULT_THEME"] = configured
+    try:
+        html = client.get("/").get_data(as_text=True)
+    finally:
+        app.config["DEFAULT_THEME"] = saved
+    assert f'window.DEFAULT_THEME = "{expected}";' in html

@@ -389,6 +389,7 @@ ui:
    recruiter: { es: "Abrir el asistente" }
    visual: { es: "Abrir la vista visual" }
    theme: { es: "Cambiar el tema" }
+   theme_current: { es: "Tema: {name}" }
    info: { es: "Ver información" }
    language: { es: "Cambiar el idioma" }
  view:
@@ -497,11 +498,22 @@ ui:
    loading: { es: "Cargando proyectos..." }
    empty: { es: "No hay proyectos para mostrar." }
    load_error: { es: "No se pudieron cargar los proyectos: {error}" }
-   overlay_live: { es: "Ver el proyecto en vivo" }
-   overlay_source: { es: "Ver el código" }
-   overlay_go: { es: "Ir" }
-   link_live: { es: "En vivo" }
-   link_code: { es: "Código" }
+   link_site: { es: "Ir al sitio" }
+   link_site_label: { es: "Ir al sitio de {title}" }
+   link_code: { es: "Ver el código" }
+   link_code_label: { es: "Ver el código de {title} en GitHub" }
+   link_pypi: { es: "Ver en PyPI" }
+   link_pypi_label: { es: "Ver {title} en PyPI" }
+   link_docs: { es: "Ver la documentación" }
+   link_docs_label: { es: "Ver la documentación de {title}" }
+   no_screenshot: { es: "captura en preparación" }
+   type_webapp: { es: "Aplicación web" }
+   type_library: { es: "Biblioteca" }
+   type_data-analysis: { es: "Análisis de datos" }
+   type_api: { es: "API" }
+   type_tool: { es: "Herramienta" }
+   type_mobile: { es: "Aplicación móvil" }
+   type_repo: { es: "Repositorio" }
    untitled: { es: "Proyecto sin título" }
    no_description: { es: "Sin descripción." }
    screenshot_alt: { es: "Captura de {title}" }

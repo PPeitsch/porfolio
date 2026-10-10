@@ -17,11 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Theme Management ---
     const THEME_KEY = 'cli_theme';
     const availableThemes = ['dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
-    let currentThemeIndex = 0;
+    const DEFAULT_THEME = window.DEFAULT_THEME || 'catppuccin';
+    let currentThemeIndex = availableThemes.indexOf(DEFAULT_THEME);
 
     function applyTheme(themeName) {
         const themeIndex = availableThemes.indexOf(themeName);
-        currentThemeIndex = themeIndex !== -1 ? themeIndex : 0;
+        currentThemeIndex = themeIndex !== -1 ? themeIndex : availableThemes.indexOf(DEFAULT_THEME);
         const activeTheme = availableThemes[currentThemeIndex];
 
         // The page (desktop, dock, selector, visual view) and every open window
@@ -31,16 +32,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         localStorage.setItem(THEME_KEY, activeTheme);
+        showThemeName(activeTheme);
         console.log(`Global theme applied: ${activeTheme}`);
     }
 
-    function cycleTheme() {
+    // The palette buttons show the current theme's name in a tooltip.
+    const themeButtons = () => document.querySelectorAll('#dock-theme-switcher, #home-theme-switcher');
+    const themeLabel = (name) => uiText('dock.theme_current', { name: name.charAt(0).toUpperCase() + name.slice(1) });
+
+    function showThemeName(themeName) {
+        themeButtons().forEach(button => {
+            button.dataset.tip = themeLabel(themeName);
+            button.setAttribute('aria-label', `${uiText('dock.theme')} (${button.dataset.tip})`);
+        });
+    }
+
+    // After a click the tooltip stays a moment, so it is seen on touch screens too.
+    let themeTipTimer = null;
+    function flashThemeName(button) {
+        button.classList.add('tip-visible');
+        clearTimeout(themeTipTimer);
+        themeTipTimer = setTimeout(() => button.classList.remove('tip-visible'), 1500);
+    }
+
+    function cycleTheme(event) {
         // From the saved theme: the CLI's "theme" command changes it too.
         const savedIndex = availableThemes.indexOf(localStorage.getItem(THEME_KEY));
         if (savedIndex !== -1) currentThemeIndex = savedIndex;
         currentThemeIndex = (currentThemeIndex + 1) % availableThemes.length;
         const nextTheme = availableThemes[currentThemeIndex];
         applyTheme(nextTheme);
+        if (event && event.currentTarget) flashThemeName(event.currentTarget);
     }
 
 
@@ -121,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.cli_js, viewSpecificJsId, () => {
                     window.initializeCliView({onClose: showSelector});
-                    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula'); // Re-apply theme on new window
+                    applyTheme(localStorage.getItem(THEME_KEY) || DEFAULT_THEME); // Re-apply theme on new window
                 });
             });
 
@@ -152,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, () => {
                     window.initializeRecruiterView({onClose: showSelector});
-                    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula'); // Re-apply theme on new window
+                    applyTheme(localStorage.getItem(THEME_KEY) || DEFAULT_THEME); // Re-apply theme on new window
                 });
             });
 
@@ -298,6 +320,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (themeSwitcher) themeSwitcher.addEventListener('click', cycleTheme);
     const homeThemeSwitcher = document.getElementById('home-theme-switcher');
     if (homeThemeSwitcher) homeThemeSwitcher.addEventListener('click', cycleTheme);
+    // The CLI's "theme" command changes the theme without these buttons.
+    themeButtons().forEach(button => button.addEventListener('mouseenter', () => {
+        showThemeName(document.documentElement.dataset.theme || DEFAULT_THEME);
+    }));
 
 
     // --- Dock Event Listeners ---
@@ -331,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectorContainer.classList.remove('hidden-view');
     viewContainer.classList.add('hidden-view');
     viewContainer.classList.remove('visible-view');
-    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula');
+    applyTheme(localStorage.getItem(THEME_KEY) || DEFAULT_THEME);
 
     let viewToRestore = null;
     try {

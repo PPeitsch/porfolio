@@ -350,7 +350,7 @@ window.initializeRecruiterView = function (callbacks) {
     }
 
     function initializeChat() {
-        const savedTheme = localStorage.getItem(THEME_KEY) || 'dracula';
+        const savedTheme = localStorage.getItem(THEME_KEY) || window.DEFAULT_THEME || 'catppuccin';
         applyTheme(savedTheme);
         const token = sessionStorage.getItem(TOKEN_KEY);
         conversationHistory = [];

@@ -29,6 +29,13 @@ class Config:
     # Used when the browser asks for none of LANGUAGES.
     DEFAULT_LANGUAGE = os.environ.get("PORTFOLIO_DEFAULT_LANGUAGE", LANGUAGES[0])
 
+    # Color themes defined in themes.css. A visitor's choice is kept in the
+    # browser; DEFAULT_THEME is for visitors who have not picked one.
+    THEMES = ["dracula", "light", "solarized", "gruvbox", "catppuccin"]
+    DEFAULT_THEME = (
+        os.environ.get("PORTFOLIO_DEFAULT_THEME", "catppuccin").strip().lower()
+    )
+
     # UI Feature Flags
     BANNER_ENABLED = os.environ.get("BANNER_ENABLED", "false").lower() in (
         "true",

@@ -191,6 +191,57 @@ body {
     border-color: var(--fg);
 }
 
+/* Name of the current theme on the palette buttons: above in the dock, below
+   on the selector. Shown on hover and for a moment after a click. */
+#dock-theme-switcher,
+.home-theme-button {
+    position: relative;
+}
+
+#dock-theme-switcher[data-tip]::after,
+.home-theme-button[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: 50%;
+    padding: 6px 10px;
+    white-space: nowrap;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg);
+    background-color: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s, visibility 0.15s;
+}
+
+#dock-theme-switcher[data-tip]::after {
+    bottom: calc(100% + 14px);
+    transform: translateX(-50%);
+}
+
+/* The dock item scales up on hover; undo it so the tooltip keeps its size. */
+#dock-theme-switcher:hover[data-tip]::after {
+    transform: translateX(-50%) scale(0.91);
+}
+
+.home-theme-button[data-tip]::after {
+    top: calc(100% + 8px);
+    transform: translateX(-50%);
+}
+
+#dock-theme-switcher[data-tip]:hover::after,
+#dock-theme-switcher.tip-visible[data-tip]::after,
+.home-theme-button[data-tip]:hover::after,
+.home-theme-button.tip-visible[data-tip]::after {
+    opacity: 1;
+    visibility: visible;
+}
+
 .language-switcher {
     display: flex;
     gap: 4px;

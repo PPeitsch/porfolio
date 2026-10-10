@@ -163,7 +163,7 @@ window.initializeCliView = function(callbacks) {
           'theme': (args) => {
               const themeName = (args[0] || '').toLowerCase();
               if (!themeName) {
-                  const currentTheme = localStorage.getItem(THEME_KEY) || 'dracula';
+                  const currentTheme = localStorage.getItem(THEME_KEY) || window.DEFAULT_THEME || 'catppuccin';
                   writeOutput(uiText('cli.theme_current', { theme: currentTheme }), 'info-message');
                   writeOutput(uiText('cli.theme_available', { themes: availableThemes.join(', ') }));
                   return;
@@ -316,7 +316,7 @@ window.initializeCliView = function(callbacks) {
   outputDiv.addEventListener("click", (event) => { if (event.target.tagName !== "A") { inputElem.focus(); } });
 
   function initializeTerminal() {
-      const savedTheme = localStorage.getItem(THEME_KEY) || 'dracula';
+      const savedTheme = localStorage.getItem(THEME_KEY) || window.DEFAULT_THEME || 'catppuccin';
       if (availableThemes.includes(savedTheme)) {
           cliWindow.dataset.theme = savedTheme;
       }

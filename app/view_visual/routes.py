@@ -34,13 +34,20 @@ def static_files(filename):
         abort(404)
 
 
+def _type_label(project_type):
+    """The project type as shown on the card, or "" for an unknown type."""
+    key = f"visual.type_{project_type}"
+    label = t(key)
+    return "" if label == key else label
+
+
 @visual_bp.route("/api/projects")
 def get_projects_for_visual():
     """Gets and formats project data for the visual overview display.
 
     This API endpoint retrieves all project data, then formats it into a
     simplified structure suitable for rendering project cards in the UI.
-    It constructs full image URLs and truncates descriptions.
+    It constructs full image URLs and labels the project type.
 
     Returns:
         Response: A JSON response containing a list of simplified project
@@ -56,8 +63,8 @@ def get_projects_for_visual():
     simple_projects = []
     for p in projects_data:
         image_filename = p.get("image")
-        placeholder_image_url = "/shell-static/images/placeholder.svg"
-        image_url = placeholder_image_url
+        # No image: the card draws its own placeholder.
+        image_url = None
         if image_filename:
             # Images live in <DATA_DIR>/images; the bundled shell static folder
             # is kept as a fallback for images added there before.
@@ -69,27 +76,27 @@ def get_projects_for_visual():
             else:
                 image_url = f"/shell-static/images/projects/{image_filename}"
 
+        # Whole: the card cuts it at three lines.
         description = str(
             p.get("short_description")
             or p.get("description")
             or t("visual.no_description")
         )
-        short_desc = (
-            (description[:100] + "...") if len(description) > 100 else description
-        )
+        project_type = p.get("type", "unknown")
 
         simple_projects.append(
             {
                 "id": p.get("id", f"unknown_{len(simple_projects)}"),
                 "title": p.get("title") or t("visual.untitled"),
                 "image_url": image_url,
-                "short_desc": short_desc,
+                "short_desc": description,
                 "live_url": p.get("live_url"),
                 "github_url": p.get("github_url"),
                 "pypi_url": p.get("pypi_url"),
                 "docs_url": p.get("docs_url"),
-                "type": p.get("type", "unknown"),
-                "technologies": p.get("technologies", [])[:4],
+                "type": project_type,
+                "type_label": _type_label(project_type),
+                "technologies": p.get("technologies", []),
             }
         )
 
