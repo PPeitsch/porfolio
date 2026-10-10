@@ -3,6 +3,7 @@ import logging
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from app.common.assets import init_asset_versioning
 from app.common.rate_limit import parse_limits
 
 logging.basicConfig(
@@ -74,6 +75,9 @@ def create_app(config_name="default"):
 
         app.register_blueprint(visual_bp, url_prefix="/visual")
         logging.info("Registered visual blueprint with prefix /visual.")
+
+    # After the blueprints, whose static folders it looks up.
+    init_asset_versioning(app)
 
     @app.route("/health")
     def health_check():
