@@ -17,11 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Theme Management ---
     const THEME_KEY = 'cli_theme';
     const availableThemes = ['dracula', 'light', 'solarized', 'gruvbox', 'catppuccin'];
-    let currentThemeIndex = 0;
+    const DEFAULT_THEME = window.DEFAULT_THEME || 'catppuccin';
+    let currentThemeIndex = availableThemes.indexOf(DEFAULT_THEME);
 
     function applyTheme(themeName) {
         const themeIndex = availableThemes.indexOf(themeName);
-        currentThemeIndex = themeIndex !== -1 ? themeIndex : 0;
+        currentThemeIndex = themeIndex !== -1 ? themeIndex : availableThemes.indexOf(DEFAULT_THEME);
         const activeTheme = availableThemes[currentThemeIndex];
 
         // The page (desktop, dock, selector, visual view) and every open window
@@ -142,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.cli_js, viewSpecificJsId, () => {
                     window.initializeCliView({onClose: showSelector});
-                    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula'); // Re-apply theme on new window
+                    applyTheme(localStorage.getItem(THEME_KEY) || DEFAULT_THEME); // Re-apply theme on new window
                 });
             });
 
@@ -173,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadJS(_app_urls.shared_window_js, sharedWindowJsId, () => {
                 loadJS(_app_urls.recruiter_js, viewSpecificJsId, () => {
                     window.initializeRecruiterView({onClose: showSelector});
-                    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula'); // Re-apply theme on new window
+                    applyTheme(localStorage.getItem(THEME_KEY) || DEFAULT_THEME); // Re-apply theme on new window
                 });
             });
 
@@ -321,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (homeThemeSwitcher) homeThemeSwitcher.addEventListener('click', cycleTheme);
     // The CLI's "theme" command changes the theme without these buttons.
     themeButtons().forEach(button => button.addEventListener('mouseenter', () => {
-        showThemeName(document.documentElement.dataset.theme || 'dracula');
+        showThemeName(document.documentElement.dataset.theme || DEFAULT_THEME);
     }));
 
 
@@ -356,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectorContainer.classList.remove('hidden-view');
     viewContainer.classList.add('hidden-view');
     viewContainer.classList.remove('visible-view');
-    applyTheme(localStorage.getItem(THEME_KEY) || 'dracula');
+    applyTheme(localStorage.getItem(THEME_KEY) || DEFAULT_THEME);
 
     let viewToRestore = null;
     try {

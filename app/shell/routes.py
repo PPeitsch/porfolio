@@ -25,6 +25,7 @@ from app.common.i18n import (
 from app.common.utils import get_welcome_message, load_cv_data
 
 logger = logging.getLogger(__name__)
+FALLBACK_THEME = "catppuccin"
 
 shell_bp = Blueprint(
     "shell",
@@ -69,6 +70,15 @@ def set_language(code):
     return response
 
 
+def get_default_theme():
+    """Returns DEFAULT_THEME if it is a known theme, else catppuccin."""
+    theme = current_app.config.get("DEFAULT_THEME")
+    if theme in current_app.config.get("THEMES", []):
+        return theme
+    logger.warning(f"Unknown DEFAULT_THEME {theme!r}; using catppuccin.")
+    return FALLBACK_THEME
+
+
 @shell_bp.route("/")
 def selector():
     """Serves the initial view selector page.
@@ -90,6 +100,7 @@ def selector():
         cv=cv_data,
         banner_enabled=banner_enabled,
         banner_message=banner_message,
+        default_theme=get_default_theme(),
     )
 
 

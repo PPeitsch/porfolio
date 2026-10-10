@@ -108,6 +108,11 @@ The interface texts (buttons, placeholders, terminal messages) are built in in E
 
 The chat is told the visitor's language, and answers in the language of each question.
 
+
+## Themes
+
+The whole site follows one of five color themes: `dracula`, `light`, `solarized`, `gruvbox` and `catppuccin`. Visitors switch it with the palette button (or the CLI's `theme` command), and their choice is remembered in the browser. Those who have not picked one get `PORTFOLIO_DEFAULT_THEME` (default `catppuccin`).
+
 ## Choosing the Model
 
 The chat goes through [LiteLLM](https://docs.litellm.ai/docs/providers), so `LLM_MODEL` is `<provider>/<model>` and the key goes in the provider's usual variable:

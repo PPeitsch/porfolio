@@ -9,10 +9,12 @@
     <!-- External CSS & Fonts -->
     <script>
         // Theme before the first paint, so the page does not flash the default one.
+        // DEFAULT_THEME (PORTFOLIO_DEFAULT_THEME) is for visitors who have not picked one.
+        window.DEFAULT_THEME = {{ default_theme|tojson }};
         try {
-            document.documentElement.dataset.theme = localStorage.getItem('cli_theme') || 'dracula';
+            document.documentElement.dataset.theme = localStorage.getItem('cli_theme') || window.DEFAULT_THEME;
         } catch (e) {
-            document.documentElement.dataset.theme = 'dracula';
+            document.documentElement.dataset.theme = window.DEFAULT_THEME;
         }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
