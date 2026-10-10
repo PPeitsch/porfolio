@@ -9,16 +9,20 @@
 [![Linting: Flake8](https://img.shields.io/badge/linting-flake8-yellowgreen)](https://flake8.pycqa.org/)
 [![Code Quality](https://github.com/PPeitsch/porfolio/actions/workflows/code-quality.yml/badge.svg)](https://github.com/PPeitsch/porfolio/actions/workflows/code-quality.yml)
 [![Tests](https://github.com/PPeitsch/porfolio/actions/workflows/tests.yml/badge.svg)](https://github.com/PPeitsch/porfolio/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/PPeitsch/porfolio/graph/badge.svg?token=PGot9fslGJ)](https://codecov.io/gh/PPeitsch/porfolio)
+[![codecov](https://codecov.io/gh/PPeitsch/porfolio/graph/badge.svg)](https://codecov.io/gh/PPeitsch/porfolio)
 [![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-brightgreen.svg?style=flat)](.github/CONTRIBUTING.md)
 
 A portfolio website with three ways in: a terminal for developers, an AI chat for recruiters and a visual gallery. Built with Python, Flask and vanilla JavaScript.
+
+**Live demo:** [ppeitsch.com.ar](https://ppeitsch.com.ar), the author's own portfolio running this engine.
 
 The engine and the content are separate: your CV, projects and texts live in plain YAML and text files, so you can use it for your own portfolio without touching the code.
 
 ---
 
 ## Screenshots
+
+With the bundled example content (`data/`) and the `catppuccin` theme. `python scripts/screenshots.py --example-images` takes them again after a change to the views (it needs `pip install playwright && playwright install chromium`).
 
 <table>
   <tr>
