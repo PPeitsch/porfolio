@@ -9,3 +9,4 @@ Werkzeug>=3.0
 
 # Force patched version of transitive dependency to resolve security vulnerability
 urllib3>=2.5.0
+certifi>=2026.10.19
