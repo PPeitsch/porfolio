@@ -10,3 +10,6 @@ Werkzeug>=3.0
 # Force patched version of transitive dependency to resolve security vulnerability
 urllib3>=2.5.0
 certifi>=2026.10.19
+# huggingface-hub's. 4.2.1 fixes three vulnerabilities but needs Python 3.11; pip-compile runs
+# on 3.10 and drops this line, so the 3.11 pin is added by hand to the compiled files.
+filelock>=4.2.1; python_version >= "3.11"
