@@ -39,7 +39,7 @@ bandit==1.8.6
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
-black==26.5.1
+black==26.10.1
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
@@ -86,7 +86,7 @@ coverage[toml]==7.10.0
     # via
     #   -c constraints.txt
     #   pytest-cov
-distlib==0.4.0
+distlib==0.4.4
     # via
     #   -c constraints.txt
     #   virtualenv
@@ -107,6 +107,8 @@ filelock==3.32.7 ; python_version < "3.11"
     # via
     #   -c constraints.txt
     #   huggingface-hub
+    #   python-discovery
+    #   virtualenv
 filelock==4.2.1 ; python_version >= "3.11"
     # via
     #   -c constraints.txt
@@ -256,7 +258,7 @@ openai==2.54.0
     # via
     #   -c constraints.txt
     #   litellm
-packaging==25.0
+packaging==26.3
     # via
     #   -c constraints.txt
     #   black
@@ -278,7 +280,7 @@ pip-tools==7.4.1
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
-platformdirs==4.3.8
+platformdirs==4.12.4
     # via
     #   -c constraints.txt
     #   black
@@ -346,7 +348,7 @@ python-dateutil==2.9.0.post0
     # via
     #   -c constraints.txt
     #   botocore
-python-discovery==1.6.1
+python-discovery==1.6.4
     # via
     #   -c constraints.txt
     #   virtualenv
@@ -432,7 +434,7 @@ types-pyyaml==6.0.12.20250516
     # via
     #   -c constraints.txt
     #   -r requirements-dev.in
-typing-extensions==4.14.1
+typing-extensions==4.16.0
     # via
     #   -c constraints.txt
     #   aiohttp
@@ -461,7 +463,7 @@ urllib3==2.8.0
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==21.14.5
+virtualenv==21.14.13
     # via
     #   -c constraints.txt
     #   pre-commit

@@ -186,7 +186,7 @@ openai==2.54.0
     # via
     #   -c constraints.txt
     #   litellm
-packaging==25.0
+packaging==26.3
     # via
     #   -c constraints.txt
     #   huggingface-hub
@@ -272,7 +272,7 @@ tqdm==4.67.1
     #   -c constraints.txt
     #   huggingface-hub
     #   openai
-typing-extensions==4.14.1
+typing-extensions==4.16.0
     # via
     #   -c constraints.txt
     #   aiohttp
